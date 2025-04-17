@@ -1,0 +1,79 @@
+.topbar-container{
+    width: 100%;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 65px;
+    background-color: var(--white);
+    border-bottom: 1px solid var(--border-color);
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.topbar-left-wrapper{
+    display: flex;
+    align-items: center;
+    padding: 0px 20px;
+}
+
+.logo-link{
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo-link img{
+    height: 25px;
+    object-fit: contain;
+}
+
+.humburgerBtn{
+    min-width: 40px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 5px;
+    background-color: var(--white);
+    margin-left: 20px;
+}
+
+.topbar-right-wrapper{
+    display: flex;
+    align-items: center;
+    padding: 0px 20px;
+}
+
+.topbar-userinfo{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.username-text{
+    color: var(--heading-color);
+}
+
+.dropMenuItem{
+    font-family: 'Roboto-Regular', sans-serif !important;
+    color: var(--heading-color) !important;
+}
+
+/* responsive */
+@media (max-width: 1380px){}
+
+@media (max-width: 1200px){}
+
+@media all and (max-width: 992px){}
+
+@media all and (max-width: 768px){}
+
+@media all and (max-width: 480px){
+    .topbar-userinfo p{
+        display: none;
+    }
+}

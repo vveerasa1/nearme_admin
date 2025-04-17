@@ -1,0 +1,136 @@
+@font-face {
+  font-family: Roboto-Regular;
+  src: url('./assets/fonts/Roboto-Regular.ttf');
+}
+
+@font-face {
+  font-family: Roboto-Medium;
+  src: url('./assets/fonts/Roboto-Medium.ttf');
+}
+
+@font-face {
+  font-family: Roboto-SemiBold;
+  src: url('./assets/fonts/Roboto-SemiBold.ttf');
+}
+
+@font-face {
+  font-family: Roboto-Bold;
+  src: url('./assets/fonts/Roboto-Bold.ttf');
+}
+
+:root{
+  --theme-color1: #31A5DC;
+  --theme-color2: #E30D17;
+  --heading-color: #212121;
+  --font-color1: #000000;
+  --font-color2: #7E7E7E;
+  --border-color: #DDDDDD;
+  --white: #ffffff;
+  --black: #000000;
+  --box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.1);
+  --bg-color: #F9FCFF;
+  --btn-main-hover: #0E668F;
+}
+
+body{
+  font-style: normal;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: 0px;
+  font-family: 'Roboto-Regular', sans-serif;
+  color: var(--font-color1);
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2{
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1.5;
+  font-family: 'Roboto-SemiBold', sans-serif;
+  color: var(--heading-color);
+  margin: 0;
+  padding: 0;
+}
+
+h3{
+  font-style: normal;
+  font-size: 18px;
+  line-height: 1.5;
+  font-family: 'Roboto-Medium', sans-serif;
+  color: var(--heading-color);
+  margin: 0;
+  padding: 0;
+}
+
+h4, h5, h6{
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: 'Roboto-Medium', sans-serif;
+  color: var(--heading-color);
+  margin: 0;
+  padding: 0;
+}
+
+p{
+  font-style: normal;
+  font-family: 'Roboto-Regular', sans-serif;
+  color: var(--font-color2);
+  margin: 0;
+  padding: 0;
+}
+
+ul{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.theme-btn{
+  font-style: normal;
+  font-size: 16px;
+  line-height: 1.5;
+  min-width: 100px;
+  padding: 10px 15px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: ease-in-out 0.3s;
+}
+
+.btn-main{
+  border: 1px solid var(--theme-color1);
+  background-color: var(--theme-color1);
+  color: var(--white);
+}
+
+.btn-main:hover{
+  background-color: var(--btn-main-hover);
+  color: var(--white);
+  transition: ease-in-out 0.3s;
+  border-color: var(--btn-main-hover);
+}
+
+.btn-border{
+  border: 1px solid var(--heading-color);
+  background-color: var(--white);
+  color: var(--heading-color);
+}
+
+.btn-border:hover{
+  background-color: var(--heading-color);
+  color: var(--white);
+  transition: ease-in-out 0.3s;
+}
+
+.img-fluid{
+  min-width: 100%;
+}
+
+.pb-0{
+  padding-bottom: 0px !important;
+}
+
+.mb-0{
+  margin-bottom: 0px !important;
+}

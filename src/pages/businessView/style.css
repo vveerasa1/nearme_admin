@@ -1,0 +1,112 @@
+.view-container{
+    width: 100%;
+    position: relative;
+    display: inline-block;
+    padding: 20px;
+    border-radius: 12px;
+    background-color: var(--white);
+    box-shadow: var(--box-shadow);
+}
+
+.view-images-wrapper{
+    width: 100%;
+    position: relative;
+    display: inline-block;
+}
+
+.view-big-image{
+    width: 100%;
+    position: relative;
+    display: inline-block;
+    height: 250px;
+    margin-bottom: 20px;
+}
+
+.view-big-image img{
+    object-fit: contain;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    width: 100%;
+    height: 100%;
+}
+
+.view-small-image{
+    width: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.view-small-image img{
+    width: 65px;
+    min-width: 65px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+
+.vheading{
+    font-size: 22px;
+}
+
+.vrating{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.vrating p{
+    margin-bottom: 0px;
+}
+
+.vrating span{
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.vstars{
+    font-size: 18px !important;
+    color: #F5D41A;
+}
+
+.vblockheading{
+    font-size: 16px;
+}
+
+.vcontact p{
+    margin-bottom: 0px;
+}
+
+.vhours{
+    margin-top: 15px;
+}
+
+.vhours ul{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.vhours ul li{
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.vhours ul li p{
+    min-width: 110px;
+    margin-bottom: 0px;
+}
+
+.vmap{
+    width: 100%;
+    position: relative;
+    display: inline-block;
+    height: 200px;
+    margin-top: 10px;
+}
