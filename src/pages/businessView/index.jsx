@@ -10,18 +10,20 @@ const BusinessView = () => {
         <div className='content-wrapper'>
             {/* breadcrumb */}
             <div className='breadcrumb-wrapper'>
-                <h2 className='page-heading'>North East Kitchen  ( Specialty Cuisine Restaurant )</h2>
-                <ul className='breadcrumb-list'>
-                    <li className='breadcrumb-item'>
-                        <Link to={'/dashboard'} className='breadcrumb-link'>Home</Link>
-                    </li>
-                    <li className='breadcrumb-item'>
-                        <Link to={'/business-listings'} className='breadcrumb-link'>Business Listings</Link>
-                    </li>
-                    <li className='breadcrumb-item'>
-                        <a className='breadcrumb-link'>North East Kitchen  ( Specialty Cuisine Restaurant )</a>
-                    </li>
-                </ul>
+                <div className='breadcrumb-block'>
+                    <h2 className='page-heading'>North East Kitchen  ( Specialty Cuisine Restaurant )</h2>
+                    <ul className='breadcrumb-list'>
+                        <li className='breadcrumb-item'>
+                            <Link to={'/dashboard'} className='breadcrumb-link'>Home</Link>
+                        </li>
+                        <li className='breadcrumb-item'>
+                            <Link to={'/business-listings'} className='breadcrumb-link'>Business Listings</Link>
+                        </li>
+                        <li className='breadcrumb-item'>
+                            <a className='breadcrumb-link'>North East Kitchen  ( Specialty Cuisine Restaurant )</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
             {/* list */}
             <div className='view-container'>
@@ -37,6 +39,9 @@ const BusinessView = () => {
                                 <img className='img-fluid' src={BusineessImg} alt='Img' />
                             </div>
                         </div>
+                        {/* <div className='coupons-view'>
+                            <button type='button' className='theme-btn btn-border'>View Offers</button>
+                        </div> */}
                     </div>
                     <div className='col-12 col-md-7 col-lg-7 mb-4'>
                         <div className='view-content-wrapper'>
@@ -52,7 +57,6 @@ const BusinessView = () => {
                                 </span>
                                 <p>(1.2K)</p>
                             </div>
-                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam fermentum urna et libero ullamcorper lobortis. Proin nulla risus, suscipit sed purus eget, sollicitudin convallis sapien.</p>
                             <div className='vadress'>
                                 <h4 className='vblockheading'>Address</h4>
                                 <p>Wellingdon Estate, 53, New Winston Road, New York, NY A4E V23</p>
@@ -63,7 +67,7 @@ const BusinessView = () => {
                                 <p>info@example.com</p>
                             </div>
                             <div className='vhours'>
-                                <h4 className='vblockheading'>Operating Hours</h4>
+                                <h4 className='vblockheading'>Working hours</h4>
                                 <ul>
                                     <li>
                                         <p>Monday</p>

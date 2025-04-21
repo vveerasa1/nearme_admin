@@ -5,9 +5,14 @@ import SignIn from './auth/signin'
 import Dashboard from './pages/dashboard'
 import BusinessListing from './pages/businessListing'
 import BusinessView from './pages/businessView'
+import AddBusiness from './pages/addBusiness'
 import Coupon from './pages/coupon'
+import Deal from './pages/deal'
+import Discount from './pages/discount'
 import CouponView from './pages/couponView'
-import AddCoupon from './pages/addCoupon'
+import DealView from './pages/dealView'
+import DiscountView from './pages/discountView'
+import AddOffer from './pages/addOffer'
 import AppLayout from './layout'
 import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap/dist/js/bootstrap.bundle.min.js"
@@ -38,16 +43,36 @@ function App() {
           element={<AppLayout><BusinessView /></AppLayout>} 
         />
         <Route 
+          path="/add-new-business" 
+          element={<AppLayout><AddBusiness /></AppLayout>} 
+        />
+        <Route 
           path="/coupons" 
           element={<AppLayout><Coupon /></AppLayout>} 
+        />
+        <Route 
+          path="/deals" 
+          element={<AppLayout><Deal /></AppLayout>} 
+        />
+        <Route 
+          path="/discounts" 
+          element={<AppLayout><Discount /></AppLayout>} 
         />
         <Route 
           path="/coupon-view" 
           element={<AppLayout><CouponView /></AppLayout>} 
         />
         <Route 
-          path="/add-coupon" 
-          element={<AppLayout><AddCoupon /></AppLayout>} 
+          path="/deal-view" 
+          element={<AppLayout><DealView /></AppLayout>} 
+        />
+        <Route 
+          path="/discount-view" 
+          element={<AppLayout><DiscountView /></AppLayout>} 
+        />
+        <Route 
+          path="/add-offer" 
+          element={<AppLayout><AddOffer /></AppLayout>} 
         />
       </Routes>
     </Router>

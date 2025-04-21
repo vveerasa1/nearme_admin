@@ -48,15 +48,17 @@ const Dashboard = () => {
         <div className='content-wrapper'>
             {/* breadcrumb */}
             <div className='breadcrumb-wrapper'>
-                <h2 className='page-heading'>Dashboard</h2>
-                <ul className='breadcrumb-list'>
-                    <li className='breadcrumb-item'>
-                        <Link to={'/'} className='breadcrumb-link'>Home</Link>
-                    </li>
-                    <li className='breadcrumb-item'>
-                        <a className='breadcrumb-link'>Dashboard</a>
-                    </li>
-                </ul>
+                <div className='breadcrumb-block'>
+                    <h2 className='page-heading'>Dashboard</h2>
+                    <ul className='breadcrumb-list'>
+                        <li className='breadcrumb-item'>
+                            <Link to={'/'} className='breadcrumb-link'>Home</Link>
+                        </li>
+                        <li className='breadcrumb-item'>
+                            <a className='breadcrumb-link'>Dashboard</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
             {/* counts */}
             <div className='counts-wrapper'>

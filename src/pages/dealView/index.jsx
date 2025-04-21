@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import BusineessImg from '../../assets/images/businessImg.jpg'
 import DeleteConfirmationModal from '../../components/deleteConfirmation'
 
-const CouponView = () => {
+const DealView = () => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -59,6 +59,10 @@ const CouponView = () => {
                             <div className='view-content-wrapper'>
                                 <h3 className='vheading'>Summer Splash 15% Off</h3>
                                 <p>Enjoy 15% off on all swimwear and beach accessories. Offer valid until June 30th. Applicable on purchases above $50. Terms and conditions apply.</p>
+                                <div className='vadress'>
+                                    <h4 className='vblockheading'>Deal Amount</h4>
+                                    <p>$200</p>
+                                </div>
                                 <div className='vcontact'>
                                     <h4 className='vblockheading'>Valid</h4>
                                     <p>10 March 10:00 - 31 March 23:59</p>
@@ -95,4 +99,4 @@ const CouponView = () => {
     );
 };
 
-export default CouponView;
+export default DealView;

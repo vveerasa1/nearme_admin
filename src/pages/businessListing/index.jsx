@@ -21,15 +21,20 @@ const BusinessListing = () => {
             <div className='content-wrapper'>
                 {/* breadcrumb */}
                 <div className='breadcrumb-wrapper'>
-                    <h2 className='page-heading'>Business Listings</h2>
-                    <ul className='breadcrumb-list'>
-                        <li className='breadcrumb-item'>
-                            <Link to={'/dashboard'} className='breadcrumb-link'>Home</Link>
-                        </li>
-                        <li className='breadcrumb-item'>
-                            <a className='breadcrumb-link'>Business Listings</a>
-                        </li>
-                    </ul>
+                    <div className='breadcrumb-block'>
+                        <h2 className='page-heading'>Business Listings</h2>
+                        <ul className='breadcrumb-list'>
+                            <li className='breadcrumb-item'>
+                                <Link to={'/dashboard'} className='breadcrumb-link'>Home</Link>
+                            </li>
+                            <li className='breadcrumb-item'>
+                                <a className='breadcrumb-link'>Business Listings</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div className='buttons-block'>
+                        <Link to={'/add-new-business'} className='theme-btn btn-main'>Add New Business</Link>
+                    </div>
                 </div>
                 {/* list */}
                 <div className='lists-container'>
@@ -64,8 +69,30 @@ const BusinessListing = () => {
                                                     </Link>
                                                     <p className='lw-info-address'>24, Wellingdon Estate, 53, Ethiraj Salai</p>
                                                     <p className='lw-info-options'><span>Dine-in</span><span>Takeaway</span></p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
-                                                        Coupon available
+                                                    <Link to={'/add-coupon'} className='lw-info-coupon-link available'>
+                                                        Create coupon
+                                                    </Link>
+                                                </div>
+                                                <div className='lw-actionbtns'>
+                                                    <button className='lw-abtn edit' type='button'><Edit className='lw-icon' /></button>
+                                                    <button className='lw-abtn delete' onClick={handleOpenModal} type='button'><Delete className='lw-icon' /></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className='col-12 col-md-6 col-lg-4 mb-4'>
+                                            <div className='lw-card'>
+                                                <div className='lw-img'>
+                                                    <img className='img-fluid' src={BusineessImg} alt="Img" />
+                                                </div>
+                                                <div className='lw-info'>
+                                                    <Link to={'/business-view'} className='lw-info-heading'>
+                                                        North East Kitchen
+                                                        ( Specialty Cuisine Restaurant )
+                                                    </Link>
+                                                    <p className='lw-info-address'>24, Wellingdon Estate, 53, Ethiraj Salai</p>
+                                                    <p className='lw-info-options'><span>Dine-in</span><span>Takeaway</span></p>
+                                                    <Link to={'/add-coupon'} className='lw-info-coupon-link available'>
+                                                        Create coupon
                                                     </Link>
                                                 </div>
                                                 <div className='lw-actionbtns'>
@@ -108,8 +135,8 @@ const BusinessListing = () => {
                                                     </Link>
                                                     <p className='lw-info-address'>24, Wellingdon Estate, 53, Ethiraj Salai</p>
                                                     <p className='lw-info-options'><span>Dine-in</span><span>Takeaway</span></p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
-                                                        Coupon available
+                                                    <Link to={'/add-coupon'} className='lw-info-coupon-link available'>
+                                                        Create coupon
                                                     </Link>
                                                 </div>
                                                 <div className='lw-actionbtns'>
@@ -130,8 +157,8 @@ const BusinessListing = () => {
                                                     </Link>
                                                     <p className='lw-info-address'>24, Wellingdon Estate, 53, Ethiraj Salai</p>
                                                     <p className='lw-info-options'><span>Dine-in</span><span>Takeaway</span></p>
-                                                    <Link to={'/add-coupon'} className='lw-info-coupon-link notavailable'>
-                                                        Coupon not available
+                                                    <Link to={'/add-coupon'} className='lw-info-coupon-link available'>
+                                                        Create coupon
                                                     </Link>
                                                 </div>
                                                 <div className='lw-actionbtns'>
@@ -152,8 +179,8 @@ const BusinessListing = () => {
                                                     </Link>
                                                     <p className='lw-info-address'>24, Wellingdon Estate, 53, Ethiraj Salai</p>
                                                     <p className='lw-info-options'><span>Dine-in</span><span>Takeaway</span></p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
-                                                        Coupon available
+                                                    <Link to={'/add-coupon'} className='lw-info-coupon-link available'>
+                                                        Create coupon
                                                     </Link>
                                                 </div>
                                                 <div className='lw-actionbtns'>
@@ -174,8 +201,8 @@ const BusinessListing = () => {
                                                     </Link>
                                                     <p className='lw-info-address'>24, Wellingdon Estate, 53, Ethiraj Salai</p>
                                                     <p className='lw-info-options'><span>Dine-in</span><span>Takeaway</span></p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
-                                                        Coupon available
+                                                    <Link to={'/add-coupon'} className='lw-info-coupon-link available'>
+                                                        Create coupon
                                                     </Link>
                                                 </div>
                                                 <div className='lw-actionbtns'>
@@ -196,8 +223,8 @@ const BusinessListing = () => {
                                                     </Link>
                                                     <p className='lw-info-address'>24, Wellingdon Estate, 53, Ethiraj Salai</p>
                                                     <p className='lw-info-options'><span>Dine-in</span><span>Takeaway</span></p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
-                                                        Coupon available
+                                                    <Link to={'/add-coupon'} className='lw-info-coupon-link available'>
+                                                        Create coupon
                                                     </Link>
                                                 </div>
                                                 <div className='lw-actionbtns'>
@@ -218,30 +245,8 @@ const BusinessListing = () => {
                                                     </Link>
                                                     <p className='lw-info-address'>24, Wellingdon Estate, 53, Ethiraj Salai</p>
                                                     <p className='lw-info-options'><span>Dine-in</span><span>Takeaway</span></p>
-                                                    <Link to={'/add-coupon'} className='lw-info-coupon-link notavailable'>
-                                                        Coupon not available
-                                                    </Link>
-                                                </div>
-                                                <div className='lw-actionbtns'>
-                                                    <button className='lw-abtn edit' type='button'><Edit className='lw-icon' /></button>
-                                                    <button className='lw-abtn delete' onClick={handleOpenModal} type='button'><Delete className='lw-icon' /></button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className='col-12 col-md-6 col-lg-4 mb-4'>
-                                            <div className='lw-card'>
-                                                <div className='lw-img'>
-                                                    <img className='img-fluid' src={BusineessImg} alt="Img" />
-                                                </div>
-                                                <div className='lw-info'>
-                                                    <Link to={'/business-view'} className='lw-info-heading'>
-                                                        North East Kitchen
-                                                        ( Specialty Cuisine Restaurant )
-                                                    </Link>
-                                                    <p className='lw-info-address'>24, Wellingdon Estate, 53, Ethiraj Salai</p>
-                                                    <p className='lw-info-options'><span>Dine-in</span><span>Takeaway</span></p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
-                                                        Coupon available
+                                                    <Link to={'/add-coupon'} className='lw-info-coupon-link available'>
+                                                        Create coupon
                                                     </Link>
                                                 </div>
                                                 <div className='lw-actionbtns'>

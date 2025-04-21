@@ -16,6 +16,8 @@ const Sidebar = () => {
     const menuItems = [
         { label: 'Dashboard', icon: <Home />, path: '/dashboard' },
         { label: 'Business Listings', icon: <Business />, path: '/business-listings' },
+        { label: 'Deals', icon: <LocalOffer />, path: '/deals' },
+        { label: 'Discounts', icon: <LocalOffer />, path: '/discounts' },
         { label: 'Coupons', icon: <LocalOffer />, path: '/coupons' },
     ];
 

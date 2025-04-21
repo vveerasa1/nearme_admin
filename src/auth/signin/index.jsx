@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import "./style.css"
-import { TextField, InputAdornment } from '@mui/material'
+import { Input } from '@mui/material'
 import Logo from '../../assets/images/near-me-logo.png'
 import { Email, Lock } from '@mui/icons-material'
 
@@ -17,11 +17,11 @@ const Signin = () => {
                 </div>
                 <form className='authform'>
                     <div className='auth-form-group'>
-                        <input className='auth-input' type='email' placeholder='Email' />
+                        <Input className='auth-input' type='email' placeholder='Email' />
                         <span className='authInputIcon'><Email style={{ fontSize: '16px' }} /></span>
                     </div>
                     <div className='auth-form-group'>
-                        <input className='auth-input' type='password' placeholder='Password' />
+                        <Input className='auth-input' type='password' placeholder='Password' />
                         <span className='authInputIcon'><Lock style={{ fontSize: '16px' }} /></span>
                     </div>
                     <div className='auth-form-group authSubmitbtn mb-0'>

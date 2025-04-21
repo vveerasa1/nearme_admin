@@ -70,7 +70,15 @@
     border-radius: 12px;
     padding: 0px 10px 0px 35px;
     min-height: 48px;
-    border: none;
+    border: none !important;
+}
+
+.auth-input::before{
+    border: none !important;
+}
+
+.auth-input::after{
+    border: none !important;
 }
 
 .auth-input:focus, .auth-input:active{
@@ -80,8 +88,10 @@
 .authInputIcon{
     position: absolute;
     color: var(--font-color2);
-    top: 12px;
+    top: 16px;
     left: 10px;
+    display: flex;
+    align-items: center;
 }
 
 .authSubmitbtn .theme-btn{

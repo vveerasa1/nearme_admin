@@ -6,7 +6,7 @@ import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css"; // Main style
 import "react-date-range/dist/theme/default.css"; // Theme style
 
-const AddCoupon = () => {
+const AddOffer = () => {
     const [file, setFile] = useState(null);
 
     const handleFileChange = (e) => {
@@ -34,15 +34,17 @@ const AddCoupon = () => {
         <div className='content-wrapper'>
             {/* breadcrumb */}
             <div className='breadcrumb-wrapper'>
-                <h2 className='page-heading'>Add Coupons</h2>
-                <ul className='breadcrumb-list'>
-                    <li className='breadcrumb-item'>
-                        <Link to={'/dashboard'} className='breadcrumb-link'>Home</Link>
-                    </li>
-                    <li className='breadcrumb-item'>
-                        <a className='breadcrumb-link'>Coupon</a>
-                    </li>
-                </ul>
+                <div className='breadcrumb-block'>
+                    <h2 className='page-heading'>Add Offer</h2>
+                    <ul className='breadcrumb-list'>
+                        <li className='breadcrumb-item'>
+                            <Link to={'/dashboard'} className='breadcrumb-link'>Home</Link>
+                        </li>
+                        <li className='breadcrumb-item'>
+                            <a className='breadcrumb-link'>Offer</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
             {/* add form */}
             <div className='form-container'>
@@ -67,18 +69,32 @@ const AddCoupon = () => {
                                 {/* discount type */}
                                 <div className='col-12 col-md-12 col-lg-12 mb-3'>
                                     <div className='form-group'>
-                                        <label className='form-label'>Discount Type</label>
-                                        <div className='form-custom-radio'>
-                                            <div className='radiobtns'>
-                                                <label htmlFor="radio1"><input id="radio1" name="radio" type="radio" className="radio" />
-                                                    <span>Percentage</span></label>
-                                                <label htmlFor="radio2"><input id="radio2" name="radio" type="radio" className="radio" /><span>Amount</span></label>
-                                            </div>
-                                            <div className='discountfields'>
-                                                <input type='text' className='form-input' placeholder='%' />
-                                                <p className='discounttext'>Discount Upto</p>
-                                                <input type='text' className='form-input' placeholder='' />
-                                            </div>
+                                        <label className='form-label'>Offer Type</label>
+                                        <select className='form-input'>
+                                            <option>Deal</option>
+                                            <option>Discount</option>
+                                            <option>Coupon</option>
+                                        </select>
+                                    </div>
+                                    {/* discount */}
+                                    <div className='mt-4'>
+                                        <label className='form-label'>Percentage</label>
+                                        <input type='text' className='form-input' placeholder='%' />
+                                    </div>
+                                    {/* deal */}
+                                    {/* <div className='mt-4'>
+                                        <label className='form-label'>Amount</label>
+                                        <input type='text' className='form-input' placeholder='%' />
+                                    </div> */}
+                                </div>
+                                {/* primary */}
+                                <div className='col-12 col-md-12 col-lg-12 mb-3'>
+                                    <div className='customday-wrapper'>
+                                        <div className="custom-checkbox-container">
+                                            <input type="checkbox" id="primary" className="custom-checkbox" />
+                                            <label htmlFor="primary" className="custom-checkbox-label">
+                                                Make as primary
+                                            </label>
                                         </div>
                                     </div>
                                 </div>
@@ -117,7 +133,7 @@ const AddCoupon = () => {
                                 {/* vaildity */}
                                 <div className='col-12 col-md-12 col-lg-12 mb-3'>
                                     <div className='form-group'>
-                                        <label className='form-label'>Coupon Validity Period</label>
+                                        <label className='form-label'>Offer Validity Period</label>
                                         <div
                                             className="custom-input"
                                             onClick={togglePicker}
@@ -154,13 +170,13 @@ const AddCoupon = () => {
                                 {/* time */}
                                 <div className='col-12 col-md-6 col-lg-6 mb-3'>
                                     <div className='form-group'>
-                                        <label className='form-label'>Coupon Active Start time</label>
+                                        <label className='form-label'>Offer Active Start time</label>
                                         <input type='time' className='form-input' placeholder='' />
                                     </div>
                                 </div>
                                 <div className='col-12 col-md-6 col-lg-6 mb-4'>
                                     <div className='form-group'>
-                                        <label className='form-label'>Coupon Active End time</label>
+                                        <label className='form-label'>Offer Active End time</label>
                                         <input type='time' className='form-input' placeholder='' />
                                     </div>
                                 </div>
@@ -231,4 +247,4 @@ const AddCoupon = () => {
     );
 };
 
-export default AddCoupon;
+export default AddOffer;

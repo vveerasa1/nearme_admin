@@ -5,7 +5,7 @@ import { Search, Edit, Delete } from '@mui/icons-material';
 import CouponImg from '../../assets/images/couponImg.png'
 import DeleteConfirmationModal from '../../components/deleteConfirmation'
 
-const Coupon = () => {
+const Discount = () => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -22,13 +22,13 @@ const Coupon = () => {
                 {/* breadcrumb */}
                 <div className='breadcrumb-wrapper'>
                     <div className='breadcrumb-block'>
-                        <h2 className='page-heading'>Coupons</h2>
+                        <h2 className='page-heading'>Discounts</h2>
                         <ul className='breadcrumb-list'>
                             <li className='breadcrumb-item'>
                                 <Link to={'/dashboard'} className='breadcrumb-link'>Home</Link>
                             </li>
                             <li className='breadcrumb-item'>
-                                <a className='breadcrumb-link'>Coupons</a>
+                                <a className='breadcrumb-link'>Discounts</a>
                             </li>
                         </ul>
                     </div>
@@ -43,7 +43,7 @@ const Coupon = () => {
                             <div className='lists-wrapper'>
                                 <div className='lw-top'>
                                     <div className='list-head'>
-                                        <h3>Coupon Lists</h3>
+                                        <h3>Discount Lists</h3>
                                     </div>
                                     <div className='list-filter'>
                                         <div className='lf-search'>
@@ -60,12 +60,12 @@ const Coupon = () => {
                                                     <img className='img-fluid' src={CouponImg} alt="Img" />
                                                 </div>
                                                 <div className='lw-info'>
-                                                    <Link to={'/coupon-view'} className='lw-info-heading'>
+                                                    <Link to={'/discount-view'} className='lw-info-heading'>
                                                         Summer Splash 15% Off
                                                     </Link>
-                                                    
+                                                    <p className='lw-info-address'>Discount: 15%</p>
                                                     <p className='lw-info-options'>Valid: 10 March 10:00 - 31 March 11:59</p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -81,12 +81,12 @@ const Coupon = () => {
                                                     <img className='img-fluid' src={CouponImg} alt="Img" />
                                                 </div>
                                                 <div className='lw-info'>
-                                                    <Link to={'/coupon-view'} className='lw-info-heading'>
+                                                    <Link to={'/discount-view'} className='lw-info-heading'>
                                                         New Year Special $25 Off
                                                     </Link>
-                                                    
+                                                    <p className='lw-info-address'>Discount: 15%</p>
                                                     <p className='lw-info-options'>Valid: 10 March 10:00 - 31 March 11:59</p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -102,12 +102,12 @@ const Coupon = () => {
                                                     <img className='img-fluid' src={CouponImg} alt="Img" />
                                                 </div>
                                                 <div className='lw-info'>
-                                                    <Link to={'/coupon-view'} className='lw-info-heading'>
+                                                    <Link to={'/discount-view'} className='lw-info-heading'>
                                                         Weekend Flash Sale 30% Off
                                                     </Link>
-                                                    
+                                                    <p className='lw-info-address'>Discount: 15%</p>
                                                     <p className='lw-info-options'>Valid: 10 March 10:00 - 31 March 11:59</p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -123,12 +123,12 @@ const Coupon = () => {
                                                     <img className='img-fluid' src={CouponImg} alt="Img" />
                                                 </div>
                                                 <div className='lw-info'>
-                                                    <Link to={'/coupon-view'} className='lw-info-heading'>
+                                                    <Link to={'/discount-view'} className='lw-info-heading'>
                                                         Buy 1 Get 1 Free Bonanza
                                                     </Link>
-                                                    
+                                                    <p className='lw-info-address'>Discount: 15%</p>
                                                     <p className='lw-info-options'>Valid: 10 March 10:00 - 31 March 11:59</p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -144,12 +144,12 @@ const Coupon = () => {
                                                     <img className='img-fluid' src={CouponImg} alt="Img" />
                                                 </div>
                                                 <div className='lw-info'>
-                                                    <Link to={'/coupon-view'} className='lw-info-heading'>
+                                                    <Link to={'/discount-view'} className='lw-info-heading'>
                                                         Summer Splash 15% Off
                                                     </Link>
-                                                    
+                                                    <p className='lw-info-address'>Discount: 15%</p>
                                                     <p className='lw-info-options'>Valid: 10 March 10:00 - 31 March 11:59</p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -165,12 +165,12 @@ const Coupon = () => {
                                                     <img className='img-fluid' src={CouponImg} alt="Img" />
                                                 </div>
                                                 <div className='lw-info'>
-                                                    <Link to={'/coupon-view'} className='lw-info-heading'>
+                                                    <Link to={'/discount-view'} className='lw-info-heading'>
                                                         New Year Special $25 Off
                                                     </Link>
-                                                    
+                                                    <p className='lw-info-address'>Discount: 15%</p>
                                                     <p className='lw-info-options'>Valid: 10 March 10:00 - 31 March 11:59</p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -186,12 +186,12 @@ const Coupon = () => {
                                                     <img className='img-fluid' src={CouponImg} alt="Img" />
                                                 </div>
                                                 <div className='lw-info'>
-                                                    <Link to={'/coupon-view'} className='lw-info-heading'>
+                                                    <Link to={'/discount-view'} className='lw-info-heading'>
                                                         Weekend Flash Sale 30% Off
                                                     </Link>
-                                                    
+                                                    <p className='lw-info-address'>Discount: 15%</p>
                                                     <p className='lw-info-options'>Valid: 10 March 10:00 - 31 March 11:59</p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -207,12 +207,12 @@ const Coupon = () => {
                                                     <img className='img-fluid' src={CouponImg} alt="Img" />
                                                 </div>
                                                 <div className='lw-info'>
-                                                    <Link to={'/coupon-view'} className='lw-info-heading'>
+                                                    <Link to={'/discount-view'} className='lw-info-heading'>
                                                         Buy 1 Get 1 Free Bonanza
                                                     </Link>
-                                                    
+                                                    <p className='lw-info-address'>Discount: 15%</p>
                                                     <p className='lw-info-options'>Valid: 10 March 10:00 - 31 March 11:59</p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -228,12 +228,12 @@ const Coupon = () => {
                                                     <img className='img-fluid' src={CouponImg} alt="Img" />
                                                 </div>
                                                 <div className='lw-info'>
-                                                    <Link to={'/coupon-view'} className='lw-info-heading'>
+                                                    <Link to={'/discount-view'} className='lw-info-heading'>
                                                         Buy 1 Get 1 Free Bonanza
                                                     </Link>
-                                                    
+                                                    <p className='lw-info-address'>Discount: 15%</p>
                                                     <p className='lw-info-options'>Valid: 10 March 10:00 - 31 March 11:59</p>
-                                                    <Link to={'/coupon-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -274,4 +274,4 @@ const Coupon = () => {
     );
 };
 
-export default Coupon;
+export default Discount;
