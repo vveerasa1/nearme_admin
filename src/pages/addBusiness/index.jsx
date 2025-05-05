@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import "./style.css"
 import { Link } from 'react-router-dom'
 import { Upload, Star, Add, Remove } from '@mui/icons-material'
+import PhoneInput from "react-phone-input-2";
+import 'react-phone-input-2/lib/style.css'
 
 const AddBusiness = () => {
     const [file, setFile] = useState(null);
@@ -9,6 +11,8 @@ const AddBusiness = () => {
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
     };
+
+    const [phone, setPhone] = useState("");
 
     return (
         <div className='content-wrapper'>
@@ -124,14 +128,15 @@ const AddBusiness = () => {
                                 <div className='col-12 col-md-12 col-lg-12 mb-3'>
                                     <div className='form-group'>
                                         <label className='form-label'>Phone number</label>
-                                        <input type='text' className='form-input' placeholder='Phone number' />
-                                    </div>
-                                </div>
-                                {/* email */}
-                                <div className='col-12 col-md-12 col-lg-12 mb-3'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Email address</label>
-                                        <input type='text' className='form-input' placeholder='Email address' />
+                                        <div className='form-phone'>
+                                            <PhoneInput
+                                                className="form-phone"
+                                                country={"eg"}
+                                                enableSearch={true}
+                                                value={phone}
+                                                onChange={(phone) => setPhone(phone)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                                 {/* place link */}
@@ -156,21 +161,10 @@ const AddBusiness = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className='col-12 col-md-6 col-lg-6 mb-4'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Review</label>
-                                        <input type='text' className='form-input' placeholder='' />
-                                    </div>
-                                </div>
                                 {/* working hours */}
-                                <div className='col-12 col-md-12 col-lg-12 mb-4'>
-                                    <div className='form-group'>
+                                <div className='col-12 col-md-12 col-lg-12'>
+                                    <div className='form-group mb-1'>
                                         <label className='form-label'>Working hours</label>
-                                        <select className='form-input'>
-                                            <option>Open 24 hours</option>
-                                            <option>Closed</option>
-                                            <option>Custom time</option>
-                                        </select>
                                     </div>
                                 </div>
                                 {/* fields */}
@@ -189,6 +183,10 @@ const AddBusiness = () => {
                                                 <label className='form-label'>End time</label>
                                                 <input type='time' className='form-input' placeholder='' />
                                             </div>
+                                            <div className='customhours'>
+                                                <input id="hour" name='hour' className='hour-checkbox' type='checkbox' />
+                                                <label htmlFor='hour' className='hour-label'>24 Hours</label>
+                                            </div>
                                             <div className='customfiled-addbtn'>
                                                 <button type='button' className='cfBtn add'><Add className='' /></button>
                                             </div>
@@ -205,6 +203,10 @@ const AddBusiness = () => {
                                             <div className='form-group'>
                                                 <label className='form-label'>End time</label>
                                                 <input type='time' className='form-input' placeholder='' />
+                                            </div>
+                                            <div className='customhours'>
+                                                <input id="hour1" name='hour1' className='hour-checkbox' type='checkbox' />
+                                                <label htmlFor='hour1' className='hour-label'>24 Hours</label>
                                             </div>
                                             <div className='customfiled-addbtn'>
                                                 <button type='button' className='cfBtn remove'><Remove className='' /></button>

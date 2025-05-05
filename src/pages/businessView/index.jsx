@@ -64,7 +64,7 @@ const BusinessView = () => {
                             <div className='vcontact'>
                                 <h4 className='vblockheading'>Contact</h4>
                                 <p>+1(123)456-7890</p>
-                                <p>info@example.com</p>
+                                {/* <p>info@example.com</p> */}
                             </div>
                             <div className='vhours'>
                                 <h4 className='vblockheading'>Working hours</h4>

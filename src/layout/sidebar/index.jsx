@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
-import { Home, Business, LocalOffer } from '@mui/icons-material';
+import { Home, Business, LocalOffer, Person } from '@mui/icons-material';
 import './style.css';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -19,6 +19,7 @@ const Sidebar = () => {
         { label: 'Deals', icon: <LocalOffer />, path: '/deals' },
         { label: 'Discounts', icon: <LocalOffer />, path: '/discounts' },
         { label: 'Coupons', icon: <LocalOffer />, path: '/coupons' },
+        { label: 'Users', icon: <Person />, path: '/users' },
     ];
 
     return (

@@ -230,7 +230,7 @@
 }
 
 .customfieldtimes .form-group.day{
-    min-width: 30%;
+    min-width: 25%;
 }
 
 input:focus{
@@ -258,6 +258,44 @@ textarea:focus{
 
 .position-relative{
     position: relative;
+}
+
+.customhours{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    gap: 5px;
+    height: 100%;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.hour-label{
+    font-size: 12px;
+    line-height: 14px;
+}
+
+.form-phone{
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.phoneCountrySelect{
+    min-width: 140px;
+    min-height: 48px;
+}
+
+.react-tel-input .form-control{
+    height: 48px !important;
+    width: 100% !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.react-tel-input .form-control:focus{
+    box-shadow: none !important;
 }
 
 /* responsive */

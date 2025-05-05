@@ -1,7 +1,7 @@
 import React from "react"
 import "./style.css"
 import { Link } from 'react-router-dom'
-import { Business, LocalOffer } from '@mui/icons-material'
+import { Business, LocalOffer, Person } from '@mui/icons-material'
 import {
     LineChart,
     Line,
@@ -104,6 +104,28 @@ const Dashboard = () => {
                             <div className='countitem-info'>
                                 <h4>New Coupons <span>(This Week)</span></h4>
                                 <h3>5</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='col-12 col-md-6 col-lg-3 mb-4'>
+                        <div className='count-item'>
+                            <div className='countitem-icon'>
+                                <Person className='cicon' />
+                            </div>
+                            <div className='countitem-info'>
+                                <h4>Total Users</h4>
+                                <h3>250</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='col-12 col-md-6 col-lg-3 mb-4'>
+                        <div className='count-item'>
+                            <div className='countitem-icon'>
+                                <Person className='cicon' />
+                            </div>
+                            <div className='countitem-info'>
+                                <h4>New Users <span>(This Week)</span></h4>
+                                <h3>24</h3>
                             </div>
                         </div>
                     </div>

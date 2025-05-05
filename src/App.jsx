@@ -14,6 +14,8 @@ import DealView from './pages/dealView'
 import DiscountView from './pages/discountView'
 import AddOffer from './pages/addOffer'
 import AppLayout from './layout'
+import Users from './pages/users'
+import UserView from './pages/userView'
 import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap/dist/js/bootstrap.bundle.min.js"
 
@@ -73,6 +75,14 @@ function App() {
         <Route 
           path="/add-offer" 
           element={<AppLayout><AddOffer /></AppLayout>} 
+        />
+        <Route 
+          path="/users" 
+          element={<AppLayout><Users /></AppLayout>} 
+        />
+         <Route 
+          path="/user-view" 
+          element={<AppLayout><UserView /></AppLayout>} 
         />
       </Routes>
     </Router>

@@ -1,0 +1,41 @@
+.usercard-name{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.userbadge{
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    margin-bottom: 5px;
+}
+
+.lw-info .userbadge p{
+    margin-bottom: 0px;
+    font-size: 12px !important;
+}
+
+.lw-info .ubicon{
+    font-size: 14px !important;
+}
+
+.userbadge p.verified{
+    color: #0BD222;
+}
+
+.userbadge p.notverified{
+    color: #E30D17;
+}
+
+.userbadge .ubicon.verified{
+    color: #0BD222;
+}
+
+.userbadge .ubicon.notverified{
+    color: #E30D17;
+}
+
+.lw-info-coupon-link.available {
+    color: #31A5DC;
+}

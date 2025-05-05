@@ -66,6 +66,13 @@ const AddOffer = () => {
                                         <textarea className='form-input' cols={30} rows={3} placeholder='Type something here'></textarea>
                                     </div>
                                 </div>
+                                {/* coupon details */}
+                                <div className='col-12 col-md-12 col-lg-12 mb-3'>
+                                    <div className='form-group'>
+                                        <label className='form-label'>Coupon Details</label>
+                                        <textarea className='form-input' cols={30} rows={3} placeholder='Type something here'></textarea>
+                                    </div>
+                                </div>
                                 {/* discount type */}
                                 <div className='col-12 col-md-12 col-lg-12 mb-3'>
                                     <div className='form-group'>

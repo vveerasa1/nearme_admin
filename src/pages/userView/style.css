@@ -1,0 +1,35 @@
+.view-content-wrapper p{
+    margin-bottom: 8px;
+}
+
+.userbadge{
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    margin-bottom: 5px;
+}
+
+.userbadge p{
+    margin-bottom: 0px;
+    font-size: 16px;
+}
+
+.ubicon{
+    font-size: 18px !important;
+}
+
+.userbadge p.verified{
+    color: #0BD222;
+}
+
+.userbadge p.notverified{
+    color: #E30D17;
+}
+
+.userbadge .ubicon.verified{
+    color: #0BD222;
+}
+
+.userbadge .ubicon.notverified{
+    color: #E30D17;
+}
