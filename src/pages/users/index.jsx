@@ -69,7 +69,7 @@ const Users = () => {
                                                     <p className='lw-info-address'>DOB: 20 June, 2020</p>
                                                     <p className='lw-info-options mb-1'>Phone: +1(234) 567 8901</p>
                                                     <p className='lw-info-options'>Address: 1234, New Winston Road</p>
-                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/user-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -96,7 +96,7 @@ const Users = () => {
                                                     <p className='lw-info-address'>DOB: 20 June, 2020</p>
                                                     <p className='lw-info-options mb-1'>Phone: +1(234) 567 8901</p>
                                                     <p className='lw-info-options'>Address: 1234, New Winston Road</p>
-                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/user-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -123,7 +123,7 @@ const Users = () => {
                                                     <p className='lw-info-address'>DOB: 20 June, 2020</p>
                                                     <p className='lw-info-options mb-1'>Phone: +1(234) 567 8901</p>
                                                     <p className='lw-info-options'>Address: 1234, New Winston Road</p>
-                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/user-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -150,7 +150,7 @@ const Users = () => {
                                                     <p className='lw-info-address'>DOB: 20 June, 2020</p>
                                                     <p className='lw-info-options mb-1'>Phone: +1(234) 567 8901</p>
                                                     <p className='lw-info-options'>Address: 1234, New Winston Road</p>
-                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/user-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -177,7 +177,7 @@ const Users = () => {
                                                     <p className='lw-info-address'>DOB: 20 June, 2020</p>
                                                     <p className='lw-info-options mb-1'>Phone: +1(234) 567 8901</p>
                                                     <p className='lw-info-options'>Address: 1234, New Winston Road</p>
-                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/user-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -204,7 +204,7 @@ const Users = () => {
                                                     <p className='lw-info-address'>DOB: 20 June, 2020</p>
                                                     <p className='lw-info-options mb-1'>Phone: +1(234) 567 8901</p>
                                                     <p className='lw-info-options'>Address: 1234, New Winston Road</p>
-                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/user-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -231,7 +231,7 @@ const Users = () => {
                                                     <p className='lw-info-address'>DOB: 20 June, 2020</p>
                                                     <p className='lw-info-options mb-1'>Phone: +1(234) 567 8901</p>
                                                     <p className='lw-info-options'>Address: 1234, New Winston Road</p>
-                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/user-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -258,7 +258,7 @@ const Users = () => {
                                                     <p className='lw-info-address'>DOB: 20 June, 2020</p>
                                                     <p className='lw-info-options mb-1'>Phone: +1(234) 567 8901</p>
                                                     <p className='lw-info-options'>Address: 1234, New Winston Road</p>
-                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/user-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
@@ -285,7 +285,7 @@ const Users = () => {
                                                     <p className='lw-info-address'>DOB: 20 June, 2020</p>
                                                     <p className='lw-info-options mb-1'>Phone: +1(234) 567 8901</p>
                                                     <p className='lw-info-options'>Address: 1234, New Winston Road</p>
-                                                    <Link to={'/discount-view'} className='lw-info-coupon-link available'>
+                                                    <Link to={'/user-view'} className='lw-info-coupon-link available'>
                                                         View
                                                     </Link>
                                                 </div>
