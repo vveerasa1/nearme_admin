@@ -1,232 +1,714 @@
-import { useState } from 'react'
-import "./style.css"
-import { Link } from 'react-router-dom'
-import { Upload, Star, Add, Remove } from '@mui/icons-material'
+import { useState, useRef, useEffect } from "react";
+import "./style.css";
+import { Link } from "react-router-dom";
+import { Star, Add, Remove, Delete } from "@mui/icons-material";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+import axios from "axios";
+import CreatableSelect from "react-select/creatable";
 
 const AddBusiness = () => {
-    const [file, setFile] = useState(null);
+  const [photos, setPhotos] = useState(null);
+  const [allTypes, setAllTypes] = useState([]);
+  const [filteredTypes, setFilteredTypes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
+  const [photoError, setPhotoError] = useState(""); // State for image validation errors
 
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
+  const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+  const MAX_IMAGES = 5;
+  const [workingHours, setWorkingHours] = useState([
+    { day: "", startTime: "", endTime: "", is24Hours: false },
+  ]);
+
+  const resizeImage = (file, width, height) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        img.src = e.target.result;
+      };
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw the image on the canvas with the specified dimensions
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            resolve(new File([blob], file.name, { type: file.type }));
+          },
+          file.type,
+          1
+        );
+      };
+
+      img.onerror = (err) => reject(err);
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files);
+    let error = "";
+
+    // Validate file count
+    if (files.length + (photos?.length || 0) > MAX_IMAGES) {
+      error = `You can upload a maximum of ${MAX_IMAGES} images.`;
+    }
+
+    const resizedImages = [];
+    for (const file of files) {
+      // Validate file type and size
+      if (!SUPPORTED_FORMATS.includes(file.type)) {
+        error = "Only JPEG, JPG, and PNG formats are allowed.";
+      } else if (file.size > MAX_FILE_SIZE) {
+        error = "Each file must not exceed 5 MB.";
+      } else {
+        try {
+          // Resize the image to a standard size (e.g., 500x500 pixels)
+          const resizedImage = await resizeImage(file, 400, 400);
+          resizedImages.push(resizedImage);
+        } catch (err) {
+          console.error("Error resizing image:", err);
+        }
+      }
+    }
+
+    if (error) {
+      setPhotoError(error);
+    } else {
+      setPhotoError(""); // Clear error if validation passes
+      setPhotos((prevPhotos) => [...(prevPhotos || []), ...resizedImages]);
+    }
+  };
+
+  useEffect(() => {
+    const fetchTypes = async () => {
+      try {
+        setLoading(true);
+        const url = "http://localhost:4001/business/types";
+        const response = await axios.get(url);
+        const options = response.data.data.map((type) => ({
+          label: type,
+          value: type,
+        }));
+        setAllTypes(options);
+        console.log(options);
+        setFilteredTypes(options.slice(1, 10));
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching types", err);
+      }
     };
+    fetchTypes();
+  }, []);
 
-    return (
-        <div className='content-wrapper'>
-            {/* breadcrumb */}
-            <div className='breadcrumb-wrapper'>
-                <div className='breadcrumb-block'>
-                    <h2 className='page-heading'>Add Business</h2>
-                    <ul className='breadcrumb-list'>
-                        <li className='breadcrumb-item'>
-                            <Link to={'/dashboard'} className='breadcrumb-link'>Home</Link>
-                        </li>
-                        <li className='breadcrumb-item'>
-                            <a className='breadcrumb-link'>Business</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            {/* add form */}
-            <div className='form-container'>
-                <form>
-                    <div className='row'>
-                        <div className='col-12 col-md-12 col-lg-6'>
-                            <div className='row'>
-                                {/* name */}
-                                <div className='col-12 col-md-12 col-lg-12 mb-3'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Name</label>
-                                        <input type='text' className='form-input' placeholder='Enter name here' />
-                                    </div>
-                                </div>
-                                {/* types */}
-                                <div className='col-12 col-md-12 col-lg-12 mb-3'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Types</label>
-                                        <select className='form-input'>
-                                            <option></option>
-                                        </select>
-                                    </div>
-                                </div>
-                                {/* address */}
-                                <div className='col-12 col-md-12 col-lg-12'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Types</label>
-                                        <div className='row'>
-                                            <div className='col-12 col-md-6 col-lg-6 mb-3'>
-                                                <input type='text' className='form-input' placeholder='Address line 1' />
-                                            </div>
-                                            <div className='col-12 col-md-6 col-lg-6 mb-3'>
-                                                <input type='text' className='form-input' placeholder='Address line 2' />
-                                            </div>
-                                            <div className='col-12 col-md-6 col-lg-6 mb-3'>
-                                                <input type='text' className='form-input' placeholder='City' />
-                                            </div>
-                                            <div className='col-12 col-md-6 col-lg-6 mb-3'>
-                                                <input type='text' className='form-input' placeholder='State / Province / Region' />
-                                            </div>
-                                            <div className='col-12 col-md-6 col-lg-6 mb-3'>
-                                                <input type='text' className='form-input' placeholder='Postal code / Zip code' />
-                                            </div>
-                                            <div className='col-12 col-md-6 col-lg-6 mb-3'>
-                                                <input type='text' className='form-input' placeholder='Country' />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* Latitude */}
-                                <div className='col-12 col-md-12 col-lg-6 mb-3'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Latitude</label>
-                                        <input type='text' className='form-input' placeholder='Latitude' />
-                                    </div>
-                                </div>
-                                {/* Longitude */}
-                                <div className='col-12 col-md-12 col-lg-6 mb-3'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Longitude</label>
-                                        <input type='text' className='form-input' placeholder='Longitude' />
-                                    </div>
-                                </div>
-                                {/* image */}
-                                <div className='col-12 col-md-12 col-lg-12 mb-3'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Image</label>
-                                        <div className="file-upload-container">
-                                            <label htmlFor="fileUpload">
-                                                <Upload /> Upload File
-                                            </label>
-                                            <input
-                                                type="file"
-                                                id="fileUpload"
-                                                accept=".jpeg, .png, .gif, .svg"
-                                                onChange={handleFileChange}
-                                            />
-                                            <p className="file-info">
-                                                {file ? (
-                                                    <span>Selected File: {file.name}</span>
-                                                ) : (
-                                                    "Choose a file or drag and drop it here"
-                                                )}
-                                            </p>
-                                        </div>
-                                        <p className="form-note">
-                                            Note: Upload images in JPEG, PNG, GIF, or SVG format, max 5MB, and
-                                            between 800x600 pixels.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className='col-12 col-md-12 col-lg-6 mb-4'>
-                            <div className='row'>
-                                {/* phone */}
-                                <div className='col-12 col-md-12 col-lg-12 mb-3'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Phone number</label>
-                                        <input type='text' className='form-input' placeholder='Phone number' />
-                                    </div>
-                                </div>
-                                {/* email */}
-                                <div className='col-12 col-md-12 col-lg-12 mb-3'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Email address</label>
-                                        <input type='text' className='form-input' placeholder='Email address' />
-                                    </div>
-                                </div>
-                                {/* place link */}
-                                <div className='col-12 col-md-12 col-lg-12 mb-3'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Place Link</label>
-                                        <input type='text' className='form-input' placeholder='Place Link' />
-                                    </div>
-                                </div>
-                                {/* rating */}
-                                <div className='col-12 col-md-6 col-lg-6 mb-3'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Rating</label>
-                                        <div className='ratinginput'>
-                                            <div className='position-relative'>
-                                                <input type='text' className='form-input' placeholder='0' />
-                                                <Star className='ratingInputStar' />
-                                            </div>
-                                            <div className='position-relative'>
-                                                <input type='text' className='form-input' placeholder='000' />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className='col-12 col-md-6 col-lg-6 mb-4'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Review</label>
-                                        <input type='text' className='form-input' placeholder='' />
-                                    </div>
-                                </div>
-                                {/* working hours */}
-                                <div className='col-12 col-md-12 col-lg-12 mb-4'>
-                                    <div className='form-group'>
-                                        <label className='form-label'>Working hours</label>
-                                        <select className='form-input'>
-                                            <option>Open 24 hours</option>
-                                            <option>Closed</option>
-                                            <option>Custom time</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                {/* fields */}
-                                <div className='row'>
-                                    <div className='col-12 col-md-12 col-lg-12'>
-                                        <div className='customfieldtimes'>
-                                            <div className='form-group day'>
-                                                <label className='form-label'>Day</label>
-                                                <input type='text' className='form-input' placeholder='' />
-                                            </div>
-                                            <div className='form-group'>
-                                                <label className='form-label'>Start time</label>
-                                                <input type='time' className='form-input' placeholder='' />
-                                            </div>
-                                            <div className='form-group'>
-                                                <label className='form-label'>End time</label>
-                                                <input type='time' className='form-input' placeholder='' />
-                                            </div>
-                                            <div className='customfiled-addbtn'>
-                                                <button type='button' className='cfBtn add'><Add className='' /></button>
-                                            </div>
-                                        </div>
-                                        <div className='customfieldtimes'>
-                                            <div className='form-group day'>
-                                                <label className='form-label'>Day</label>
-                                                <input type='text' className='form-input' placeholder='' />
-                                            </div>
-                                            <div className='form-group'>
-                                                <label className='form-label'>Start time</label>
-                                                <input type='time' className='form-input' placeholder='' />
-                                            </div>
-                                            <div className='form-group'>
-                                                <label className='form-label'>End time</label>
-                                                <input type='time' className='form-input' placeholder='' />
-                                            </div>
-                                            <div className='customfiled-addbtn'>
-                                                <button type='button' className='cfBtn remove'><Remove className='' /></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* form button */}
-                        <div className='col-12 col-md-12 col-lg-12'>
-                            <div className='vbtns'>
-                                <button className='theme-btn btn-border' type='button'>Clear</button>
-                                <button className='theme-btn btn-main' type='button'>Save</button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
+  const handleRemoveImage = (indexToRemove) => {
+    setPhotos((prevImages) =>
+      prevImages.filter((_, index) => index !== indexToRemove)
     );
+  };
+
+  const handleWorkingHoursChange = (index, field, value) => {
+    setWorkingHours((prevHours) =>
+      prevHours.map((day, i) =>
+        i === index
+          ? {
+              ...day,
+              [field]: value,
+              ...(field === "is24Hours" && value
+                ? { startTime: "", endTime: "" } // Clear start and end times if 24 Hours is checked
+                : {}),
+            }
+          : day
+      )
+    );
+  };
+
+  const handleAddDay = () => {
+    setWorkingHours([...workingHours, { day: "", startTime: "", endTime: "" }]);
+  };
+
+  const handleRemoveDay = (index) => {
+    const updatedDays = [...workingHours];
+    updatedDays.splice(index, 1);
+    setWorkingHours(updatedDays);
+  };
+
+  const handleSubmit = async (values, { resetForm }) => {
+    setLoading(true);
+    const formattedWorkingHours = workingHours.reduce((acc, day) => {
+      if (day.is24Hours) {
+        acc[day.day] = "Open 24 Hours";
+      } else if (!day.startTime && !day.endTime) {
+        acc[day.day] = "Closed";
+      } else {
+        acc[day.day] = `${day.startTime} - ${day.endTime}`;
+      }
+      return acc;
+    }, {});
+    const formData = new FormData();
+    formData.append("display_name", values.display_name);
+    formData.append("types", JSON.stringify([values.types]));
+    formData.append("address", values.address);
+    formData.append("street", values.street);
+    formData.append("city", values.city);
+    formData.append("state", values.state);
+    formData.append("postal_code", values.postal_code);
+    formData.append("county", values.county);
+    formData.append("country_code", values.country_code);
+    formData.append("latitude", values.latitude);
+    formData.append("longitude", values.longitude);
+    formData.append("phone", values.phone);
+    formData.append("place_link", values.place_link || "");
+    formData.append("rating", values.rating || "");
+    formData.append("reviews", values.reviews || "");
+    formData.append("working_hours", JSON.stringify(formattedWorkingHours));
+
+    if (photos) {
+      console.log(photos);
+      Array.from(photos).map((file) => formData.append("photo", file));
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:4001/business",
+        formData
+      );
+      console.log("Business submitted:", response.data);
+      setPhotos(null);
+      setWorkingHours([{ day: "", startTime: "", endTime: "" }]);
+      if (fileInputRef.current) fileInputRef.current.value = null;
+      resetForm();
+      setLoading(false);
+    } catch (error) {
+      console.error("Submission failed:", error);
+    }
+  };
+
+  return (
+    <div className="content-wrapper">
+      {/* breadcrumb */}
+      <div className="breadcrumb-wrapper">
+        <div className="breadcrumb-block">
+          <h2 className="page-heading">Add Business</h2>
+          <ul className="breadcrumb-list">
+            <li className="breadcrumb-item">
+              <Link to={"/dashboard"} className="breadcrumb-link">
+                Home
+              </Link>
+            </li>
+            <li className="breadcrumb-item">
+              <a className="breadcrumb-link">Business</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      {/* add form */}
+      <div className="form-container">
+        <Formik
+          initialValues={{
+            display_name: "",
+            types: "",
+            address: "",
+            street: "",
+            city: "",
+            state: "",
+            postal_code: "",
+            county: "",
+            country_code: "",
+            latitude: "",
+            longitude: "",
+            phone: "",
+            place_link: "",
+            reviews: "",
+            rating: "",
+            working_hours: "",
+          }}
+          validationSchema={Yup.object({
+            display_name: Yup.string().required("Title is required"),
+            types: Yup.string().required("Types Field is Required"),
+          })}
+          onSubmit={handleSubmit}
+        >
+          {({ values, setFieldValue }) => (
+            <Form className="form-wrapper">
+              <div className="row">
+                <div className="col-12 col-md-12 col-lg-6">
+                  <div className="row">
+                    {/* name */}
+                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                      <div className="form-group">
+                        <label className="form-label">Name</label>
+                        <Field
+                          name="display_name"
+                          type="text"
+                          className="form-input"
+                          placeholder="Enter name here"
+                        />
+                        <ErrorMessage
+                          name="display_name"
+                          component="div"
+                          className="error text-danger"
+                        />
+                      </div>
+                    </div>
+                    {/* types */}
+                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                      <div className="form-group">
+                        <label className="form-label">Types</label>
+                        {loading === true ? (
+                          "Data Fetching"
+                        ) : (
+                          <CreatableSelect
+                            name="types"
+                            options={filteredTypes}
+                            value={
+                              values.types.length > 0 &&
+                              values.types.map(
+                                (type) =>
+                                  allTypes.find(
+                                    (option) => option.value === type
+                                  ) || {
+                                    label: type,
+                                    value: type,
+                                  }
+                              )
+                            }
+                            onChange={(selected) =>
+                              setFieldValue(
+                                "types",
+                                selected.map((option) => option.value)
+                              )
+                            }
+                            onInputChange={(inputValue) => {
+                              const filtered = allTypes.filter((option) =>
+                                option.label
+                                  .toLowerCase()
+                                  .includes(inputValue.toLowerCase())
+                              );
+                              setFilteredTypes(filtered.slice(0, 20));
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && e.target.value) {
+                                const newType = e.target.value.trim();
+                                if (
+                                  newType &&
+                                  !allTypes.some(
+                                    (option) => option.value === newType
+                                  )
+                                ) {
+                                  const newOption = {
+                                    label: newType,
+                                    value: newType,
+                                  };
+                                  setAllTypes((prev) => [...prev, newOption]);
+                                  setFilteredTypes((prev) => [
+                                    ...prev,
+                                    newOption,
+                                  ]);
+                                  setFieldValue("types", [
+                                    ...values.types,
+                                    newType,
+                                  ]);
+                                }
+                                e.preventDefault(); // Prevent the default behavior of the Enter key
+                              }
+                            }}
+                            placeholder="Select or create a type..."
+                            isMulti
+                            isSearchable
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* address */}
+                    <div className="col-12 col-md-12 col-lg-12">
+                      <div className="form-group">
+                        <label className="form-label">Address</label>
+                        <div className="row">
+                          <div className="col-12 col-md-6 col-lg-6 mb-3">
+                            <Field
+                              name="address"
+                              type="text"
+                              className="form-input"
+                              placeholder="Address line 1"
+                            />
+                            <ErrorMessage
+                              name="address"
+                              component="div"
+                              className="error text-danger"
+                            />
+                          </div>
+                          <div className="col-12 col-md-6 col-lg-6 mb-3">
+                            <Field
+                              name="street"
+                              type="text"
+                              className="form-input"
+                              placeholder="Address line 2"
+                            />
+                          </div>
+                          <div className="col-12 col-md-6 col-lg-6 mb-3">
+                            <Field
+                              name="city"
+                              type="text"
+                              className="form-input"
+                              placeholder="City"
+                            />
+                          </div>
+                          <div className="col-12 col-md-6 col-lg-6 mb-3">
+                            <Field
+                              name="state"
+                              type="text"
+                              className="form-input"
+                              placeholder="State / Province / Region"
+                            />
+                          </div>
+                          <div className="col-12 col-md-6 col-lg-6 mb-3">
+                            <Field
+                              name="postal_code"
+                              type="text"
+                              className="form-input"
+                              placeholder="Postal code / Zip code"
+                            />
+                          </div>
+                          <div className="col-12 col-md-6 col-lg-6 mb-3">
+                            <Field
+                              name="county"
+                              type="text"
+                              className="form-input"
+                              placeholder="County"
+                            />
+                          </div>
+                          <div className="col-12 col-md-6 col-lg-6 mb-3">
+                            <Field
+                              name="country_code"
+                              type="text"
+                              className="form-input"
+                              placeholder="CA"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Latitude */}
+                    <div className="col-12 col-md-12 col-lg-6 mb-3">
+                      <div className="form-group">
+                        <label className="form-label">Latitude</label>
+                        <Field
+                          name="latitude"
+                          type="text"
+                          className="form-input"
+                          placeholder="Latitude"
+                        />
+                        <ErrorMessage
+                          name="latitude"
+                          component="div"
+                          className="error text-danger"
+                        />
+                      </div>
+                    </div>
+                    {/* Longitude */}
+                    <div className="col-12 col-md-12 col-lg-6 mb-3">
+                      <div className="form-group">
+                        <label className="form-label">Longitude</label>
+                        <Field
+                          name="longitude"
+                          type="text"
+                          className="form-input"
+                          placeholder="Longitude"
+                        />
+                        <ErrorMessage
+                          name="longitude"
+                          component="div"
+                          className="error text-danger"
+                        />
+                      </div>
+                    </div>
+                    {/* image */}
+                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                      <div className="form-group">
+                        <label className="form-label">Image</label>
+                        <div className="file-upload-container">
+                          <label htmlFor="fileUpload" className="upload-label">
+                            Upload Files
+                            <input
+                              type="file"
+                              id="fileUpload"
+                              ref={fileInputRef}
+                              accept=".jpeg, .png, .gif, .svg"
+                              onChange={handleFileChange}
+                              multiple
+                              style={{ display: "none" }}
+                            />
+                          </label>
+
+                          <div className="file-info">
+                            {photos && photos.length > 0 ? (
+                              photos.map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="uploaded-file row  py-2"
+                                >
+                                  <div className=" col">
+                                    <span className="">{file.name}</span>
+                                  </div>
+                                  <div className="col">
+                                    <button
+                                      type="button"
+                                      className="remove-btn btn btn-sm btn-sm "
+                                      onClick={() => handleRemoveImage(index)}
+                                    >
+                                      <Delete className="text-danger" />
+                                    </button>
+                                  </div>
+
+                                  <div className=""></div>
+                                </div>
+                              ))
+                            ) : (
+                              <p>Choose files or drag and drop here</p>
+                            )}
+                            {photoError && (
+                              <div className="error text-danger">
+                                {photoError}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-12 col-md-12 col-lg-6 mb-4">
+                  <div className="row">
+                    {/* phone */}
+                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                      <div className="form-group">
+                        <label className="form-label">Phone number</label>
+                        <Field
+                          name="phone"
+                          type="number"
+                          className="form-input"
+                          placeholder="Phone number"
+                        />
+                        <ErrorMessage
+                          name="phone"
+                          component="div"
+                          className="error text-danger"
+                        />
+                      </div>
+                    </div>
+                    {/* email */}
+
+                    {/* place link */}
+                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                      <div className="form-group">
+                        <label className="form-label">Place Link</label>
+                        <Field
+                          name="place_link"
+                          type="text"
+                          className="form-input"
+                          placeholder="Place Link"
+                        />
+                        <ErrorMessage
+                          name="place_link"
+                          component="div"
+                          className="error text-danger"
+                        />
+                      </div>
+                    </div>
+                    {/* rating */}
+                    <div className="col-12 col-md-6 col-lg-6 mb-3">
+                      <div className="form-group">
+                        <label className="form-label">Rating</label>
+                        <div className="ratinginput">
+                          <div className="position-relative">
+                            <Field
+                              name="rating"
+                              type="text"
+                              className="form-input"
+                              placeholder="0"
+                            />
+                            <Star className="ratingInputStar" />
+                            <ErrorMessage
+                              name="rating"
+                              component="div"
+                              className="error text-danger"
+                            />
+                          </div>
+                          <div className="position-relative">
+                            <Field
+                              name="rating"
+                              type="text"
+                              className="form-input "
+                              placeholder="000"
+                            />
+                            <ErrorMessage
+                              name="rating"
+                              component="div"
+                              className="error text-danger"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-6 col-lg-6 mb-4">
+                      <div className="form-group">
+                        <label className="form-label">Review</label>
+                        <Field
+                          name="reviews"
+                          type="text"
+                          className="form-input"
+                          placeholder=""
+                        />
+                        <ErrorMessage
+                          name="reviews"
+                          component="div"
+                          className="error text-danger"
+                        />
+                      </div>
+                    </div>
+                    {/* working hours */}
+                    <div className="col-12 col-md-12 col-lg-12 mb-4">
+                      <div className="form-group">
+                        <label className="form-label">Working hours</label>
+                      </div>
+                    </div>
+                    {/* fields */}
+                    {/* Working HOurs section */}
+                    <div className="custom-days">
+                      {workingHours.map((day, index) => (
+                        <div
+                          key={index}
+                          className="custom-day-row mb-2 d-flex gap-2"
+                        >
+                          <Field
+                            as="select"
+                            name="working_hours"
+                            value={day.day}
+                            onChange={(e) =>
+                              handleWorkingHoursChange(
+                                index,
+                                "day",
+                                e.target.value
+                              )
+                            }
+                            className="form-control w-25" // optional Bootstrap or your own styling
+                          >
+                            <option value="" disabled>
+                              Select a day
+                            </option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                            <option value="Sunday">Sunday</option>
+                          </Field>
+
+                          <Field
+                            className="form-control w-25" // optional Bootstrap or your own styling
+                            type="time"
+                            placeholder="Start Time"
+                            value={day.startTime}
+                            onChange={(e) =>
+                              handleWorkingHoursChange(
+                                index,
+                                "startTime",
+                                e.target.value
+                              )
+                            }
+                          />
+                          <Field
+                            className="form-control w-25" // optional Bootstrap or your own styling
+                            type="time"
+                            placeholder="End Time"
+                            value={day.endTime}
+                            onChange={(e) =>
+                              handleWorkingHoursChange(
+                                index,
+                                "endTime",
+                                e.target.value
+                              )
+                            }
+                          />
+                          <div className="form-check">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              checked={day.endTime === "Open 24 Hours"}
+                              onChange={(e) =>
+                                handleWorkingHoursChange(
+                                  index,
+                                  "endTime",
+                                  e.target.checked ? "Open 24 Hours" : ""
+                                )
+                              }
+                              id={`24hours-${index}`}
+                            />
+                            <label
+                              className="form-check-label ms-2"
+                              htmlFor={`24hours-${index}`}
+                            >
+                              24 Hours
+                            </label>
+                          </div>
+
+                          {index === 0 && (
+                            <button
+                              type="button"
+                              onClick={handleAddDay}
+                              className="btn btn-sm btn-primary  p-1 mb-1 px-2"
+                            >
+                              <Add />
+                            </button>
+                          )}
+                          {workingHours.length > 1 && index !== 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveDay(index)}
+                              className="btn btn-sm btn-danger  p-1 mb-1 px-2"
+                            >
+                              <Remove />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {/* Submit Button */}
+
+                {/* form button */}
+                <div className="col-12 col-md-12 col-lg-12">
+                  <div className="vbtns">
+                    <button className="theme-btn btn-border" type="button">
+                      Clear
+                    </button>
+                    <button className="theme-btn btn-main" type="submit">
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </Form>
+          )}
+        </Formik>
+      </div>
+    </div>
+  );
 };
 
 export default AddBusiness;

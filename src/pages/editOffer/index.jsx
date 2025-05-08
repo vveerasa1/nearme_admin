@@ -1,5 +1,4 @@
-import { useRef, useState } from "react";
-import "./style.css";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Add, Remove, Delete } from "@mui/icons-material";
@@ -12,104 +11,82 @@ import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import weekday from "dayjs/plugin/weekday";
 import isBetween from "dayjs/plugin/isBetween";
-import { Toaster, toast } from "react-hot-toast";
-
 dayjs.extend(weekday);
 dayjs.extend(isBetween);
-
 const { RangePicker } = DatePicker;
 
-const AddOffer = () => {
+const EditOffer = () => {
+  const { _id } = useParams();
   const [customDays, setCustomDays] = useState([
     { day: "", startTime: "", endTime: "" },
   ]);
 
   const fileInputRef = useRef(null);
-  const [images, setImages] = useState([]);
-  const [imageError, setImageError] = useState(""); // State for image validation errors
+  const [existingImages, setExistingImages] = useState([]);
+  const [newImages, setNewImages] = useState([]);
+
   const [range, setRange] = useState([dayjs(), dayjs()]);
   const [disabledDays, setDisabledDays] = useState([]);
   const [loading, setLoading] = useState(false);
-  const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-  const MAX_IMAGES = 5;
+  const [initialValues, setInitialValues] = useState({
+    title: "",
+    description: "",
+    discountType: "",
+    discountValue: "",
+    type: false,
+    startDate: new Date(),
+    endDate: new Date(),
+    startTime: "00:00",
+    endTime: "23:59",
+  });
 
-  const { _id } = useParams();
-
-  const resizeImage = (file, width, height) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
-  
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
-  
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-  
-        canvas.width = width;
-        canvas.height = height;
-  
-        // Draw the image on the canvas with the specified dimensions
-        ctx.drawImage(img, 0, 0, width, height);
-  
-        canvas.toBlob(
-          (blob) => {
-            resolve(new File([blob], file.name, { type: file.type }));
-          },
-          file.type,
-          1
-        );
-      };
-  
-      img.onerror = (err) => reject(err);
-  
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleFileChange = async (e) => {
-    const files = Array.from(e.target.files);
-    let error = "";
-  
-    // Validate file count
-    if (files.length + images.length > MAX_IMAGES) {
-      error = `You can upload a maximum of ${MAX_IMAGES} images.`;
-    }
-  
-    const resizedImages = [];
-    for (const file of files) {
-      // Validate file type and size
-      if (!SUPPORTED_FORMATS.includes(file.type)) {
-        error = "Only JPEG, JPG, and PNG formats are allowed.";
-      } else if (file.size > MAX_FILE_SIZE) {
-        error = "Each file must not exceed 5 MB.";
-      } else {
-        try {
-          // Resize the image to a standard size (e.g., 500x500 pixels)
-          const resizedImage = await resizeImage(file, 400, 400);
-          resizedImages.push(resizedImage);
-        } catch (err) {
-          console.error("Error resizing image:", err);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`http://localhost:4001/coupons/${_id}`);
+        const data = res.data.data;
+        if (data.images && data.images.length > 0) {
+          setExistingImages(data.images); // assuming it's an array of URLs or paths
         }
+
+        console.log("Fetched Data:", data);
+        setInitialValues({
+          title: data.title || "",
+          description: data.description || "",
+          discountType: data.discountType || "",
+          discountValue: data.discountValue || "",
+          images: data.images || "",
+          type: data.type || false,
+          startDate: data.startDate ? dayjs(data.startDate) : dayjs(),
+          endDate: data.endDate ? dayjs(data.endDate) : dayjs(),
+          startTime: data.startTime || "00:00",
+          endTime: data.endTime || "23:59",
+        });
+
+        if (data.type) {
+          setCustomDays(
+            data.customDays || [{ day: "", startTime: "", endTime: "" }]
+          );
+        }
+        if (data.startDate && data.endDate) {
+          setRange([dayjs(data.startDate), dayjs(data.endDate)]);
+        }
+      } catch (err) {
+        console.error("Error fetching offer data:", err);
       }
-    }
-  
-    if (error) {
-      setImageError(error);
-    } else {
-      setImageError(""); // Clear error if validation passes
-      setImages((prevImages) => [...prevImages, ...resizedImages]);
-    }
+    };
+    fetchData();
+  }, [_id]);
+
+  const handleFileChange = (e) => {
+    setNewImages(Array.from(e.target.files));
   };
 
-  const handleRemoveImage = (indexToRemove) => {
-    setImages((prevImages) =>
-      prevImages.filter((_, index) => index !== indexToRemove)
-    );
-  };
+
+  // const handleRemoveNewImage = (indexToRemove) => {
+  //   setNewImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  // };
+
   const handleCustomDayChange = (index, field, value) => {
     const updatedDays = [...customDays];
     updatedDays[index][field] = value;
@@ -117,19 +94,7 @@ const AddOffer = () => {
   };
 
   const handleAddDay = () => {
-    const lastDay = customDays[customDays.length - 1];
-  
-    // Validate that the last day has a selected day
-    if (!lastDay.day) {
-      toast.error("Please select a day before adding another.");
-      return;
-    }
-  
-    // Add a new custom day with default startTime and endTime
-    setCustomDays([
-      ...customDays,
-      { day: "", startTime: "00:00", endTime: "23:59" },
-    ]);
+    setCustomDays([...customDays, { day: "", startTime: "", endTime: "" }]);
   };
 
   const handleRemoveDay = (index) => {
@@ -140,68 +105,34 @@ const AddOffer = () => {
 
   const handleRangeChange = (dates) => {
     if (dates) {
+      setRange([dayjs(dates[0]), dayjs(dates[1])]);
+
       const start = dayjs(dates[0]);
       const end = dayjs(dates[1]);
+      const daysInRange = [];
 
-      // Ensure the start date is always before or the same as the end date
-      if (start.isAfter(end)) {
-        // If start date is after end date, reset the range to ensure correct order
-        setRange([end, start]);
-      } else {
-        setRange([start, end]);
+      for (
+        let d = start;
+        d.isBefore(end) || d.isSame(end);
+        d = d.add(1, "day")
+      ) {
+        daysInRange.push(d.format("dddd"));
       }
 
-      // Check if both dates are in the same month
-      const isSameMonth =
-        start.month() === end.month() && start.year() === end.year();
-
-      if (isSameMonth) {
-        const daysInRange = [];
-
-        for (
-          let d = start;
-          d.isBefore(end) || d.isSame(end);
-          d = d.add(1, "day")
-        ) {
-          const weekday = d.format("dddd");
-          if (!daysInRange.includes(weekday)) {
-            daysInRange.push(weekday);
-          }
-        }
-
-        // Only disable days NOT in selected range
-        const allWeekdays = [
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-          "Sunday",
-        ];
-        const disabled = allWeekdays.filter(
-          (day) => !daysInRange.includes(day)
-        );
-        setDisabledDays(disabled);
-      } else {
-        // If range spans months, enable all days
-        setDisabledDays([]);
-      }
+      setDisabledDays(daysInRange); // Update disabled days
     } else {
       setRange([null, null]);
-      setDisabledDays([]);
+      setDisabledDays([]); // Clear disabled days
     }
   };
 
-  const handleSubmit = async (values, formikHelpers = {}) => {
-    const { resetForm } = formikHelpers;
+  const handleSubmit = async (values, { resetForm }) => {
     setLoading(true);
-
     const formData = new FormData();
-    formData.append("place_Id", _id);
+
+    // Add form fields
     formData.append("title", values.title);
     formData.append("description", values.description);
-    formData.append("couponDescription", values.couponDescription);
     formData.append("discountType", values.discountType);
     formData.append("type", values.type);
     formData.append("startDate", range[0]);
@@ -218,45 +149,60 @@ const AddOffer = () => {
       formData.append("discountValue", values.discountValue);
     }
 
-    if (images) {
-      console.log(images);
-      Array.from(images).forEach((file) => {
-        formData.append("images", file);
-      });
+    // Add existing images (after removal)
+    formData.append("existingImages", JSON.stringify(existingImages));
+
+    // Add new images
+    if (newImages.length > 0) {
+      newImages.forEach((file) => formData.append("newImages", file));
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:4001/coupons/",
-        formData
+      // Update existing offer
+      const updateResponse = await axios.put(
+        `http://localhost:4001/coupons/${_id}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
       );
-      console.log("Submitted:", response.data);
+      console.log("Updated:", updateResponse.data);
 
-      if (resetForm) resetForm(); // only call if it's defined
-      setImages(null);
-      toast.success("Coupon Created Successfully");
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = null; // Reset file input
-      }
-
-      setCustomDays([{ day: "", startTime: "", endTime: "" }]); // reset customDays state
-      setRange([dayjs(), dayjs()]); // Reset date range
-      setDisabledDays([]);
-    } catch (err) {
-      console.error("ERROR", err);
-    } finally {
+      resetForm();
       setLoading(false);
+    } catch (err) {
+      console.error("Error submitting form:", err);
+      setLoading(false);
+    }
+  };
+
+  const handleImageDelete = async (url) => {
+    try {
+      const deleteUrl = `http://localhost:4001/coupons/${_id}/image`; // Ensure _id is defined
+  
+      const deleteResponse = await axios.delete(deleteUrl, {
+        data: { imageUrl: url }, // Pass imageUrl in the data object
+      });
+  
+      console.log("Image URL:", url);
+      console.log("Delete Response:", deleteResponse);
+  
+      // Optionally, update the UI to remove the deleted image
+      // For example, you can filter out the deleted image from the existingImages array
+      setExistingImages((prevImages) =>
+        prevImages.filter((image) => image !== url)
+      );
+    } catch (err) {
+      console.error("Error deleting image:", err.response?.data || err.message);
     }
   };
 
   return (
     <div className="content-wrapper">
-      <Toaster />
       {/* breadcrumb */}
       <div className="breadcrumb-wrapper">
         <div className="breadcrumb-block">
-          <h2 className="page-heading">Add Offer</h2>
+          <h2 className="page-heading">Edit Offer</h2>
           <ul className="breadcrumb-list">
             <li className="breadcrumb-item">
               <Link to={"/dashboard"} className="breadcrumb-link">
@@ -270,30 +216,23 @@ const AddOffer = () => {
         </div>
       </div>
       {/* add form */}
-      <div className="form-container">
+      <div className="form-container ">
         <Formik
-          initialValues={{
-            title: "",
-            description: "",
-            discountType: "",
-            discountValue: "",
-            couponDescription: "",
-            type: false,
-            startDate: new Date(),
-            endDate: new Date(),
-            startTime: "00:00",
-            endTime: "23:59",
-          }}
+          initialValues={initialValues}
+          enableReinitialize={true}
           validationSchema={Yup.object({
             title: Yup.string().required("Title is required"),
             description: Yup.string().required("Description is required"),
-            couponDescription: Yup.string().required("Description is required"),
           })}
           onSubmit={handleSubmit}
         >
           {({ values, handleChange }) => (
             <Form className="form-wrapper">
-              <div className="row">
+              <div className="row ">
+                <div className="row">
+                  <div className="col"></div>
+                  <div className="col"></div>
+                </div>
                 <div className="col-12 col-md-12 col-lg-6">
                   <div className="row">
                     {/* title */}
@@ -309,7 +248,7 @@ const AddOffer = () => {
                         <ErrorMessage
                           name="title"
                           component="div"
-                          className="error text-danger"
+                          className="error"
                         />
                       </div>
                     </div>
@@ -328,25 +267,7 @@ const AddOffer = () => {
                         <ErrorMessage
                           name="description"
                           component="div"
-                          className="error text-danger"
-                        />
-                      </div>
-                    </div>
-                    <div className="col-12 col-md-12 col-lg-12 mb-3">
-                      <div className="form-group">
-                        <label className="form-label">Coupon Description</label>
-                        <Field
-                          as="textarea"
-                          name="couponDescription"
-                          className="form-input"
-                          cols={30}
-                          rows={3}
-                          placeholder="Type something here"
-                        />
-                        <ErrorMessage
-                          name="couponDescription"
-                          component="div"
-                          className="error text-danger"
+                          className="error"
                         />
                       </div>
                     </div>
@@ -365,11 +286,6 @@ const AddOffer = () => {
                           <option>Discount</option>
                           <option>Coupon</option>
                         </Field>
-                        <ErrorMessage
-                          name="discountType"
-                          component="div"
-                          className="error text-danger"
-                        />
                       </div>
                       {/* discount */}
                       {values.discountType === "Discount" ? (
@@ -382,17 +298,9 @@ const AddOffer = () => {
                             placeholder="%"
                           />
                         </div>
-                      ) : values.discountType === "Deal" ? (
-                        <div className="mt-4">
-                          <label className="form-label">Amount</label>
-                          <Field
-                            name="discountValue"
-                            type="text"
-                            className="form-input"
-                            placeholder="$"
-                          />
-                        </div>
-                      ) : null}
+                      ) : (
+                        ""
+                      )}
                     </div>
                     {/* image */}
                     <div className="col-12 col-md-12 col-lg-12 mb-3">
@@ -405,7 +313,7 @@ const AddOffer = () => {
                               type="file"
                               id="fileUpload"
                               ref={fileInputRef}
-                              accept=".jpeg, .png, .jpg"
+                              accept=".jpeg, .png, .gif, .svg"
                               onChange={handleFileChange}
                               multiple
                               style={{ display: "none" }}
@@ -413,42 +321,64 @@ const AddOffer = () => {
                           </label>
 
                           <div className="file-info">
-                            {images && images.length > 0 ? (
-                              images.map((file, index) => (
+                            {/* Existing images */}
+                            {existingImages.length > 0 &&
+                              existingImages.map((url, index) => (
                                 <div
-                                  key={index}
-                                  className="uploaded-file row  py-2"
+                                  key={`existing-${index}`}
+                                  className="uploaded-file row py-2"
                                 >
-                                  <div className=" col">
-                                    <span className="">{file.name}</span>
+                                  <div className="col-5 mb-2">
+                                    <img src={url} alt="uploaded" height="60" />
                                   </div>
-                                  <div className="col">
+                                  <div className="col mt-2">
                                     <button
                                       type="button"
-                                      className="remove-btn btn btn-sm btn-sm "
-                                      onClick={() => handleRemoveImage(index)}
+                                      className="remove-btn btn btn-sm"
+                                      onClick={() =>
+                                        handleImageDelete(url)
+                                      }
                                     >
                                       <Delete className="text-danger" />
                                     </button>
                                   </div>
                                 </div>
-                              ))
-                            ) : (
-                              <p>Choose files or drag and drop here</p>
-                            )}
+                              ))}
+
+                            {/* New images */}
+                            {newImages.length > 0 &&
+                              newImages.map((file, index) => (
+                                <div
+                                  key={`new-${index}`}
+                                  className="uploaded-file row py-2"
+                                >
+                                  <div className="col">
+                                    <span>{file.name}</span>
+                                  </div>
+                                  <div className="col">
+                                    <button
+                                      type="button"
+                                      className="remove-btn btn btn-sm"
+                                      onClick={() =>
+                                        handleRemoveNewImage(index)
+                                      }
+                                    >
+                                      <Delete className="text-danger" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+
+                            {existingImages.length === 0 &&
+                              newImages.length ===  0 && (
+                                <p>Choose files or drag and drop here</p>
+                              )}
                           </div>
-                          {imageError && (
-                            <div className="error text-danger">
-                              {imageError}
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="col-12 col-md-12 col-lg-6 mb-4">
-                  <div className="row">
+                  <div className="row ">
                     {/* validity */}
                     <div className="col-12 col-md-12 col-lg-12 mb-3">
                       <div className="form-group">
@@ -518,7 +448,7 @@ const AddOffer = () => {
 
                     {/* Custom days section */}
                     {values.type && (
-                      <div className="custom-days">
+                      <div className="custom-days  ">
                         {customDays.map((day, index) => (
                           <div key={index} className="custom-day-row mb-3">
                             <Field
@@ -582,7 +512,7 @@ const AddOffer = () => {
                               className="mx-3 py-1"
                               type="time"
                               placeholder="Start Time"
-                              value={day.startTime || "00:00"}
+                              value={day.startTime}
                               onChange={(e) =>
                                 handleCustomDayChange(
                                   index,
@@ -595,7 +525,7 @@ const AddOffer = () => {
                               className="w-25 py-1"
                               type="time"
                               placeholder="End Time"
-                              value={day.endTime || "23:59"}
+                              value={day.endTime}
                               onChange={(e) =>
                                 handleCustomDayChange(
                                   index,
@@ -621,7 +551,7 @@ const AddOffer = () => {
                               <button
                                 type="button"
                                 onClick={() => handleRemoveDay(index)}
-                                className="btn btn-sm btn-danger mx-3 p-1 mb-1 px-2"
+                                className="btn btn-sm btn-danger  mx-3 p-1 mb-1 px-2"
                               >
                                 <Remove />
                               </button>
@@ -632,12 +562,12 @@ const AddOffer = () => {
                     )}
                   </div>
                 </div>
-              </div>
-              {/* Submit Button */}
-              <div className="col-12">
-                <button type="submit" className="btn btn-primary">
-                  {loading === true ? "Submitting..." : "Add Offer"}
-                </button>
+                {/* Submit Button */}
+                <div className="col-12">
+                  <button type="submit" className="btn btn-primary">
+                    {loading === true ? "Submitting..." : "Update Offer"}
+                  </button>
+                </div>
               </div>
             </Form>
           )}
@@ -647,4 +577,4 @@ const AddOffer = () => {
   );
 };
 
-export default AddOffer;
+export default EditOffer;

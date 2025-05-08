@@ -266,3 +266,33 @@
 @media all and (max-width: 480px){
     
 }
+
+
+.lf-search {
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+  
+  .lfs-input {
+    flex-grow: 1;
+    padding-right: 30px; /* Make space for the icon/spinner */
+  }
+  
+  .search-icon-container {
+    position: absolute;
+    right: 10px; /* Position the spinner or search icon to the right */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+  
+  .search-spinner {
+    font-size: 16px; /* Adjust the spinner size */
+  }
+  
+  .lf-searchicon {
+    font-size: 20px; /* Adjust search icon size */
+  }
+  

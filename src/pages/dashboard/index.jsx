@@ -1,245 +1,336 @@
-import React from "react"
-import "./style.css"
-import { Link } from 'react-router-dom'
-import { Business, LocalOffer } from '@mui/icons-material'
+import React from "react";
+import "./style.css";
+import { Link } from "react-router-dom";
+import { Business, LocalOffer } from "@mui/icons-material";
+import CountUp from "react-countup";
+import { useEffect, useState } from "react";
+import { Spin } from "antd";
 import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-    BarChart,
-    Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from "recharts";
 
-const shop = [
-    { name: "Jan", present: 40, previous: 30 },
-    { name: "Feb", present: 80, previous: 70 },
-    { name: "Mar", present: 50, previous: 60 },
-    { name: "Apr", present: 90, previous: 85 },
-    { name: "May", present: 60, previous: 55 },
-    { name: "Jun", present: 100, previous: 95 },
-];
-
-const coupon = [
-    { name: "Jan", present: 40, previous: 30 },
-    { name: "Feb", present: 80, previous: 70 },
-    { name: "Mar", present: 50, previous: 60 },
-    { name: "Apr", present: 90, previous: 85 },
-    { name: "May", present: 60, previous: 55 },
-    { name: "Jun", present: 100, previous: 95 },
-];
-
-const activity = [
-    { name: 'Shop A', coupons: 120 },
-    { name: 'Shop B', coupons: 80 },
-    { name: 'Shop C', coupons: 150 },
-    { name: 'Shop D', coupons: 200 },
-    { name: 'Shop E', coupons: 95 },
-];
+import axios from "axios";
 
 const Dashboard = () => {
-    const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+  const [getTotalCount, setGetTotalCount] = useState();
+  const [getNewTotalCount, setGetNewTotalCount] = useState();
+  const [getTotalCouponCount, setGetTotalCouponCount] = useState();
+  const [getNewTotalCouponCount, setGetNewCouponTotalCount] = useState();
+  const [getGraphWeekData, setGetGraphWeekData] = useState();
+  const [getGraphMonthData, setGetGraphMonthData] = useState();
+  const [getGraphYearData, setGetGraphYearData] = useState();
+  const [graphType, setGraphType] = useState("week");
+  const [graphTypeCoupon, setGraphTypeCoupon] = useState("week");
+  const [loading, setLoading] = useState(true);
 
-    return (
-        <div className='content-wrapper'>
-            {/* breadcrumb */}
-            <div className='breadcrumb-wrapper'>
-                <div className='breadcrumb-block'>
-                    <h2 className='page-heading'>Dashboard</h2>
-                    <ul className='breadcrumb-list'>
-                        <li className='breadcrumb-item'>
-                            <Link to={'/'} className='breadcrumb-link'>Home</Link>
-                        </li>
-                        <li className='breadcrumb-item'>
-                            <a className='breadcrumb-link'>Dashboard</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            {/* counts */}
-            <div className='counts-wrapper'>
-                <div className='row'>
-                    <div className='col-12 col-md-6 col-lg-3 mb-4'>
-                        <div className='count-item'>
-                            <div className='countitem-icon'>
-                                <Business className='cicon' />
-                            </div>
-                            <div className='countitem-info'>
-                                <h4>Total Shops</h4>
-                                <h3>80</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col-12 col-md-6 col-lg-3 mb-4'>
-                        <div className='count-item'>
-                            <div className='countitem-icon'>
-                                <Business className='cicon' />
-                            </div>
-                            <div className='countitem-info'>
-                                <h4>New Shops <span>(This Week)</span></h4>
-                                <h3>6</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col-12 col-md-6 col-lg-3 mb-4'>
-                        <div className='count-item'>
-                            <div className='countitem-icon'>
-                                <LocalOffer className='cicon' />
-                            </div>
-                            <div className='countitem-info'>
-                                <h4>Total Coupons</h4>
-                                <h3>12</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col-12 col-md-6 col-lg-3 mb-4'>
-                        <div className='count-item'>
-                            <div className='countitem-icon'>
-                                <LocalOffer className='cicon' />
-                            </div>
-                            <div className='countitem-info'>
-                                <h4>New Coupons <span>(This Week)</span></h4>
-                                <h3>5</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {/* statistics */}
-            <div className='statistics-wrapper'>
-                <div className='row'>
-                    <div className='col-12 col-md-12 col-lg-12'>
-                        <div className='graph-card-heading'>
-                            <h3>Statistics</h3>
-                        </div>
-                    </div>
-                </div>
-                <div className='row'>
-                    <div className='col-12 col-md-12 col-lg-6 mb-4'>
-                        <div className='graph-card-wrapper'>
-                            <div className='gc-head'>
-                                <h3>Shops</h3>
-                                <div className='gc-sort-btns'>
-                                    <button type='button' className='gcBtn active'>D</button>
-                                    <button type='button' className='gcBtn'>W</button>
-                                    <button type='button' className='gcBtn'>M</button>
-                                    <button type='button' className='gcBtn'>Y</button>
-                                </div>
-                            </div>
-                            <div className='gc-body'>
-                                <ResponsiveContainer>
-                                    <LineChart
-                                        data={shop}
-                                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="name" tickFormatter={(name) => name.charAt(0).toUpperCase() + name.slice(1)} />
-                                        <YAxis />
-                                        <Tooltip formatter={(value, name) => [value, name.charAt(0).toUpperCase() + name.slice(1)]} />
-                                        <Legend formatter={(value) => capitalize(value)} />
-                                        {/* Present values line */}
-                                        <Line
-                                            type="monotone"
-                                            dataKey="present"
-                                            stroke="#EB8137"
-                                            activeDot={{ r: 8 }}
-                                        />
-                                        {/* Previous values line */}
-                                        <Line
-                                            type="monotone"
-                                            dataKey="previous"
-                                            stroke="#4C74B5"
-                                            activeDot={{ r: 8 }}
-                                            strokeDasharray="5 5" // Optional dashed line for visual distinction
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='col-12 col-md-12 col-lg-6 mb-4'>
-                        <div className='graph-card-wrapper'>
-                            <div className='gc-head'>
-                                <h3>Coupons</h3>
-                                <div className='gc-sort-btns'>
-                                    <button type='button' className='gcBtn active'>D</button>
-                                    <button type='button' className='gcBtn'>W</button>
-                                    <button type='button' className='gcBtn'>M</button>
-                                    <button type='button' className='gcBtn'>Y</button>
-                                </div>
-                            </div>
-                            <div className='gc-body'>
-                                <ResponsiveContainer>
-                                    <LineChart
-                                        data={coupon}
-                                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="name" tickFormatter={(name) => name.charAt(0).toUpperCase() + name.slice(1)} />
-                                        <YAxis />
-                                        <Tooltip formatter={(value, name) => [value, name.charAt(0).toUpperCase() + name.slice(1)]} />
-                                        <Legend formatter={(value) => capitalize(value)} />
-                                        {/* Present values line */}
-                                        <Line
-                                            type="monotone"
-                                            dataKey="present"
-                                            stroke="#EB8137"
-                                            activeDot={{ r: 8 }}
-                                        />
-                                        {/* Previous values line */}
-                                        <Line
-                                            type="monotone"
-                                            dataKey="previous"
-                                            stroke="#4C74B5"
-                                            activeDot={{ r: 8 }}
-                                            strokeDasharray="5 5" // Optional dashed line for visual distinction
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {/* activity */}
-            <div className='statistics-wrapper'>
-                <div className='row'>
-                    <div className='col-12 col-md-12 col-lg-12'>
-                        <div className='graph-card-heading'>
-                            <h3>Overall Activity</h3>
-                        </div>
-                    </div>
-                </div>
-                <div className='row'>
-                    <div className='col-12 col-md-12 col-lg-12'>
-                        <div className='graph-card-wrapper'>
-                            <div className='gc-body bargraph'>
-                                <ResponsiveContainer>
-                                    <BarChart data={activity}>
-                                        <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="name" />
-                                        <YAxis />
-                                        <Tooltip
-                                            formatter={(value, name) => [
-                                                value,
-                                                name.charAt(0).toUpperCase() + name.slice(1), // Capitalize first letter of shop name
-                                            ]}
-                                        />
-                                        <Legend formatter={(value) => value.charAt(0).toUpperCase() + value.slice(1)} />
-                                        <Bar dataKey="coupons" fill="#4C74B5" />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const url = "http://localhost:4001/dashboard";
+        const url1 = "http://localhost:4001/dashboard/new?last7Days=true";
+        const url2 = "http://localhost:4001/dashboard/coupon?last7Days=true";
+        const url3 =
+          "http://localhost:4001/dashboard/coupon/new?last7Days=true";
+        const url5 = "http://localhost:4001/dashboard/graph?type=week";
+        const url6 = "http://localhost:4001/dashboard/graph?type=month";
+        const url7 = "http://localhost:4001/dashboard/graph?type=year";
+
+        const response = await Promise.all([
+          axios.get(url),
+          axios.get(url1),
+          axios.get(url2),
+          axios.get(url3),
+          axios.get(url5),
+          axios.get(url6),
+          axios.get(url7),
+        ]);
+
+        const totalCountData = response[0].data.message;
+        const totalNewCountData = response[1].data.message.count;
+        const totalCouponData = response[2].data.message;
+        const totalNewCouponData = response[3].data.message.count;
+        const graphWeekData = response[4].data.data;
+        const graphMonthData = response[5].data.data;
+        const graphYearData = response[6].data.data;
+
+        setGetTotalCount(totalCountData);
+        setGetNewTotalCount(totalNewCountData);
+        setGetTotalCouponCount(totalCouponData);
+        setGetNewCouponTotalCount(totalNewCouponData);
+        setGetGraphWeekData(graphWeekData);
+        setGetGraphMonthData(graphMonthData);
+        setGetGraphYearData(graphYearData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Something went wrong", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  
+
+  useEffect(() => {
+    if (getGraphWeekData) {
+      console.log("✅ Week Graph Data updated:", getGraphWeekData);
+    }
+  }, [getGraphWeekData]);
+
+  useEffect(() => {
+    if (getGraphMonthData) {
+      console.log("✅ Month Graph Data updated:", getGraphMonthData);
+    }
+  }, [getGraphMonthData]);
+
+  useEffect(() => {
+    if (getGraphYearData) {
+      console.log("✅ Year Graph Data updated:", getGraphYearData);
+    }
+  }, [getGraphYearData]);
+
+  const getBusinessGraphData = () => {
+    switch (graphType) {
+      case "week":
+        return getGraphWeekData.businesses || [];
+      case "month":
+        return getGraphMonthData.businesses || [];
+      case "year":
+        return getGraphYearData.businesses || [];
+      default:
+        return [];
+    }
+  };
+
+  const getCouponGraphData = () => {
+    switch (graphTypeCoupon) {
+      case "week":
+        return getGraphWeekData?.coupons || [];
+      case "month":
+        return getGraphMonthData?.coupons || [];
+      case "year":
+        return getGraphYearData?.coupons || [];
+      default:
+        return [];
+    }
+  };
+
+  return (
+    <div className="content-wrapper">
+      {/* breadcrumb */}
+      <div className="breadcrumb-wrapper">
+        <div className="breadcrumb-block">
+          <h2 className="page-heading">Dashboard</h2>
+          <ul className="breadcrumb-list">
+            <li className="breadcrumb-item">
+              <Link to={"/"} className="breadcrumb-link">
+                Home
+              </Link>
+            </li>
+            <li className="breadcrumb-item">
+              <a className="breadcrumb-link">Dashboard</a>
+            </li>
+          </ul>
         </div>
-    );
+      </div>
+      {/* counts */}
+      <div className="counts-wrapper">
+        <div className="row">
+          <div className="col-12 col-md-6 col-lg-3 mb-4">
+            <div className="count-item">
+              <div className="countitem-icon">
+                <Business className="cicon" />
+              </div>
+              <div className="countitem-info">
+                <h4>Total Shops</h4>
+                <h3>
+                  <CountUp start={0} end={getTotalCount} duration={2} />
+                </h3>
+              </div>
+            </div>
+          </div>
+          <div className="col-12 col-md-6 col-lg-3 mb-4">
+            <div className="count-item">
+              <div className="countitem-icon">
+                <Business className="cicon" />
+              </div>
+              <div className="countitem-info">
+                <h4>
+                  New Shops <span>(This Week)</span>
+                </h4>
+                <h3>
+                  <CountUp start={0} end={getNewTotalCount} duration={2} />
+                </h3>
+              </div>
+            </div>
+          </div>
+          <div className="col-12 col-md-6 col-lg-3 mb-4">
+            <div className="count-item">
+              <div className="countitem-icon">
+                <LocalOffer className="cicon" />
+              </div>
+              <div className="countitem-info">
+                <h4>Total Coupons</h4>
+                <h3>
+                  <CountUp start={0} end={getTotalCouponCount} duration={2} />
+                </h3>
+              </div>
+            </div>
+          </div>
+          <div className="col-12 col-md-6 col-lg-3 mb-4">
+            <div className="count-item">
+              <div className="countitem-icon">
+                <LocalOffer className="cicon" />
+              </div>
+              <div className="countitem-info">
+                <h4>
+                  New Coupons <span>(This Week)</span>
+                </h4>
+                <h3>
+                  <CountUp
+                    start={0}
+                    end={getNewTotalCouponCount}
+                    duration={2}
+                  />
+                </h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* statistics */}
+      <div className="statistics-wrapper">
+        <div className="row">
+          <div className="col-12 col-md-12 col-lg-12">
+            <div className="graph-card-heading">
+              <h3>Statistics</h3>
+            </div>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-12 col-md-12 col-lg-6 mb-4">
+            <div className="graph-card-wrapper">
+              <div className="gc-head">
+                <h3>Shops</h3>
+                <div className="gc-sort-btns">
+                  {[ "week", "month", "year"].map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      className={`gcBtn ${graphType === type ? "active" : ""}`}
+                      onClick={() => setGraphType(type)}
+                    >
+                      {type[0].toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="gc-body">
+                <ResponsiveContainer>
+                  {loading === true ? (
+                    <Spin />
+                  ) : (
+                    <LineChart
+                      data={getBusinessGraphData()}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      {console.log(getBusinessGraphData(), "Line chart 📈")}
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="label"
+                        tickFormatter={(name) =>
+                          name.charAt(0).toUpperCase() + name.slice(1)
+                        }
+                      />
+                      <YAxis />
+                      <Tooltip
+                        formatter={(value, name) => [
+                          value,
+                          name.charAt(0).toUpperCase() + name.slice(1),
+                        ]}
+                      />
+                      <Legend formatter={(value) => capitalize(value)} />
+                      {/* Present values line */}
+                      <Line
+                        type="monotone"
+                        dataKey="count"
+                        stroke="#EB8137"
+                        activeDot={{ r: 8 }}
+                      />
+                      {/* Previous values line */}
+                      <Line
+                        type="monotone"
+                        dataKey="previous"
+                        stroke="#4C74B5"
+                        activeDot={{ r: 8 }}
+                        strokeDasharray="5 5"
+                      />
+                    </LineChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+          <div className="col-12 col-md-12 col-lg-6 mb-4">
+            <div className="graph-card-wrapper">
+              <div className="gc-head">
+                <h3>Coupons</h3>
+                <div className="gc-sort-btns">
+                  {[ "week", "month", "year"].map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      className={`gcBtn ${
+                        graphTypeCoupon === type ? "active" : ""
+                      }`}
+                      onClick={() => setGraphTypeCoupon(type)}
+                    >
+                      {type[0].toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="gc-body">
+                <ResponsiveContainer>
+                  {loading === true ? (
+                    <Spin />
+                  ) : (
+                    <LineChart data={getCouponGraphData()}>
+                      {console.log(getCouponGraphData(), "Coupon chart 📈")}
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="label" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="count"
+                        stroke="#EB8137"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="count"
+                        stroke="#4C74B5"
+                      />
+                    </LineChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Dashboard;

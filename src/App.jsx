@@ -13,14 +13,19 @@ import CouponView from './pages/couponView'
 import DealView from './pages/dealView'
 import DiscountView from './pages/discountView'
 import AddOffer from './pages/addOffer'
+import EditOffer from './pages/editOffer'
 import AppLayout from './layout'
+import EditBusiness from './pages/editBusiness'
+import ViewBusinessData from './pages/viewBusinessData'
 import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap/dist/js/bootstrap.bundle.min.js"
-
+import ViewData from './pages/viewData'
+import { BusinessProvider } from './pages/businessListing/businessContext'
 function App() {
 
   return (
     <Router>
+      <BusinessProvider>
       <Routes>
 
         {/* Redirect default route ("/") to "/signin" */}
@@ -59,6 +64,10 @@ function App() {
           element={<AppLayout><Discount /></AppLayout>} 
         />
         <Route 
+          path="/view/:discountType/:_id" 
+          element={<AppLayout><ViewData /></AppLayout>} 
+        />
+        <Route 
           path="/coupon-view" 
           element={<AppLayout><CouponView /></AppLayout>} 
         />
@@ -71,10 +80,24 @@ function App() {
           element={<AppLayout><DiscountView /></AppLayout>} 
         />
         <Route 
-          path="/add-offer" 
+          path="/add-offer/:_id" 
           element={<AppLayout><AddOffer /></AppLayout>} 
         />
+         <Route 
+          path="/edit-offer/:_id" 
+          element={<AppLayout><EditOffer /></AppLayout>} 
+        />
+         <Route 
+          path="/edit-business/:_id" 
+          element={<AppLayout><EditBusiness /></AppLayout>} 
+        />
+         <Route 
+          path="/view-business/:_id" 
+          element={<AppLayout><ViewBusinessData /></AppLayout>} 
+        />
       </Routes>
+      </BusinessProvider>
+
     </Router>
   )
 }

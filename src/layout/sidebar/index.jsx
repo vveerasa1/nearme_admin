@@ -22,7 +22,7 @@ const Sidebar = () => {
     ];
 
     return (
-        <List className='menuList'>
+        <List  className='menuList '>
             {menuItems.map((item) => (
                 <ListItemButton
                     key={item.path}

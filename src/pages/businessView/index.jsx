@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import "./style.css"
 import { Link } from 'react-router-dom'
 import BusineessImg from '../../assets/images/businessImg.jpg'

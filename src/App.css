@@ -23,7 +23,6 @@
   --theme-color2: #E30D17;
   --heading-color: #212121;
   --font-color1: #000000;
-  --font-color2: #7E7E7E;
   --border-color: #DDDDDD;
   --white: #ffffff;
   --black: #000000;
@@ -133,4 +132,13 @@ ul{
 
 .mb-0{
   margin-bottom: 0px !important;
+}
+
+
+.carousel-indicators [data-bs-target] {
+  background-color: black !important; /* Your desired color */
+}
+
+.carousel-indicators .active {
+  background-color: #ff5722; /* Active indicator color */
 }

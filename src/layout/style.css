@@ -20,7 +20,7 @@
     background-color: var(--theme-color1);
     border-right: 1px solid var(--border-color);
     min-height: calc(100vh - 66px);
-    transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out !important; 
     opacity: 1; /* Fully visible */
     overflow: hidden;
 }
@@ -52,3 +52,5 @@
       border: none;
     }
 }
+
+
