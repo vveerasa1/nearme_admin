@@ -11,6 +11,8 @@ import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import weekday from "dayjs/plugin/weekday";
 import isBetween from "dayjs/plugin/isBetween";
+import { Toaster, toast } from "react-hot-toast";
+
 dayjs.extend(weekday);
 dayjs.extend(isBetween);
 const { RangePicker } = DatePicker;
@@ -21,10 +23,15 @@ const EditOffer = () => {
     { day: "", startTime: "", endTime: "" },
   ]);
 
+  
   const fileInputRef = useRef(null);
   const [existingImages, setExistingImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
+  const [imageError, setImageError] = useState(""); // State for image validation errors
 
+  const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+  const MAX_IMAGES = 5;
   const [range, setRange] = useState([dayjs(), dayjs()]);
   const [disabledDays, setDisabledDays] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,6 +46,9 @@ const EditOffer = () => {
     startTime: "00:00",
     endTime: "23:59",
   });
+
+
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,8 +88,74 @@ const EditOffer = () => {
     fetchData();
   }, [_id]);
 
-  const handleFileChange = (e) => {
-    setNewImages(Array.from(e.target.files));
+  const resizeImage = (file, width, height) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+  
+      reader.onload = (e) => {
+        img.src = e.target.result;
+      };
+  
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+  
+        canvas.width = width;
+        canvas.height = height;
+  
+        // Draw the image on the canvas with the specified dimensions
+        ctx.drawImage(img, 0, 0, width, height);
+  
+        canvas.toBlob(
+          (blob) => {
+            resolve(new File([blob], file.name, { type: file.type }));
+          },
+          file.type,
+          1
+        );
+      };
+  
+      img.onerror = (err) => reject(err);
+  
+      reader.readAsDataURL(file);
+    });
+  };
+
+
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files);
+    let error = "";
+  
+    // Validate file count
+    if (files.length + newImages.length > MAX_IMAGES) {
+      error = `You can upload a maximum of ${MAX_IMAGES} images.`;
+    }
+  
+    const resizedImages = [];
+    for (const file of files) {
+      // Validate file type and size
+      if (!SUPPORTED_FORMATS.includes(file.type)) {
+        error = "Only JPEG, JPG, and PNG formats are allowed.";
+      } else if (file.size > MAX_FILE_SIZE) {
+        error = "Each file must not exceed 5 MB.";
+      } else {
+        try {
+          // Resize the image to a standard size (e.g., 500x500 pixels)
+          const resizedImage = await resizeImage(file, 400, 400);
+          resizedImages.push(resizedImage);
+        } catch (err) {
+          console.error("Error resizing image:", err);
+        }
+      }
+    }
+  
+    if (error) {
+      setImageError(error);
+    } else {
+      setImageError(""); // Clear error if validation passes
+      setNewImages((prevImages) => [...prevImages, ...resizedImages]);
+    }
   };
 
 
@@ -94,7 +170,19 @@ const EditOffer = () => {
   };
 
   const handleAddDay = () => {
-    setCustomDays([...customDays, { day: "", startTime: "", endTime: "" }]);
+    const lastDay = customDays[customDays.length - 1];
+  
+    // Validate that the last day has a selected day
+    if (!lastDay.day) {
+      toast.error("Please select a day before adding another.");
+      return;
+    }
+  
+    // Add a new custom day with default startTime and endTime
+    setCustomDays([
+      ...customDays,
+      { day: "", startTime: "00:00", endTime: "23:59" },
+    ]);
   };
 
   const handleRemoveDay = (index) => {
@@ -104,28 +192,59 @@ const EditOffer = () => {
   };
 
   const handleRangeChange = (dates) => {
-    if (dates) {
-      setRange([dayjs(dates[0]), dayjs(dates[1])]);
-
-      const start = dayjs(dates[0]);
-      const end = dayjs(dates[1]);
-      const daysInRange = [];
-
-      for (
-        let d = start;
-        d.isBefore(end) || d.isSame(end);
-        d = d.add(1, "day")
-      ) {
-        daysInRange.push(d.format("dddd"));
+      if (dates) {
+        const start = dayjs(dates[0]);
+        const end = dayjs(dates[1]);
+  
+        // Ensure the start date is always before or the same as the end date
+        if (start.isAfter(end)) {
+          // If start date is after end date, reset the range to ensure correct order
+          setRange([end, start]);
+        } else {
+          setRange([start, end]);
+        }
+  
+        // Check if both dates are in the same month
+        const isSameMonth =
+          start.month() === end.month() && start.year() === end.year();
+  
+        if (isSameMonth) {
+          const daysInRange = [];
+  
+          for (
+            let d = start;
+            d.isBefore(end) || d.isSame(end);
+            d = d.add(1, "day")
+          ) {
+            const weekday = d.format("dddd");
+            if (!daysInRange.includes(weekday)) {
+              daysInRange.push(weekday);
+            }
+          }
+  
+          // Only disable days NOT in selected range
+          const allWeekdays = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+          ];
+          const disabled = allWeekdays.filter(
+            (day) => !daysInRange.includes(day)
+          );
+          setDisabledDays(disabled);
+        } else {
+          // If range spans months, enable all days
+          setDisabledDays([]);
+        }
+      } else {
+        setRange([null, null]);
+        setDisabledDays([]);
       }
-
-      setDisabledDays(daysInRange); // Update disabled days
-    } else {
-      setRange([null, null]);
-      setDisabledDays([]); // Clear disabled days
-    }
-  };
-
+    };
   const handleSubmit = async (values, { resetForm }) => {
     setLoading(true);
     const formData = new FormData();
@@ -360,7 +479,7 @@ const EditOffer = () => {
                                       type="button"
                                       className="remove-btn btn btn-sm"
                                       onClick={() =>
-                                        handleRemoveNewImage(index)
+                                        handleImageDelete(index)
                                       }
                                     >
                                       <Delete className="text-danger" />

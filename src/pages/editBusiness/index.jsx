@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { data, Link } from "react-router-dom";
 import { Star, Add, Remove, Delete } from "@mui/icons-material";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -39,7 +39,6 @@ const EditBusiness = () => {
     latitude: "",
     longitude: "",
     phone: "",
-    photo: [],
     place_link: "",
     rating: "",
     reviews: "",
@@ -49,20 +48,21 @@ const EditBusiness = () => {
   useEffect(() => {
     const fetchTypes = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:4001/business/types"
-        );
+        setLoading(true);
+        const url = "http://localhost:4001/business/types";
+        const response = await axios.get(url);
         const options = response.data.data.map((type) => ({
           label: type,
           value: type,
         }));
+
         setAllTypes(options);
-        setFilteredTypes(options);
+        setFilteredTypes(options.slice(1, 10));
+        setLoading(false);
       } catch (err) {
-        console.error("Error fetching types:", err);
+        console.error("Error fetching types", err);
       }
     };
-
     fetchTypes();
   }, []);
 
@@ -72,21 +72,15 @@ const EditBusiness = () => {
         setLoading(true);
         const res = await axios.get(`http://localhost:4001/business/${_id}`);
         const data = res.data.data;
-
+  
         console.log("Fetched Data:", data); // Debugging: Check fetched data
-
-        //   const parsedTypes = Array.isArray(data.types)
-        //   ? data.types
-        //   : (() => {
-        //       console.log("Raw types data:", data.types); // Debugging: Check raw data
-        //       return JSON.parse(data.types || "[]");
-        //     })();
-
-        const parsedWorkingHours = (() => {
-          console.log("Raw working_hours data:", data.working_hours); // Debugging: Check raw data
-          return JSON.parse(data.working_hours || "{}");
-        })();
-
+  
+        const parsedTypes = Array.isArray(data.types)
+          ? data.types
+          : JSON.parse(data.types || "[]");
+  
+        const parsedWorkingHours = JSON.parse(data.working_hours || "{}");
+  
         const transformedWorkingHours = Object.keys(parsedWorkingHours).map(
           (day) => {
             const value = parsedWorkingHours[day];
@@ -100,32 +94,12 @@ const EditBusiness = () => {
             }
           }
         );
-
+  
         setWorkingHours(transformedWorkingHours);
-        setExistingPhoto(data.photo || []); // Set existing photos
+  
         setInitialValues({
           display_name: data.display_name || "",
-          types: data.types || [], // Directly set the types array
-          address: data.address || "",
-          street: data.street || "",
-          city: data.city || "",
-          state: data.state || "",
-          postal_code: data.postal_code || "",
-          county: data.county || "",
-          country_code: data.country_code || "",
-          latitude: data.latitude || "",
-          longitude: data.longitude || "",
-          phone: data.phone || "",
-          photo: data.photo || "",
-          place_link: data.place_link || "",
-          rating: data.rating || "",
-          reviews: data.reviews || "",
-          working_hours: data.working_hours || "",
-        });
-
-        console.log("Initial Values Set:", {
-          display_name: data.display_name || "",
-          // types: parsedTypes || "",
+          types: parsedTypes || "",
           address: data.address || "",
           street: data.street || "",
           city: data.city || "",
@@ -142,13 +116,33 @@ const EditBusiness = () => {
           reviews: data.reviews || "",
           working_hours: parsedWorkingHours,
         });
-
+  
+        console.log("Initial Values Set:", {
+          display_name: data.display_name || "",
+          types: parsedTypes || "",
+          address: data.address || "",
+          street: data.street || "",
+          city: data.city || "",
+          state: data.state || "",
+          postal_code: data.postal_code || "",
+          county: data.county || "",
+          country_code: data.country_code || "",
+          latitude: data.latitude || "",
+          longitude: data.longitude || "",
+          phone: data.phone || "",
+          photo: data.photo || "",
+          place_link: data.place_link || "",
+          rating: data.rating || "",
+          reviews: data.reviews || "",
+          working_hours: parsedWorkingHours,
+        });
+  
         setLoading(false);
       } catch (err) {
         console.error("Error fetching offer data:", err);
       }
     };
-
+  
     fetchData();
   }, [_id]);
 
@@ -345,14 +339,14 @@ const EditBusiness = () => {
           <Spin />
         ) : (
           <Formik
-            initialValues={initialValues}
-            enableReinitialize
-            validationSchema={Yup.object({
-              display_name: Yup.string().required("Title is required"),
-              // Add other validations here
-            })}
-            onSubmit={handleSubmit}
-          >
+          initialValues={initialValues}
+          enableReinitialize
+          validationSchema={Yup.object({
+            display_name: Yup.string().required("Title is required"),
+            // Add other validations here
+          })}
+          onSubmit={handleSubmit}
+        >
             {({ values, setFieldValue }) => (
               <Form className="form-wrapper">
                 <div className="row">
@@ -376,49 +370,75 @@ const EditBusiness = () => {
                         </div>
                       </div>
                       {/* types */}
-                      <CreatableSelect
-                        name="types"
-                        options={filteredTypes}
-                        value={
-                          values.types.length > 0 &&
-                          values.types.map((type) => ({
-                            label: type,
-                            value: type,
-                          }))
-                        }
-                        onChange={(selected) =>
-                          setFieldValue(
-                            "types",
-                            selected.map((option) => option.value) // Convert back to an array of strings
-                          )
-                        }
-                        onInputChange={(inputValue) => {
-                          const filtered = allTypes.filter((option) =>
-                            option.label
-                              .toLowerCase()
-                              .includes(inputValue.toLowerCase())
-                          );
-                          setFilteredTypes(filtered.slice(0, 20));
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && e.target.value) {
-                            const newType = e.target.value.trim();
-                            if (
-                              newType &&
-                              !values.types.includes(newType) // Ensure no duplicates
-                            ) {
-                              setFieldValue("types", [
-                                ...values.types,
-                                newType,
-                              ]); // Add new type to the array
-                            }
-                            e.preventDefault(); // Prevent the default behavior of the Enter key
-                          }
-                        }}
-                        placeholder="Select or create a type..."
-                        isMulti
-                        isSearchable
-                      />
+                      <div className="col-12 col-md-12 col-lg-12 mb-3">
+                        <div className="form-group">
+                          <label className="form-label">Types</label>
+                          {loading === true ? (
+                            "Data Fetching"
+                          ) : (
+                            <CreatableSelect
+                              name="types"
+                              options={filteredTypes}
+                              value={
+                                values.types.length > 0 &&
+                                values.types.map(
+                                  (type) =>
+                                    allTypes.find(
+                                      (option) => option.value === type
+                                    ) || {
+                                      label: type,
+                                      value: type,
+                                    }
+                                )
+                              }
+                              onChange={(selected) =>
+                                setFieldValue(
+                                  "types",
+                                  selected.map((option) => option.value)
+                                )
+                              }
+                              onInputChange={(inputValue) => {
+                                const filtered = allTypes.filter((option) =>
+                                  option.label
+                                    .toLowerCase()
+                                    .includes(inputValue.toLowerCase())
+                                );
+                                setFilteredTypes(filtered.slice(0, 20));
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && e.target.value) {
+                                  const newType = e.target.value.trim();
+                                  if (
+                                    newType &&
+                                    !allTypes.some(
+                                      (option) => option.value === newType
+                                    )
+                                  ) {
+                                    const newOption = {
+                                      label: newType,
+                                      value: newType,
+                                    };
+                                    setAllTypes((prev) => [...prev, newOption]);
+                                    setFilteredTypes((prev) => [
+                                      ...prev,
+                                      newOption,
+                                    ]);
+                                    setFieldValue("types", [
+                                      ...values.types,
+                                      newType,
+                                    ]);
+                                  }
+                                  e.preventDefault(); // Prevent the default behavior of the Enter key
+                                }
+                              }}
+                              placeholder="Select or create a type..."
+                              isMulti
+                              isSearchable
+                            />
+                          )}
+                        </div>
+                      </div>
+
                       {/* address */}
                       <div className="col-12 col-md-12 col-lg-12">
                         <div className="form-group">
@@ -530,7 +550,6 @@ const EditBusiness = () => {
 
                             <div className="file-info">
                               {/* Existing images */}
-                              {console.log(existingPhoto)}
                               {existingPhoto.length > 0 &&
                                 existingPhoto.map((url, index) => (
                                   <div
@@ -596,29 +615,13 @@ const EditBusiness = () => {
                       <div className="col-12 col-md-12 col-lg-12 mb-3">
                         <div className="form-group">
                           <label className="form-label">Phone number</label>
-                          <div className="d-flex gap-2">
-                            {/* Country Code Select */}
-                            <Field
-                              as="select"
-                              name="country_code"
-                              className="form-control w-25"
-                            >
-                              <option value="+1">+1 (USA)</option>
-                              <option value="+91">+91 (India)</option>
-                              <option value="+44">+44 (UK)</option>
-                              <option value="+61">+61 (Australia)</option>
-                              <option value="+81">+81 (Japan)</option>
-                              {/* Add more country codes as needed */}
-                            </Field>
-
-                            {/* Phone Number Input */}
-                            <Field
-                              name="phone"
-                              type="number"
-                              className="form-input w-75"
-                              placeholder="Phone number"
-                            />
-                          </div>
+                         
+                          <Field
+                            name="phone"
+                            type="number"
+                            className="form-input"
+                            placeholder="Phone number"
+                          />
                         </div>
                       </div>
                       {/* place link */}

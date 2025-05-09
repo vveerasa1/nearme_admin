@@ -156,6 +156,7 @@ const AddBusiness = () => {
       }
       return acc;
     }, {});
+
     const formData = new FormData();
     formData.append("display_name", values.display_name);
     formData.append("types", JSON.stringify([values.types]));
@@ -168,7 +169,7 @@ const AddBusiness = () => {
     formData.append("country_code", values.country_code);
     formData.append("latitude", values.latitude);
     formData.append("longitude", values.longitude);
-    formData.append("phone", values.phone);
+    formData.append("phone", `${values.code}${values.phone}`);
     formData.append("place_link", values.place_link || "");
     formData.append("rating", values.rating || "");
     formData.append("reviews", values.reviews || "");
@@ -178,13 +179,13 @@ const AddBusiness = () => {
       console.log(photos);
       Array.from(photos).map((file) => formData.append("photo", file));
     }
-
     try {
       const response = await axios.post(
         "http://localhost:4001/business",
         formData
       );
       console.log("Business submitted:", response.data);
+      console.log(values.code)
       setPhotos(null);
       setWorkingHours([{ day: "", startTime: "", endTime: "" }]);
       if (fileInputRef.current) fileInputRef.current.value = null;
@@ -229,14 +230,15 @@ const AddBusiness = () => {
             latitude: "",
             longitude: "",
             phone: "",
+            code:"",
             place_link: "",
             reviews: "",
             rating: "",
             working_hours: "",
           }}
           validationSchema={Yup.object({
-            display_name: Yup.string().required("Title is required"),
-            types: Yup.string().required("Types Field is Required"),
+            // display_name: Yup.string().required("Title is required"),
+            // types: Yup.string().required("Types Field is Required"),
           })}
           onSubmit={handleSubmit}
         >
@@ -496,21 +498,26 @@ const AddBusiness = () => {
                     <div className="col-12 col-md-12 col-lg-12 mb-3">
                       <div className="form-group">
                         <label className="form-label">Phone number</label>
-                        <Field
-                          name="phone"
-                          type="number"
-                          className="form-input"
-                          placeholder="Phone number"
-                        />
-                        <ErrorMessage
-                          name="phone"
-                          component="div"
-                          className="error text-danger"
-                        />
+                        <div className="d-flex gap-2">
+                          {/* Country Code Select */}
+                          <Field as="select" name="code" className="form-control w-25">
+                            <option value="+1">+1 (USA)</option>
+                            <option value="+91">+91 (India)</option>
+                            <option value="+44">+44 (UK)</option>
+                            <option value="+61">+61 (Australia)</option>
+                            <option value="+81">+81 (Japan)</option>
+                          </Field>
+
+                          {/* Phone Number Input */}
+                          <Field
+                            name="phone"
+                            type="text"
+                            className="form-input w-75"
+                            placeholder="Phone number"
+                          />
+                        </div>
                       </div>
                     </div>
-                    {/* email */}
-
                     {/* place link */}
                     <div className="col-12 col-md-12 col-lg-12 mb-3">
                       <div className="form-group">

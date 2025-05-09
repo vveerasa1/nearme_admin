@@ -285,9 +285,9 @@ const AddOffer = () => {
             endTime: "23:59",
           }}
           validationSchema={Yup.object({
-            title: Yup.string().required("Title is required"),
-            description: Yup.string().required("Description is required"),
-            couponDescription: Yup.string().required("Description is required"),
+            // title: Yup.string().required("Title is required"),
+            // description: Yup.string().required("Description is required"),
+            // couponDescription: Yup.string().required("Description is required"),
           })}
           onSubmit={handleSubmit}
         >

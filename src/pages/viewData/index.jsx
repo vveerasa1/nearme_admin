@@ -8,7 +8,7 @@ const ViewData = () => {
   const [active, setActive] = useState(false);
   const { _id } = useParams();
   const { state: data } = useLocation();
-
+  console.log(data);
   useEffect(() => {
     const fetchCouponStatus = async () => {
       try {
@@ -48,8 +48,6 @@ const ViewData = () => {
     return `${day}/${month}/${year}`;
   };
 
- 
-
   return (
     <div>
       <div className="container-fluid mt-3">
@@ -69,7 +67,6 @@ const ViewData = () => {
                     <div className="carousel-indicators ">
                       {data.images.map((_, index) => (
                         <button
-                        
                           key={index}
                           type="button"
                           data-bs-target="#carouselExampleIndicators"
@@ -81,7 +78,7 @@ const ViewData = () => {
                       ))}
                     </div>
                     <div className="carousel-inner">
-                    {console.log(data.images)}
+                      {console.log(data.images)}
 
                       {data.images.map((img, index) => (
                         <div
@@ -125,22 +122,29 @@ const ViewData = () => {
                   <b>Discount Type:</b> {data.discountType}
                 </p>
                 <div>
-                  {data.activeTime ? (
+                  <h5>Active Time</h5>
+                  {data.activeTime &&
+                  data.activeTime.startTime &&
+                  data.activeTime.endTime ? (
                     <p className="d-flex">
                       <b>Time: </b> &nbsp; {data.activeTime.startTime} -{" "}
                       {data.activeTime.endTime}
                     </p>
-                  ) : data.customDays && data.customDays.length > 0 ? (
-                    <>
-                      <h5>Custom Days</h5>
-                      {data.customDays.map((dayItem) => (
-                        <p key={dayItem._id}>
-                          {dayItem.day} {dayItem.startTime} - {dayItem.endTime}
-                        </p>
-                      ))}
-                    </>
                   ) : (
-                    <p>No Time Available</p>
+                    <p>No Active Time Available</p>
+                  )}
+
+                  <h5>Custom Days</h5>
+                  {Array.isArray(data.customDays) &&
+                  data.customDays.length > 0 ? (
+                    data.customDays.map((dayItem) => (
+                      <p key={dayItem._id}>
+                        <b>{dayItem.day}:</b> {dayItem.startTime} -{" "}
+                        {dayItem.endTime}
+                      </p>
+                    ))
+                  ) : (
+                    <p>No Custom Days Available</p>
                   )}
                 </div>
               </div>
