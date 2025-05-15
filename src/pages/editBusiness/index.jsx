@@ -91,7 +91,7 @@ const EditBusiness = () => {
         const res = await axios.get(`${baseUrl}business/${_id}`);
         const data = res.data.data;
   console.log('hii', data.photo);
-  console.log('hii1', data.working_hours);
+  console.log('hii1 this is data', data.working_hours);
 
         // Parse types safely
         const parsedTypes = Array.isArray(data.types)
@@ -115,26 +115,40 @@ const EditBusiness = () => {
             return {};
           }
         })();
+
+        function cleanTimeString(time) {
+          // Removes extra spaces and multiple am/pm occurrences
+          return time
+            .toLowerCase()
+            .replace(/[^0-9:.apm]/g, '')       // Keep only digits, dot, colon, a/p/m
+            .replace(/(\s?am|\s?pm){2,}/g, '') // Remove duplicate am/pm
+            .replace(/\s+/g, '')               // Remove all spaces
+            .replace(/(am|pm)/, ' $1')         // Ensure single space before am/pm
+            .trim();
+        }
   
         // Transform working hours
-        const transformedWorkingHours = Object.entries(parsedWorkingHours).map(
-          ([day, value]) => {
-            if (value === "Open 24 Hours") {
-              return { day, startTime: "", endTime: "", is24Hours: true };
-            } else if (value === "Closed") {
-              return { day, startTime: "", endTime: "", is24Hours: false };
-            } else {
-              const [start, end] = value.split("-");
-              return {
-                day,
-                startTime: convert24hTo12h(start.trim()),
-                endTime: convert24hTo12h(end.trim()),
-                is24Hours: false,
-              };
-            }
-          }
-        );
+        const transformedWorkingHours = Object.entries(parsedWorkingHours).map(([day, value]) => {
+          if (value === "Open 24 Hours") {
+            return { day, startTime: "", endTime: "", is24Hours: true };
+          } else if (value === "Closed") {
+            return { day, startTime: "", endTime: "", is24Hours: false };
+          } else {
+            const [start, end] = value.split("-");
+            const cleanedStart = cleanTimeString(start);
+            const cleanedEnd = cleanTimeString(end);
         
+            return {
+              day,
+              startTime: convert24hTo12h(cleanedStart),
+              endTime: convert24hTo12h(cleanedEnd),
+              is24Hours: false,
+            };
+          }
+        });
+        
+        ;
+        console.log('Hii this', transformedWorkingHours);
   
         setWorkingHours(transformedWorkingHours);
         setExistingPhoto(Array.isArray(data.photo) ? data.photo : []);
@@ -800,6 +814,7 @@ const EditBusiness = () => {
                 type="time"
                 name={`working_hours[${index}].startTime`}
                 className="form-control"
+                value={day.startTime}
                 disabled={day.is24Hours}
               />
               <ErrorMessage
@@ -815,6 +830,7 @@ const EditBusiness = () => {
                 type="time"
                 name={`working_hours[${index}].endTime`}
                 className="form-control"
+                value={day.endTime}
                 disabled={day.is24Hours}
               />
               <ErrorMessage
