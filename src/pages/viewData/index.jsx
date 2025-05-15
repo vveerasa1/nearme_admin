@@ -148,7 +148,7 @@ const ViewData = () => {
                   )}
                 </div>
               </div>
-            </div>
+            </div>                                                                                  
           </div>
         </div>
       </div>
