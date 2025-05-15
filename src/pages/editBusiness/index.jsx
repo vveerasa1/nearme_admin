@@ -1,14 +1,25 @@
 import { useState, useRef, useEffect } from "react";
 import { data, Link } from "react-router-dom";
 import { Star, Add, Remove, Delete } from "@mui/icons-material";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+
+import { Formik, Form, Field, ErrorMessage, FieldArray } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import CreatableSelect from "react-select/creatable";
 import { Spin } from "antd";
+import { convert24hTo12h, formatWeeklyHours } from "./constant";
 
 const EditBusiness = () => {
+  const daysOfWeek = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
   const { _id } = useParams();
   const [allTypes, setAllTypes] = useState([]);
   const [filteredTypes, setFilteredTypes] = useState([]);
@@ -16,12 +27,12 @@ const EditBusiness = () => {
   const [existingPhoto, setExistingPhoto] = useState([]);
   const [newPhoto, setNewPhoto] = useState([]);
   const [photoError, setPhotoError] = useState("");
+  const baseUrl = import.meta.env.VITE_BASE_URL;
 
   const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
   const MAX_IMAGES = 5;
   const fileInputRef = useRef(null);
-
   const [workingHours, setWorkingHours] = useState([
     { day: "", startTime: "", endTime: "", is24Hours: false },
   ]);
@@ -36,20 +47,27 @@ const EditBusiness = () => {
     postal_code: "",
     county: "",
     country_code: "",
-    latitude: "",
-    longitude: "",
+    // latitude: "",
+    // longitude: "",
     phone: "",
     place_link: "",
     rating: "",
     reviews: "",
-    working_hours: "",
+    working_hours: [
+      {
+        day: "",
+        startTime: "",
+        endTime: "",
+        is24Hours: false,
+      },
+    ]
   });
 
   useEffect(() => {
     const fetchTypes = async () => {
       try {
         setLoading(true);
-        const url = "http://localhost:4001/business/types";
+        const url = `${baseUrl}business/types`;
         const response = await axios.get(url);
         const options = response.data.data.map((type) => ({
           label: type,
@@ -70,36 +88,59 @@ const EditBusiness = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`http://localhost:4001/business/${_id}`);
+        const res = await axios.get(`${baseUrl}business/${_id}`);
         const data = res.data.data;
-  
-        console.log("Fetched Data:", data); // Debugging: Check fetched data
-  
+  console.log('hii', data.photo);
+  console.log('hii1', data.working_hours);
+
+        // Parse types safely
         const parsedTypes = Array.isArray(data.types)
           ? data.types
-          : JSON.parse(data.types || "[]");
+          : (() => {
+              try {
+                return JSON.parse(data.types || "[]");
+              } catch {
+                console.error("Invalid types format:", data.types);
+                return [];
+              }
+            })();
   
-        const parsedWorkingHours = JSON.parse(data.working_hours || "{}");
+        // Parse working hours safely
+        const parsedWorkingHours = (() => {
+          try {
+            const fixedStr = (data.working_hours || "{}").replace(/'/g, '"');
+            return JSON.parse(fixedStr);
+          } catch {
+            console.error("Invalid working_hours format:", data.working_hours);
+            return {};
+          }
+        })();
   
-        const transformedWorkingHours = Object.keys(parsedWorkingHours).map(
-          (day) => {
-            const value = parsedWorkingHours[day];
+        // Transform working hours
+        const transformedWorkingHours = Object.entries(parsedWorkingHours).map(
+          ([day, value]) => {
             if (value === "Open 24 Hours") {
               return { day, startTime: "", endTime: "", is24Hours: true };
             } else if (value === "Closed") {
               return { day, startTime: "", endTime: "", is24Hours: false };
             } else {
-              const [startTime, endTime] = value.split(" - ");
-              return { day, startTime, endTime, is24Hours: false };
+              const [start, end] = value.split("-");
+              return {
+                day,
+                startTime: convert24hTo12h(start.trim()),
+                endTime: convert24hTo12h(end.trim()),
+                is24Hours: false,
+              };
             }
           }
         );
+        
   
         setWorkingHours(transformedWorkingHours);
-  
+        setExistingPhoto(Array.isArray(data.photo) ? data.photo : []);
         setInitialValues({
           display_name: data.display_name || "",
-          types: parsedTypes || "",
+          types: parsedTypes,
           address: data.address || "",
           street: data.street || "",
           city: data.city || "",
@@ -107,44 +148,26 @@ const EditBusiness = () => {
           postal_code: data.postal_code || "",
           county: data.county || "",
           country_code: data.country_code || "",
-          latitude: data.latitude || "",
-          longitude: data.longitude || "",
+          // latitude: data.latitude || "",
+          // longitude: data.longitude || "",
           phone: data.phone || "",
           photo: data.photo || "",
           place_link: data.place_link || "",
           rating: data.rating || "",
           reviews: data.reviews || "",
-          working_hours: parsedWorkingHours,
-        });
-  
-        console.log("Initial Values Set:", {
-          display_name: data.display_name || "",
-          types: parsedTypes || "",
-          address: data.address || "",
-          street: data.street || "",
-          city: data.city || "",
-          state: data.state || "",
-          postal_code: data.postal_code || "",
-          county: data.county || "",
-          country_code: data.country_code || "",
-          latitude: data.latitude || "",
-          longitude: data.longitude || "",
-          phone: data.phone || "",
-          photo: data.photo || "",
-          place_link: data.place_link || "",
-          rating: data.rating || "",
-          reviews: data.reviews || "",
-          working_hours: parsedWorkingHours,
+          working_hours: transformedWorkingHours,
         });
   
         setLoading(false);
       } catch (err) {
         console.error("Error fetching offer data:", err);
+        setLoading(false);
       }
     };
   
     fetchData();
   }, [_id]);
+  
 
   const resizeImage = (file, width, height) => {
     return new Promise((resolve, reject) => {
@@ -246,19 +269,17 @@ const EditBusiness = () => {
   };
 
   const handleSubmit = async (values, { resetForm }) => {
-    const formattedWorkingHours = workingHours.reduce((acc, day) => {
-      if (day.is24Hours) {
-        acc[day.day] = "Open 24 Hours";
-      } else if (!day.startTime && !day.endTime) {
-        acc[day.day] = "Closed";
-      } else {
-        acc[day.day] = `${day.startTime} - ${day.endTime}`;
-      }
-      return acc;
-    }, {});
+    console.log("hey", values.working_hours);
+    const updatedTime = values.working_hours.map((date) => ({
+      day: date.day,
+      startTime: convert24hTo12h( date.startTime),
+      endTime: convert24hTo12h(date.endTime),
+      is24Hours: date.is24Hours
+    }))
+    console.log(updatedTime);
     const formData = new FormData();
     formData.append("display_name", values.display_name);
-    formData.append("types", values.types);
+    formData.append("types", JSON.stringify(values.types));
     formData.append("address", values.address);
     formData.append("street", values.street);
     formData.append("city", values.city);
@@ -266,13 +287,13 @@ const EditBusiness = () => {
     formData.append("postal_code", values.postal_code);
     formData.append("county", values.county);
     formData.append("country_code", values.country_code);
-    formData.append("latitude", values.latitude);
-    formData.append("longitude", values.longitude);
+    // formData.append("latitude", values.latitude);
+    // formData.append("longitude", values.longitude);
     formData.append("phone", values.phone);
     formData.append("place_link", values.place_link || "");
     formData.append("rating", values.rating || "");
     formData.append("reviews", values.reviews || "");
-    formData.append("working_hours", JSON.stringify(formattedWorkingHours));
+    formData.append("working_hours", JSON.stringify(updatedTime));
 
     formData.append("existingPhoto", JSON.stringify(existingPhoto));
 
@@ -504,7 +525,7 @@ const EditBusiness = () => {
                         </div>
                       </div>
                       {/* Latitude */}
-                      <div className="col-12 col-md-12 col-lg-6 mb-3">
+                      {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
                         <div className="form-group">
                           <label className="form-label">Latitude</label>
                           <Field
@@ -514,9 +535,9 @@ const EditBusiness = () => {
                             placeholder="Latitude"
                           />
                         </div>
-                      </div>
+                      </div> */}
                       {/* Longitude */}
-                      <div className="col-12 col-md-12 col-lg-6 mb-3">
+                      {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
                         <div className="form-group">
                           <label className="form-label">Longitude</label>
                           <Field
@@ -526,7 +547,7 @@ const EditBusiness = () => {
                             placeholder="Longitude"
                           />
                         </div>
-                      </div>
+                      </div> */}
                       {/* image */}
                       <div className="col-12 col-md-12 col-lg-12 mb-3">
                         <div className="form-group">
@@ -607,6 +628,13 @@ const EditBusiness = () => {
                           </div>
                         </div>
                       </div>
+                      <p
+                        className="note text-muted"
+                        style={{ fontSize: "0.875rem" }}
+                      >
+                        Note: Upload images in JPEG, PNG, GIF, or SVG format,
+                        max 5MB, and between 800x600 pixels.
+                      </p>
                     </div>
                   </div>
                   <div className="col-12 col-md-12 col-lg-6 mb-4">
@@ -637,45 +665,222 @@ const EditBusiness = () => {
                         </div>
                       </div>
                       {/* rating */}
-                      <div className="col-12 col-md-6 col-lg-6 mb-3">
-                        <div className="form-group">
-                          <label className="form-label">Rating</label>
-                          <div className="ratinginput">
-                            <div className="position-relative">
-                              <Field
-                                name="rating"
-                                type="text"
-                                className="form-input"
-                                placeholder="0"
-                              />
-                              <Star className="ratingInputStar" />
-                            </div>
-                            <div className="position-relative">
-                              <Field
-                                name="rating"
-                                type="text"
-                                className="form-input "
-                                placeholder="000"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                       <div className="col-12 col-md-6 col-lg-6 mb-4">
-                        <div className="form-group">
-                          <label className="form-label">Review</label>
+                      <div className="form-group">
+                        <label className="form-label">Rating</label>
+                        <div className="position-relative">
                           <Field
-                            name="reviews"
-                            type="text"
-                            className="form-input"
-                            placeholder=""
+                            name="rating"
+                            type="number"
+                            step="0.1"
+                            className="form-input pe-5"
+                            placeholder="Enter number of ratings"
+                          />
+
+                          <Star
+                            className="ratingInputStar"
+                            style={{
+                              position: "absolute",
+                              top: "50%",
+                              right: "10px",
+                              transform: "translateY(-50%)",
+                              pointerEvents: "none",
+                            }}
                           />
                         </div>
+                        <ErrorMessage
+                          name="rating"
+                          component="div"
+                          className="error text-danger"
+                        />
                       </div>
+                    </div>
+
+                    {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
+                      <div className="form-group">
+                        <label className="form-label">Rating</label>
+                        <div className="ratinginput">
+                          <div className="position-relative">
+                            <Field
+                              name="rating"
+                              type="text"
+                              className="form-input"
+                              placeholder="0"
+                            />
+                            <Star className="ratingInputStar" />
+                            <ErrorMessage
+                              name="rating"
+                              component="div"
+                              className="error text-danger"
+                            />
+                          </div>
+                           <div className="position-relative">
+                            <Field
+                              name="rating"
+                              type="text"
+                              className="form-input "
+                              placeholder="000"
+                            />
+                            <ErrorMessage
+                              name="rating"
+                              component="div"
+                              className="error text-danger"
+                            />
+                          </div> 
+                        </div>
+                      </div>
+                    </div> */}
+                    <div className="col-12 col-md-6 col-lg-6 mb-4">
+                      <div className="form-group">
+                        <label className="form-label">Review</label>
+                        <Field
+                          name="reviews"
+                          type="number"
+                          className="form-input"
+                          placeholder="Enter number of reviews"
+                        />
+
+                        <ErrorMessage
+                          name="reviews"
+                          component="div"
+                          className="error text-danger"
+                        />
+                      </div>
+                    </div>
                       {/* working hours */}
 
                       {/* Custom days section */}
-                      <div className="custom-days">
+                      <div className="col-12 col-md-12 col-lg-12 mb-4">
+                      <div className="form-group">
+                        <label className="form-label">Working hours</label>
+                      </div>
+                    </div>
+                    <FieldArray name="working_hours">
+  {({ push, remove }) => (
+    <div className="custom-days">
+      {Array.isArray(values.working_hours) &&
+        values.working_hours.map((day, index) => (
+          <div
+            key={index}
+            className="custom-day-row mb-2 d-flex gap-2 align-items-start"
+          >
+            {/* Day Select */}
+            <div className="w-25">
+              <Field
+                as="select"
+                name={`working_hours[${index}].day`}
+                className="form-control"
+              >
+                <option value="" disabled>
+                  Select a day
+                </option>
+                {daysOfWeek.map((dayName) => (
+                  <option
+                    key={dayName}
+                    value={dayName}
+                    disabled={values.working_hours.some(
+                      (item, idx) =>
+                        item.day === dayName && idx !== index
+                    )}
+                  >
+                    {dayName}
+                  </option>
+                ))}
+              </Field>
+              <ErrorMessage
+                name={`working_hours[${index}].day`}
+                component="div"
+                className="text-danger"
+              />
+            </div>
+
+            {/* Start Time */}
+            <div className="w-25">
+              <Field
+                type="time"
+                name={`working_hours[${index}].startTime`}
+                className="form-control"
+                disabled={day.is24Hours}
+              />
+              <ErrorMessage
+                name={`working_hours[${index}].startTime`}
+                component="div"
+                className="text-danger"
+              />
+            </div>
+
+            {/* End Time */}
+            <div className="w-25">
+              <Field
+                type="time"
+                name={`working_hours[${index}].endTime`}
+                className="form-control"
+                disabled={day.is24Hours}
+              />
+              <ErrorMessage
+                name={`working_hours[${index}].endTime`}
+                component="div"
+                className="text-danger"
+              />
+            </div>
+
+            {/* 24 Hours Checkbox */}
+            <div className="form-check mt-2">
+              <Field
+                type="checkbox"
+                name={`working_hours[${index}].is24Hours`}
+                checked={day.is24Hours}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setFieldValue(
+                    `working_hours[${index}].is24Hours`,
+                    checked
+                  );
+                  if (checked) {
+                    setFieldValue(`working_hours[${index}].startTime`, "");
+                    setFieldValue(`working_hours[${index}].endTime`, "");
+                  }
+                }}
+              />
+              <label className="form-check-label ms-2">24 Hours</label>
+            </div>
+
+            {/* Add / Remove Buttons */}
+            <div className="d-flex flex-column mt-1">
+              {index === 0 && values.working_hours.length < 7 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    push({
+                      day: "",
+                      startTime: "",
+                      endTime: "",
+                      is24Hours: false,
+                    })
+                  }
+                  className="btn btn-sm btn-primary mb-2"
+                >
+                  <Add />
+                </button>
+              )}
+              {values.working_hours.length > 1 && index !== 0 && (
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="btn btn-sm btn-danger"
+                >
+                  <Remove />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+    </div>
+  )}
+</FieldArray>
+
+
+                      {/* <div className="custom-days">
                         <label className="form-label">Working hours</label>
 
                         {workingHours.map((day, index) => (
@@ -778,7 +983,7 @@ const EditBusiness = () => {
                             )}
                           </div>
                         ))}
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                   {/* Submit Button */}

@@ -51,8 +51,6 @@ const AddOffer = () => {
   
         canvas.width = width;
         canvas.height = height;
-  
-        // Draw the image on the canvas with the specified dimensions
         ctx.drawImage(img, 0, 0, width, height);
   
         canvas.toBlob(
@@ -81,14 +79,12 @@ const AddOffer = () => {
   
     const resizedImages = [];
     for (const file of files) {
-      // Validate file type and size
       if (!SUPPORTED_FORMATS.includes(file.type)) {
         error = "Only JPEG, JPG, and PNG formats are allowed.";
       } else if (file.size > MAX_FILE_SIZE) {
         error = "Each file must not exceed 5 MB.";
       } else {
         try {
-          // Resize the image to a standard size (e.g., 500x500 pixels)
           const resizedImage = await resizeImage(file, 400, 400);
           resizedImages.push(resizedImage);
         } catch (err) {
@@ -100,7 +96,7 @@ const AddOffer = () => {
     if (error) {
       setImageError(error);
     } else {
-      setImageError(""); // Clear error if validation passes
+      setImageError("");
       setImages((prevImages) => [...prevImages, ...resizedImages]);
     }
   };
@@ -119,13 +115,10 @@ const AddOffer = () => {
   const handleAddDay = () => {
     const lastDay = customDays[customDays.length - 1];
   
-    // Validate that the last day has a selected day
     if (!lastDay.day) {
       toast.error("Please select a day before adding another.");
       return;
     }
-  
-    // Add a new custom day with default startTime and endTime
     setCustomDays([
       ...customDays,
       { day: "", startTime: "00:00", endTime: "23:59" },
@@ -143,15 +136,11 @@ const AddOffer = () => {
       const start = dayjs(dates[0]);
       const end = dayjs(dates[1]);
 
-      // Ensure the start date is always before or the same as the end date
       if (start.isAfter(end)) {
-        // If start date is after end date, reset the range to ensure correct order
         setRange([end, start]);
       } else {
         setRange([start, end]);
       }
-
-      // Check if both dates are in the same month
       const isSameMonth =
         start.month() === end.month() && start.year() === end.year();
 
@@ -169,7 +158,6 @@ const AddOffer = () => {
           }
         }
 
-        // Only disable days NOT in selected range
         const allWeekdays = [
           "Monday",
           "Tuesday",
@@ -184,7 +172,6 @@ const AddOffer = () => {
         );
         setDisabledDays(disabled);
       } else {
-        // If range spans months, enable all days
         setDisabledDays([]);
       }
     } else {
@@ -252,7 +239,7 @@ const AddOffer = () => {
 
   return (
     <div className="content-wrapper">
-      <Toaster />
+      <Toaster position="bottom-center" />
       {/* breadcrumb */}
       <div className="breadcrumb-wrapper">
         <div className="breadcrumb-block">
@@ -502,19 +489,23 @@ const AddOffer = () => {
 
                     {/* Custom days checkbox */}
                     <div className="col-12 col-md-12 col-lg-12 mb-4">
-                      <div className="form-group ">
-                        <label className="form-label d-flex">
-                          <Field
-                            className=""
-                            type="checkbox"
-                            name="type"
-                            checked={values.type}
-                            onChange={handleChange}
-                          />
-                          <span className="">Custom Days</span>
-                        </label>
-                      </div>
-                    </div>
+  <div className="form-group">
+    <div className="d-flex align-items-center">
+      <Field
+        className="me-2"
+        type="checkbox"
+        name="type"
+        checked={values.type}
+        onChange={handleChange}
+        id="custom-days-checkbox"
+      />
+      <label htmlFor="custom-days-checkbox" className="form-label mb-0">
+        Custom Days
+      </label>
+    </div>
+  </div>
+</div>
+
 
                     {/* Custom days section */}
                     {values.type && (
@@ -633,12 +624,16 @@ const AddOffer = () => {
                   </div>
                 </div>
               </div>
-              {/* Submit Button */}
-              <div className="col-12">
-                <button type="submit" className="btn btn-primary">
-                  {loading === true ? "Submitting..." : "Add Offer"}
-                </button>
-              </div>
+               <div className="col-12 col-md-12 col-lg-12">
+                    <div className="vbtns">
+                      <button className="theme-btn btn-border" type="button">
+                        Clear
+                      </button>
+                      <button className="theme-btn btn-main" type="submit">
+                        Save
+                      </button>
+                    </div>
+                  </div>
             </Form>
           )}
         </Formik>

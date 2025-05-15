@@ -1,193 +1,183 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { LocationPin } from "@mui/icons-material";
 import axios from "axios";
 
 const ViewBusinessData = () => {
   const { _id } = useParams();
   const { state: data } = useLocation();
+  const baseUrl = import.meta.env.VITE_BASE_URL;
+
+  const [selectedImage, setSelectedImage] = useState(data?.photo[0]);
 
   useEffect(() => {
     const fetchBusinessStatus = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:4001/business/${_id}`
-        );
+        const response = await axios.get(`${baseUrl}business/${_id}`);
         console.log(response.data);
       } catch (error) {
-        console.error("Error fetching coupon status:", error);
+        console.error("Error fetching business:", error);
       }
     };
-
     fetchBusinessStatus();
-  }, [data, _id]);
+  }, [_id, baseUrl]);
 
   const renderStars = (rating) => {
-    const totalStars = 5;
-    const filledStars = Math.floor(rating);
-    const halfStar = rating - filledStars >= 0.5;
-    const emptyStars = totalStars - filledStars - (halfStar ? 1 : 0);
+    const total = 5;
+    const full = Math.floor(rating);
+    const half = rating - full >= 0.5;
+    const empty = total - full - (half ? 1 : 0);
 
-    const stars = [];
+    return (
+      <>
+        {[...Array(full)].map((_, i) => (
+          <span key={`f-${i}`} style={{ color: "#FFD700" }}>
+            ★
+          </span>
+        ))}
+        {half && <span style={{ color: "#FFD700" }}>☆</span>}
+        {[...Array(empty)].map((_, i) => (
+          <span key={`e-${i}`} style={{ color: "#ccc" }}>
+            ★
+          </span>
+        ))}
+      </>
+    );
+  };
 
-    for (let i = 0; i < filledStars; i++) {
-      stars.push(
-        <span key={`full-${i}`} style={{ color: "#FFD700" }}>
-          ★
-        </span>
-      );
+  const workingHours = (() => {
+    try {
+      if (typeof data?.working_hours === "string") {
+        return JSON.parse(data.working_hours.replace(/'/g, '"'));
+      }
+      return data?.working_hours;
+    } catch (e) {
+      console.error("Invalid working_hours format");
+      return null;
     }
+  })();
 
-    if (halfStar) {
-      stars.push(
-        <span key="half" style={{ color: "#FFD700" }}>
-          ☆
-        </span>
-      );
-    }
-
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <span key={`empty-${i}`} style={{ color: "#ccc" }}>
-          ★
-        </span>
-      );
-    }
-
-    return stars;
+  // Handle image click to update the selected main image
+  const handleImageClick = (img) => {
+    setSelectedImage(img);
   };
 
   return (
-    <div>
-      <div className="container-fluid  py-2 px-3">
-        <div className="d-flex justify-content-between">
-          <div className="">
-            <h2>{data ? data.display_name : "Loading..."}</h2>
-          </div>
-
-          <div className="text-center">
-            <a
-              href={data.reviews_link}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <LocationPin className="fs-1 text-primary mb- " />
-            </a>
-            <div className="">
-              <p>
-                {" "}
-                <p className="">View Location</p>
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="offer-data container">
-          <div className="row border d-flex p-5 ">
-            <div className="col-lg-4">
-              <div className="slider-container">
-                {data && Array.isArray(data.photo) && data.photo.length > 0 ? (
-                  <div
-                    id="carouselExampleIndicators"
-                    className="carousel slide"
-                    data-bs-ride="carousel"
-                  >
-                    <div className="carousel-indicators ">
-                      {data.photo.map((_, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          data-bs-target="#carouselExampleIndicators"
-                          data-bs-slide-to={index}
-                          className={index === 0 ? "active" : ""}
-                          aria-current={index === 0 ? "true" : undefined}
-                          aria-label={`Slide ${index + 1}`}
-                        ></button>
-                      ))}
-                    </div>
-                    <div className="carousel-inner">
-                      {console.log(data.photo)}
-
-                      {data.photo.map((img, index) => (
-                        <div
-                          key={index}
-                          className={`carousel-item ${
-                            index === 0 ? "active" : ""
-                          }`}
-                        >
-                          <img
-                            src={img}
-                            className="img-fluid"
-                            alt={`Slide ${index + 1}`}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p>No images available</p>
-                )}
-              </div>
-            </div>
-            <div className="col-4 mt-lg-0 mt-4 mx-5">
-              <div>
-                {" "}
-                <h4>{data.display_name}</h4>
-              </div>
-              <div className="d-flex align-items-center ">
-                <p className="">
-                  {data.rating}
-                  {renderStars(data.rating)}({data.reviews})
-                </p>
-              </div>
-
-              <div>
-                <b>Address</b>
-
-                <p>{data.address}</p>
-              </div>
-              <div className="">
-                <b>Contact</b>
-                <p>{data.phone}</p>
-                <p>{data.email_1}</p>
-              </div>
-            </div>
-
-            <div className="col text-center">
-              <div className="border shadow text-center rounded-5 p-2">
-                <b>Working Hours</b>
-                {(() => {
-                  let workingHours = null;
-
-                  try {
-                    workingHours =
-                      typeof data.working_hours === "string"
-                        ? JSON.parse(data.working_hours.replace(/'/g, '"'))
-                        : data.working_hours;
-                  } catch (error) {
-                    console.error("Invalid JSON in working_hours:", error);
-                  }
-
-                  return workingHours ? (
-                    <div className="mt-2">
-                      {Object.entries(workingHours).map(([day, hours]) => (
-                        <div
-                          className="d-flex justify-content-between px-3 py-1 border-bottom"
-                          key={day}
-                        >
-                          <strong>{day}</strong>
-                          <span>{hours}</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p>No working hours available</p>
-                  );
-                })()}
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="container my-4">
+      {/* Breadcrumb */}
+      <div className="mb-3">
+        <h4>
+          {data.display_name}{" "}
+          <small className="text-muted">{data.category}</small>
+        </h4>
+        <small className="text-muted">
+          Home / Business Listing / {data.display_name}
+        </small>
       </div>
+
+      {/* Main Card */}
+      <div className="card shadow-lg p-4 rounded-4 elevation-3">
+  <div className="row">
+    {/* Left Column: Images */}
+    <div className="col-md-4 mb-3">
+      {data?.photo?.length > 0 ? (
+        <>
+          <img
+            src={selectedImage}
+            className="img-fluid rounded mb-2"
+            alt="Main"
+            style={{
+              height: "400px",
+              objectFit: "cover",
+              width: "100%",
+              borderRadius: "8px",
+            }}
+          />
+          <div className="d-flex gap-2 overflow-auto">
+            {data.photo.map((img, idx) => (
+              <img
+                key={idx}
+                src={img}
+                alt={`thumb-${idx}`}
+                onClick={() => handleImageClick(img)}
+                style={{
+                  height: "80px",
+                  width: "80px",
+                  objectFit: "cover",
+                  borderRadius: "5px",
+                  border: "1px solid #ccc",
+                  cursor: "pointer",
+                }}
+              />
+            ))}
+          </div>
+        </>
+      ) : (
+        <p>No images available</p>
+      )}
+    </div>
+
+    {/* Middle Column: Business Info */}
+    <div className="col-md-6 mb-3">
+      <h5>{data.display_name}</h5>
+      <div className="d-flex align-items-center mb-2">
+        <span className="me-2">{data.rating}</span>
+        {renderStars(data.rating)}
+        <span className="ms-2">({data.reviews})</span>
+      </div>
+
+      <div className="mb-2">
+        <strong>Address</strong>
+        <p className="mb-1">{data.address}, {data.street}</p>
+        <p className="mb-3">{data.city}, {data.state} - {data.postal_code}</p>
+      </div>
+
+      <div className="mb-2">
+        <strong>Contact</strong>
+        <p className="mb-1">{data.phone}</p>
+        {data.email_1 && <p className="mb-1">{data.email_1}</p>}
+      </div>
+
+      <div className="mt-3">
+        <strong>Working Hours</strong>
+        {workingHours ? (
+          Object.entries(workingHours).map(([day, hrs]) => (
+            <div className="mb-2" key={day}>
+              <div className="d-flex justify-content-start align-items-center">
+                <span className="fw-bold me-2">{day}:</span>
+                <span>{hrs}</span>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p>No working hours available</p>
+        )}
+      </div>
+      <div className="col-12">
+      <strong>Location</strong>
+      <iframe
+        width="100%"
+        height="350"
+        frameBorder="0"
+        style={{
+          borderRadius: "12px",
+          border: 0,
+          boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+        }}
+        src={`https://maps.google.com/maps?q=${encodeURIComponent(
+          data.address
+        )}&output=embed`}
+        allowFullScreen
+        loading="lazy"
+        title="Business Location"
+      ></iframe>
+    </div>
+    </div>
+
+    {/* Bottom Row: Map */}
+   
+  </div>
+</div>
+
     </div>
   );
 };

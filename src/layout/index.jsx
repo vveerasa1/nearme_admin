@@ -1,6 +1,9 @@
 import React, { useState } from "react";
-import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import {
   faBriefcase,
   faHome,
@@ -8,111 +11,228 @@ import {
   faTag,
   faTicket,
 } from "@fortawesome/free-solid-svg-icons";
-import { Button, Layout, Menu, theme } from "antd";
-import { Link } from "react-router-dom"; // Import Link from react-router-dom
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  Button,
+  Layout,
+  Menu,
+  Avatar,
+  Dropdown,
+  theme,
+  Space,
+} from "antd";
+import { Link, useLocation } from "react-router-dom";
+
 import Logo from "../assets/images/logo-long.png";
 import MLogo from "../assets/images/icon.png";
+import '../../src/layout/style.css'
 
 const { Header, Sider, Content } = Layout;
 
 const AppLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
   const {
-    token: { colorBgContainer, borderRadiusLG },
+    token: { colorBgContainer },
   } = theme.useToken();
 
+  const getSelectedKey = () => {
+    const path = location.pathname;
+  
+    if (path.startsWith("/dashboard")) return "1";
+  
+    if (
+      path.startsWith("/business-listings") ||
+      path.startsWith("/add-new-business") ||
+      path.startsWith("/add-offer") ||
+      path.startsWith("/edit-business") ||
+      path.startsWith("/view-business")
+      
+    ) {
+      return "2";
+    }
+  
+    if (
+      path.startsWith("/deals") ||
+      path.startsWith("/edit-offer/Deal")||
+      path.startsWith("/view/Deal")
+
+    ) {
+      return "3";
+    }
+  
+    if (
+      path.startsWith("/discounts") ||
+      path.startsWith("/edit-offer/Discount")||
+      path.startsWith("/view/Discount")
+
+    ) {
+      return "4";
+    }
+  
+    if (
+      path.startsWith("/coupons") ||
+      path.startsWith("/edit-offer/Coupon")||
+      path.startsWith("/view/Coupon")
+
+    ) {
+      return "5";
+    }
+  
+    return "1"; // Default fallback to dashboard
+  };
+  
+
+  const profileMenu = (
+    <Menu
+      items={[
+        { key: "1", label: "Profile" },
+        { key: "2", label: "Logout" },
+      ]}
+    />
+  );
+
   return (
-    <Layout style={{ overflowX: "hidden", minHeight: "100vh" }} className="">
-      <Sider className="px-2" trigger={null} collapsible collapsed={collapsed}>
+    <Layout style={{ height: "100vh" }}>
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        trigger={null}
+        style={{
+          backgroundColor: "#31A5DC",
+          height: "100vh",
+          position: "fixed",
+          left: 0,
+          top: 0,
+          bottom: 0,
+        }}
+      >
         <div
-          className="logo px-3  "
           style={{
-            color: "#fff",
-            fontSize: "20px",
-            padding: "16px",
             textAlign: "center",
+            padding: collapsed ? "12px" : "20px",
+            backgroundColor: "#fff",
           }}
         >
-          {collapsed ? (
-            <img src={MLogo} className="img-fluid" alt="Logo" />
-          ) : (
-            <img src={Logo} className="img-fluid" alt="Logo" />
-          )}
-        </div>
-        <Menu
-          className="fs-6"
-          theme="dark"
-          mode="inline"
-          defaultSelectedKeys={["1"]}
-        >
-          <Menu.Item
-            key="1"
-            icon={<FontAwesomeIcon icon={faHome} />}
-            style={{ marginBottom: "20px" }}
-          >
-            <Link className="text-decoration-none" to="/dashboard">
-              Dashboard
-            </Link>
-          </Menu.Item>
-
-          <Menu.Item
-            key="2"
-            icon={<FontAwesomeIcon icon={faBriefcase} />}
-            style={{ marginBottom: "20px" }}
-          >
-            <Link className="text-decoration-none" to="/business-listings">
-              Business Listing
-            </Link>
-          </Menu.Item>
-
-          <Menu.Item
-            key="3"
-            icon={<FontAwesomeIcon icon={faStar} />}
-            style={{ marginBottom: "20px" }}
-          >
-            <Link className="text-decoration-none" to="/deals">
-              Deals
-            </Link>
-          </Menu.Item>
-
-          <Menu.Item
-            key="4"
-            icon={<FontAwesomeIcon icon={faTag} />}
-            style={{ marginBottom: "20px" }}
-          >
-            <Link className="text-decoration-none" to="/discounts">
-              Discounts
-            </Link>
-          </Menu.Item>
-
-          <Menu.Item
-            key="5"
-            icon={<FontAwesomeIcon icon={faTicket} />}
-            style={{ marginBottom: "20px" }}
-          >
-            <Link className="text-decoration-none" to="/coupons">
-              Coupons
-            </Link>
-          </Menu.Item>
-        </Menu>
-      </Sider>
-      <Layout>
-        <Header style={{ padding: 0, background: colorBgContainer }}>
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
+          <img
+            src={collapsed ? MLogo : Logo}
+            alt="Logo"
             style={{
-              fontSize: "16px",
-              width: 64,
-              height: 64,
+              maxWidth: collapsed ? "40px" : "140px",
+              transition: "0.3s ease",
             }}
           />
+        </div>
+        <div style={{ height: 35 }} />
+        <Menu
+          mode="inline"
+          selectedKeys={[getSelectedKey()]}
+          theme="dark"
+          style={{
+            backgroundColor: "#31A5DC",
+            fontSize: "16px",
+            padding: "0 8px",
+            borderRight: "none",
+          }}
+          items={[
+            {
+              key: "1",
+              icon: <FontAwesomeIcon icon={faHome} />,
+              label: <Link to="/dashboard">Dashboard</Link>,
+            },
+            {
+              key: "2",
+              icon: <FontAwesomeIcon icon={faBriefcase} />,
+              label: <Link to="/business-listings">Business Listings</Link>,
+            },
+            {
+              key: "3",
+              icon: <FontAwesomeIcon icon={faStar} />,
+              label: <Link to="/deals">Deals</Link>,
+            },
+            {
+              key: "4",
+              icon: <FontAwesomeIcon icon={faTag} />,
+              label: <Link to="/discounts">Discounts</Link>,
+            },
+            {
+              key: "5",
+              icon: <FontAwesomeIcon icon={faTicket} />,
+              label: <Link to="/coupons">Coupons</Link>,
+            },
+          ]}
+        />
+      </Sider>
+
+      <Layout style={{ marginLeft: collapsed ? 80 : 200 }}>
+        <Header
+          style={{
+            background: "#fff",
+            padding: "0 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            position: "fixed",
+            top: 0,
+            left: collapsed ? 80 : 200,
+            right: 0,
+            zIndex: 100,
+            height: 64,
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <Button
+  type="text"
+  onClick={() => setCollapsed(!collapsed)}
+  style={{
+    width: 36,
+    height: 36,
+    padding: 4,
+    border: "1.5px solid #ddd",
+    borderRadius: "10px",
+    background: "#fff",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 3,
+  }}
+>
+  {[...Array(3)].map((_, i) => (
+    <span
+      key={i}
+      style={{
+        width: "16px",
+        height: "2px",
+        backgroundColor: "#222",
+        borderRadius: "1px",
+      }}
+    />
+  ))}
+</Button>
+
+
+
+
+          <Space>
+            <span style={{ fontSize: 16 }}>Admin</span>
+            <Dropdown overlay={profileMenu} trigger={["click"]}>
+              <Avatar
+                size="large"
+                icon={<UserOutlined />}
+                style={{ backgroundColor: "#31A5DC", cursor: "pointer" }}
+              />
+            </Dropdown>
+          </Space>
         </Header>
+
         <Content
           style={{
+            marginTop: 64,
+            padding: 24,
+            height: "calc(100vh - 64px)",
+            overflowY: "auto",
             background: colorBgContainer,
-            borderRadius: borderRadiusLG,
           }}
         >
           {children}

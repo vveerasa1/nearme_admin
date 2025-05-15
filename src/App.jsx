@@ -84,7 +84,7 @@ function App() {
           element={<AppLayout><AddOffer /></AppLayout>} 
         />
          <Route 
-          path="/edit-offer/:_id" 
+          path="/edit-offer/:type/:_id" 
           element={<AppLayout><EditOffer /></AppLayout>} 
         />
          <Route 

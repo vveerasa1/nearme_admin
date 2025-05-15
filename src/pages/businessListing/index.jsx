@@ -7,15 +7,18 @@ import { LoadingOutlined } from "@ant-design/icons";
 import { Toaster, toast } from "react-hot-toast";
 import { Card, Button, Spin, message, Popconfirm } from "antd";
 import { BusinessContext } from "./businessContext";
+import fallbackImage from "../../assets/images/noimage.png";
+
 
 const BusinessListing = () => {
   const { businessList, setBusinessList, searchText, setSearchText } =
     useContext(BusinessContext);
   const [loading, setLoading] = useState(false);
+  const baseUrl = import.meta.env.VITE_BASE_URL;
 
   useEffect(() => {
     if (businessList.length === 0 && searchText.trim()) {
-      handleSearch(); // auto-fetch if searchText exists
+      handleSearch();
     }
   }, []);
 
@@ -25,14 +28,14 @@ const BusinessListing = () => {
 
   const handleSearch = async () => {
     if (!searchText.trim()) return;
-
+console.log('hello', baseUrl);
     try {
       setLoading(true);
-      const url = `http://localhost:4001/business?searchText=${searchText}&page=1&limit=20`;
+      const url = `${baseUrl}business?searchText=${searchText}&page=1&limit=20`;
       const response = await axios.get(url);
       setBusinessList(response.data.data.data);
       toast.success("Business data fetched successfully");
-      setSearchText(""); // Clear only after success
+      setSearchText("");
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to fetch business data");
@@ -55,7 +58,7 @@ const BusinessListing = () => {
 
   return (
     <>
-      <Toaster />
+      <Toaster position="bottom-center" />
       <div className="content-wrapper ">
         <div className="breadcrumb-wrapper d-flex flex-column flex-md-row">
           <div className="breadcrumb-block">
@@ -72,7 +75,11 @@ const BusinessListing = () => {
             </ul>
           </div>
           <div className="buttons-block d-flex">
-            <Link to="/add-new-business" className="theme-btn btn-main">
+            <Link
+              to="/add-new-business"
+              className="theme-btn btn-main"
+              onClick={() => setSidebarTab("business-listings")}
+            >
               Add New Business
             </Link>
           </div>
@@ -83,6 +90,7 @@ const BusinessListing = () => {
           <div className="row">
             <div className="col-12">
               <div className="lists-wrapper businesslist">
+                {/* Header + Search */}
                 <div className="lw-top d-flex flex-column flex-md-row">
                   <div className="list-head py-lg-0 py-3">
                     <h3>Shops</h3>
@@ -118,104 +126,159 @@ const BusinessListing = () => {
                     </form>
                   </div>
                 </div>
+
+                {/* Listings */}
+                <div className="row mt-4">
+                  {businessList.length > 0 ? (
+                    businessList.map(
+                      (item) => (
+                        console.log("", item?.photo),
+                        (
+                          <div
+                            className="col-lg-4 col-md-6 col-12 d-flex py-3"
+                            key={item._id}
+                          >
+                            <Card
+                              hoverable
+                              className="w-100 h-100 position-relative"
+                              style={{ marginBottom: "20px" }}
+                            >
+                              {/* ✅ Move This Outside the Grid System */}
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  top: "8px",
+                                  right: "8px",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "6px",
+                                  zIndex: 2,
+                                }}
+                              >
+                                <Link
+                                  to={`/edit-business/${item._id}`}
+                                  state={{ item }}
+                                  className="btn btn-sm p-1"
+                                  style={{
+                                    border: "1px solid #d9d9d9",
+                                    borderRadius: "50%",
+                                    width: "28px",
+                                    height: "28px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <Edit className="fs-6 text-primary" />
+                                </Link>
+                                <Popconfirm
+                                  title="Delete Business"
+                                  description="Are you sure to delete this data?"
+                                  onConfirm={() => deleteBusiness(item._id)}
+                                  onCancel={cancel}
+                                  okText="Yes"
+                                  cancelText="No"
+                                >
+                                  <Button
+                                    type="text"
+                                    danger
+                                    icon={<Delete className="fs-6" />}
+                                    style={{
+                                      border: "1px solid #d9d9d9",
+                                      borderRadius: "50%",
+                                      width: "28px",
+                                      height: "28px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      padding: 0,
+                                      boxShadow: "none",
+                                      background: "white",
+                                    }}
+                                  />
+                                </Popconfirm>
+                              </div>
+
+                              <div className="row w-100">
+                                {/* Image Column */}
+                                <div className="col-4">
+                                  <Link
+                                    className="text-decoration-none"
+                                    to={`/view-business/${item._id}`}
+                                    state={item}
+                                  >
+                                    <img
+                                      alt={item.name || "Business"}
+                                      style={{
+                                        height: "100%",
+                                        width: "100%",
+                                        objectFit: "cover",
+                                        borderRadius: "6px",
+                                      }}
+                                      src={
+                                        Array.isArray(item?.photo) &&
+                                        item.photo.length > 0 &&
+                                        item.photo[0]?.trim()
+                                          ? item.photo[0]
+                                          : fallbackImage
+                                      }
+                                      onError={(e) => {
+                                        e.target.src = fallbackImage;
+                                      }}
+                                      className="img-fluid"
+                                    />
+                                  </Link>
+                                </div>
+
+                                {/* Content Column */}
+                                <div className="col-lg-7 col-5 d-flex flex-column justify-content-between">
+                                  <div className="pe-4 mt-2">
+                                    <h6
+                                      className="mb-1"
+                                      style={{
+                                        display: "-webkit-box",
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: "vertical",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                      }}
+                                    >
+                                      {item.display_name || "No Name"}
+                                    </h6>
+                                    <p
+                                      className="mb-2 text-muted"
+                                      style={{
+                                        display: "-webkit-box",
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: "vertical",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                      }}
+                                    >
+                                      {item.address || "No Address"}
+                                    </p>
+                                    <Link
+                                      to={`/add-offer/${item._id}`}
+                                      className="lw-info-coupon-link available"
+                                    >
+                                      Create coupon
+                                    </Link>
+                                  </div>
+                                </div>
+                              </div>
+                            </Card>
+                          </div>
+                        )
+                      )
+                    )
+                  ) : (
+                    <div className="col-12 text-center mt-3">
+                      <p>No Business Found</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Listings */}
-        <div className="lists-container">
-          <div className="row">
-            {businessList.length > 0 ? (
-              businessList.map((item) =>{ 
-             console.log( item?.photo && item.photo.length > 0 ,item.photo[0]);
-               
-                return (
-                <div
-                  className="col-lg-4 col-md-6 col-12 d-flex py-3"
-                  key={item._id}
-                >
-                  <Card
-                    hoverable
-                    className="w-100 h-100 d-flex align-items-center"
-                    style={{ marginBottom: "20px" }}
-                  >
-                    <div className="row">
-                      <div className="col-4">
-                        <Link
-                          className="text-decoration-none"
-                          to={`/view-business/${item._id}`}
-                          state={item}
-                        >
-                          {console.log(item.photo)}
-                          {item?.photo && item.photo.length > 0 && (
-                            <img
-                              alt={item.name}
-                              style={{
-                                height: "100px",
-                                width: "100%",
-                                objectFit: "cover",
-                                borderRadius: "6px",
-                              }}
-                              src={item.photo[0]}
-                              className="img-fluid"
-                            />
-                          )}
-                        </Link>
-                      </div>
-                      <div className="col-lg-7 col-5 d-flex flex-column justify-content-between">
-                        <div>
-                          <h6 className="mb-1">
-                            {item.display_name || "No Name"}
-                          </h6>
-                          <p className="mb-2 text-muted">
-                            {item.address || "No Description"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="col-lg-1 col-2 d-flex flex-column align-items-end justify-content-between">
-                        <div>
-                          <Link
-                            to={`/edit-business/${item._id}`}
-                            className="btn border rounded-5 btn-sm mb-1"
-                          >
-                            <Edit className="fs-6 text-primary mb-1" />
-                          </Link>
-                          <Popconfirm
-                            title="Delete Business"
-                            description="Are you sure to delete this data?"
-                            onConfirm={() => deleteBusiness(item._id)}
-                            onCancel={cancel}
-                            okText="Yes"
-                            cancelText="No"
-                          >
-                            <Button
-                              type="text"
-                              className="btn border rounded-5 d-flex"
-                              icon={<Delete className="fs-6" />}
-                              danger
-                              style={{ outline: "none", boxShadow: "none" }}
-                            />
-                          </Popconfirm>
-                        </div>
-                      </div>
-                      <div className="col-12 mt-2 text-center">
-                        <Link
-                          to={`/add-offer/${item._id}`}
-                          className="lw-info-coupon-link available"
-                        >
-                          Create coupon
-                        </Link>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              )})
-            ) : (
-              <div className="col-12 text-center mt-3">
-                <p>No Business Found</p>
-              </div>
-            )}
           </div>
         </div>
       </div>

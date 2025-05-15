@@ -11,6 +11,14 @@ const Deal = () => {
   const [getDeal, setGetDeal] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(12); // Number of items per page
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const formatDateTime = (dateStr, timeStr) => {
+    const date = new Date(dateStr);
+    const options = { day: "2-digit", month: "long" }; // e.g., 30 April
+    return `${date.toLocaleDateString("en-GB", options)} ${timeStr}`;
+  };
 
   // This will hold the current page's coupons to be displayed
   const [paginatedDeals, setPaginatedDeals] = useState([]);
@@ -20,12 +28,16 @@ const Deal = () => {
       try {
         const url = "http://localhost:4001/coupons?discountType=Deal";
         const response = await axios.get(url);
-        console.log(response.data.data);
-        setGetDeal(response.data.data);
+        setGetDeal(response.data.data); // either [] or real data
       } catch (error) {
-        console.error("Error fetching data:", error);
+        if (error.response && error.response.status === 404) {
+          setGetDeal([]); // explicitly set empty to trigger "No deals" UI
+        } else {
+          console.error("Error fetching data:", error);
+        }
       }
     };
+
     fetchData();
   }, []);
 
@@ -88,8 +100,8 @@ const Deal = () => {
   return (
     <>
       <div className="content-wrapper">
-        {/* breadcrumb */}
-        <div className="breadcrumb-wrapper">
+        {/* Breadcrumb */}
+        <div className="breadcrumb-wrapper d-flex flex-column flex-md-row">
           <div className="breadcrumb-block">
             <h2 className="page-heading">Deals</h2>
             <ul className="breadcrumb-list">
@@ -99,138 +111,207 @@ const Deal = () => {
                 </Link>
               </li>
               <li className="breadcrumb-item">
-                <a className="breadcrumb-link">Deals</a>
+                <span className="breadcrumb-link">Deals</span>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* list */}
-        <div className="coupon-list container-fluid">
-          <div className="list-filter d-flex justify-content-end">
-            <form>
-              <div className="lf-search">
-                <input
-                  className="lfs-input"
-                  type="text"
-                  placeholder="Search here..."
-                  onChange={(e) => handleSearchText(e.target.value)}
-                />
-                <div className="search-icon-container">
-                  <div type="button"></div>
+        {/* List Section */}
+        <div className="lists-container py-4">
+          <div className="row">
+            <div className="col-12">
+              <div className="lists-wrapper businesslist">
+                {/* Search bar */}
+                <div className="list-filter d-flex justify-content-between align-items-center mb-3">
+                  <h5 className="mb-0 fw-semibold">Deals List</h5>
+
+                  <form>
+                    <div className="lf-search">
+                      <input
+                        className="lfs-input"
+                        type="text"
+                        placeholder="Search here..."
+                        onChange={(e) => handleSearchText(e.target.value)}
+                      />
+                      <div className="search-icon-container">
+                        <div type="button"></div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Deals Cards */}
+                <div className="row">
+                  {paginatedDeals.length > 0 ? (
+                    paginatedDeals.map((item) => {
+                      const isDisabled = item.active === false;
+
+                      return (
+                        <div
+                          className="col-lg-4 col-md-6 col-12 d-flex py-3"
+                          key={item._id}
+                        >
+                          <Card
+                            hoverable
+                            className="w-100 h-100 position-relative"
+                            style={{
+                              marginBottom: "20px",
+                              opacity: isDisabled ? 0.6 : 1,
+                              borderRadius: "10px",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                            }}
+                          >
+                            <div className="row w-100">
+                              {/* Left Image */}
+                              <div className="col-4">
+                                <Link
+                                  to={`/view/${item.discountType}/${item._id}`}
+                                  state={item}
+                                  className="text-decoration-none"
+                                >
+                                  <img
+                                    src={
+                                      item.images?.[0]?.trim()
+                                        ? item.images[0]
+                                        : fallbackImage
+                                    }
+                                    onError={(e) => {
+                                      e.target.src = fallbackImage;
+                                    }}
+                                    className="img-fluid"
+                                    alt="Deal"
+                                    style={{
+                                      height: "100px",
+                                      width: "100%",
+                                      objectFit: "cover",
+                                      borderRadius: "6px",
+                                    }}
+                                  />
+                                </Link>
+                              </div>
+
+                              {/* Right Content */}
+                              <div className="col-8 position-relative">
+                                {/* Action buttons - top right */}
+                                <div
+                                  className="position-absolute"
+                                  style={{
+                                    top: "0",
+                                    right: "0",
+                                    zIndex: 2,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "6px",
+                                  }}
+                                >
+                                  <Link
+                                    to={`/edit-offer/${item.discountType}/${item._id}`}
+                                    state={item}
+                                    className="btn border rounded-5 btn-sm"
+                                    disabled={isDisabled}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Edit className="fs-6 text-primary" />
+                                  </Link>
+                                  <Popconfirm
+                                    title="Delete the deal"
+                                    description="Are you sure to delete this deal?"
+                                    onConfirm={() => handleDelete(item._id)}
+                                    onCancel={cancel}
+                                    okText="Yes"
+                                    cancelText="No"
+                                  >
+                                    <Button
+                                      type="text"
+                                      className="btn border rounded-5 d-flex"
+                                      icon={<Delete className="fs-6" />}
+                                      danger
+                                      style={{
+                                        outline: "none",
+                                        boxShadow: "none",
+                                      }}
+                                      disabled={isDisabled}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  </Popconfirm>
+                                </div>
+
+                                {/* Deal Text */}
+                                <div
+                                  className="pe-4" // padding end to avoid overlapping with buttons
+                                  style={{ paddingRight: "60px" }}
+                                >
+                                  <h6
+                                    className="fw-semibold mb-1"
+                                    style={{
+                                      display: "-webkit-box",
+                                      WebkitLineClamp: 2,
+                                      WebkitBoxOrient: "vertical",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                    }}
+                                  >
+                                    {item.title || "No Title"}
+                                  </h6>
+
+                                  <p className="mb-1 text-muted">
+                                    <strong>Valid:</strong>{" "}
+                                    {formatDateTime(
+                                      item.dateRange?.startDate,
+                                      item.activeTime?.startTime
+                                    )}{" "}
+                                    -{" "}
+                                    {formatDateTime(
+                                      item.dateRange?.endDate,
+                                      item.activeTime?.endTime
+                                    )}
+                                  </p>
+
+                                  <Link
+                                    to={`/view/${item.discountType}/${item._id}`}
+                                    state={item}
+                                    className="text-decoration-underline text-primary fw-semibold"
+                                  >
+                                    View
+                                  </Link>
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="col-12 text-center mt-3">
+                      <p>No Deals Found</p>
+                    </div>
+                  )}
                 </div>
               </div>
-            </form>
-          </div>
-          <div className="row">
-            {paginatedDeals.length > 0 &&
-              paginatedDeals.map((item) => {
-                const isDisabled = item.active === false; // Define variable inside curly braces
-
-                return (
-                  <div
-                    className="col-lg-4   py-2 text-decoration-none"
-                    key={item._id}
-                    state={item}
-                  >
-                    <Card
-                      hoverable // Disable hover effect for inactive items
-                      className="w-100 h-100 d-lg-flex align-items-center"
-                      style={{
-                        marginBottom: "20px",
-                        opacity: isDisabled ? 0.6 : 1, // Apply opacity for disabled coupons
-                      }}
-                    >
-                      <div className="row">
-                        <div className="col-lg-3 col-12">
-                          <Link
-                            to={`/view/${item.discountType}/${item._id}`}
-                            state={item}
-                          >
-                            <img
-                              src={item.images[0]}
-                              style={{
-                                objectFit: "cover",
-                                borderRadius: "6px",
-                              }}
-                              className="img-fluid"
-                              alt="Coupon Image"
-                            />
-                          </Link>
-                        </div>
-                        <div className="col-lg-7 col mt-lg-0 mt-4 d-flex flex-column justify-content-between">
-                          <div>
-                            <h5 className="card-title">{item.title}</h5>
-                            <p className="d-flex">
-                              <b>Date: &nbsp;</b>{" "}
-                              {formatDate(item.dateRange.startDate)} -{" "}
-                              {formatDate(item.dateRange.endDate)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="col-lg-1 col-2 mt-lg-0 mt-4 d-flex flex-column align-items-end justify-content-between">
-                          <div>
-                            <Link
-                              className="btn border rounded-5 btn-sm mb-1 "
-                              to={`/edit-offer/${item._id}`}
-                              disabled={isDisabled}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
-                            >
-                              <Edit className="fs-6 text-primary mb-1  " />
-                            </Link>
-
-                            <Popconfirm
-                              title="Delete the task"
-                              description="Are you sure to delete this task?"
-                              onConfirm={() => handleDelete(item._id)}
-                              onCancel={cancel}
-                              okText="Yes"
-                              cancelText="No"
-                            >
-                              <Button
-                                type="text"
-                                className="btn border rounded-5 d-flex"
-                                icon={<Delete className="fs-6" />}
-                                danger
-                                style={{ outline: "none", boxShadow: "none" }}
-                                disabled={isDisabled}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                }}
-                              />
-                            </Popconfirm>
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  </div>
-                );
-              })}
+            </div>
           </div>
         </div>
 
+        {/* Pagination */}
         <div className="d-flex justify-content-center p-2">
-          {/* Pagination */}
-          {getDeal.length > pageSize && (
+          {paginatedDeals.length > pageSize && (
             <Pagination
               current={currentPage}
-              total={getDeal.length}
+              total={paginatedDeals.length}
               pageSize={pageSize}
               onChange={handlePageChange}
-              showSizeChanger={false} // Hide the size changer if you want fixed page size
+              showSizeChanger={false}
             />
           )}
         </div>
       </div>
 
+      {/* Delete Modal */}
       <DeleteConfirmationModal
         isOpen={isModalOpen}
-        // onClose={handleCloseModal}
         onConfirm={handleConfirmDelete}
-        itemName="Sample Item"
+        itemName="Sample Deal"
       />
     </>
   );

@@ -19,6 +19,7 @@ import {
 import axios from "axios";
 
 const Dashboard = () => {
+
   const [getTotalCount, setGetTotalCount] = useState();
   const [getNewTotalCount, setGetNewTotalCount] = useState();
   const [getTotalCouponCount, setGetTotalCouponCount] = useState();
@@ -29,20 +30,23 @@ const Dashboard = () => {
   const [graphType, setGraphType] = useState("week");
   const [graphTypeCoupon, setGraphTypeCoupon] = useState("week");
   const [loading, setLoading] = useState(true);
+  const baseUrl = import.meta.env.VITE_BASE_URL;
+
 
   const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
   useEffect(() => {
+
     const fetchData = async () => {
       try {
-        const url = "http://localhost:4001/dashboard";
-        const url1 = "http://localhost:4001/dashboard/new?last7Days=true";
-        const url2 = "http://localhost:4001/dashboard/coupon?last7Days=true";
+        const url = `${baseUrl}dashboard`;
+        const url1 = `${baseUrl}dashboard/new?last7Days=true`;
+        const url2 = `${baseUrl}dashboard/coupon?last7Days=true`;
         const url3 =
-          "http://localhost:4001/dashboard/coupon/new?last7Days=true";
-        const url5 = "http://localhost:4001/dashboard/graph?type=week";
-        const url6 = "http://localhost:4001/dashboard/graph?type=month";
-        const url7 = "http://localhost:4001/dashboard/graph?type=year";
+          `${baseUrl}dashboard/coupon/new?last7Days=true`;
+        const url5 = `${baseUrl}dashboard/graph?type=week`;
+        const url6 = `${baseUrl}dashboard/graph?type=month`;
+        const url7 = `${baseUrl}dashboard/graph?type=year`;
 
         const response = await Promise.all([
           axios.get(url),

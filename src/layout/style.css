@@ -1,56 +1,46 @@
-.main-container{
-    width: 100%;
-    position: relative;
+/* Remove link underlines in menu */
+.ant-menu-item a {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+/* Custom selected menu item */
+.ant-menu-item-selected {
+  background-color: #0689C7 !important; /* Your custom selected background */
+  border-radius: 8px !important;
+  color: #fff !important;
+}
+
+/* Change icon and link text color when selected */
+.ant-menu-item-selected .anticon,
+.ant-menu-item-selected a {
+  color: #fff !important;
+}
+  
+  /* Fix sidebar top logo height */
+  .logo-container {
+    background-color: #fff;
+    height: 64px;
     display: flex;
-    flex-direction: column;
-    background-color: var(--bg-color);
-}
-
-.content-container{
-    width: 100%;
-    position: relative;
-    display: flex;
-}
-
-.sidebar{
-    width: 247px;
-    min-width: 247px;
-    position: relative;
-    display: inline-block;
-    background-color: var(--theme-color1);
-    border-right: 1px solid var(--border-color);
-    min-height: calc(100vh - 66px);
-    transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out !important; 
-    opacity: 1; /* Fully visible */
-    overflow: hidden;
-}
-
-.content{
-    width: 100%;
-    position: relative;
-    display: inline-block;
-}
-
-.sidebar.collapse {
-    width: 0; /* Collapsed width */
-    opacity: 0; /* Fully hidden */
-    transition: all 0.3s ease-in-out;
-}
-
-/* Mobile-specific adjustments */
-@media (max-width: 768px) {
-    .sidebar {
-      width: 0; /* Initially collapsed */
-      opacity: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+  }
+  
+  /* Responsive layout */
+  @media (max-width: 768px) {
+    .ant-layout-sider {
+      position: absolute !important;
+      z-index: 1000;
+      height: 100vh !important;
     }
   
-    .sidebar:not(.collapse) {
-      width: 247px;
-      opacity: 1;
-      position: absolute;
-      z-index: 99;
-      border: none;
+    .ant-layout-header {
+      left: 0 !important;
     }
-}
-
-
+  
+    .ant-layout {
+      margin-left: 0 !important;
+    }
+  }
+  

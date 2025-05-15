@@ -2,10 +2,24 @@ import { useState, useRef, useEffect } from "react";
 import "./style.css";
 import { Link } from "react-router-dom";
 import { Star, Add, Remove, Delete } from "@mui/icons-material";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form, Field, ErrorMessage, FieldArray } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import CreatableSelect from "react-select/creatable";
+import TimePicker from "react-time-picker";
+import 'react-time-picker/dist/TimePicker.css';
+import { convert24hTo12h, formatWeeklyHours } from "./constants";
+
+
+const daysOfWeek = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 const AddBusiness = () => {
   const [photos, setPhotos] = useState(null);
@@ -14,6 +28,7 @@ const AddBusiness = () => {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
   const [photoError, setPhotoError] = useState(""); // State for image validation errors
+  
 
   const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -21,6 +36,8 @@ const AddBusiness = () => {
   const [workingHours, setWorkingHours] = useState([
     { day: "", startTime: "", endTime: "", is24Hours: false },
   ]);
+  const baseUrl = import.meta.env.VITE_BASE_URL;
+
 
   const resizeImage = (file, width, height) => {
     return new Promise((resolve, reject) => {
@@ -95,7 +112,7 @@ const AddBusiness = () => {
     const fetchTypes = async () => {
       try {
         setLoading(true);
-        const url = "http://localhost:4001/business/types";
+        const url = `${baseUrl}business/types`;
         const response = await axios.get(url);
         const options = response.data.data.map((type) => ({
           label: type,
@@ -118,6 +135,21 @@ const AddBusiness = () => {
     );
   };
 
+  // const handleWorkingHoursChange = (index, field, value) => {
+  //   setWorkingHours((prevHours) =>
+  //     prevHours.map((day, i) =>
+  //       i === index
+  //         ? {
+  //             ...day,
+  //             [field]: value,
+  //             ...(field === "is24Hours" && value
+  //               ? { startTime: "", endTime: "" } // Clear start and end times if 24 Hours is checked
+  //               : {}),
+  //           }
+  //         : day
+  //     )
+  //   );
+  // };
   const handleWorkingHoursChange = (index, field, value) => {
     setWorkingHours((prevHours) =>
       prevHours.map((day, i) =>
@@ -126,7 +158,7 @@ const AddBusiness = () => {
               ...day,
               [field]: value,
               ...(field === "is24Hours" && value
-                ? { startTime: "", endTime: "" } // Clear start and end times if 24 Hours is checked
+                ? { startTime: "", endTime: "" }
                 : {}),
             }
           : day
@@ -134,10 +166,17 @@ const AddBusiness = () => {
     );
   };
 
+  // Add a new day row
   const handleAddDay = () => {
-    setWorkingHours([...workingHours, { day: "", startTime: "", endTime: "" }]);
+    if (workingHours.length < 7) {
+      setWorkingHours([
+        ...workingHours,
+        { day: "", startTime: "", endTime: "" },
+      ]);
+    }
   };
 
+  // Remove a day row
   const handleRemoveDay = (index) => {
     const updatedDays = [...workingHours];
     updatedDays.splice(index, 1);
@@ -145,7 +184,21 @@ const AddBusiness = () => {
   };
 
   const handleSubmit = async (values, { resetForm }) => {
+    console.log("hey", values.working_hours);
+  
+    // Convert working hours to 12-hour format
+    const updatedTime = values.working_hours.map((date) => ({
+      day: date.day,
+      startTime: convert24hTo12h(date.startTime),
+      endTime: convert24hTo12h(date.endTime),
+      is24Hours: date.is24Hours
+    }));
+    console.log('hellow ', values.types);
+  
+    // Set loading state to true
     setLoading(true);
+  
+    // Format working hours for submission
     const formattedWorkingHours = workingHours.reduce((acc, day) => {
       if (day.is24Hours) {
         acc[day.day] = "Open 24 Hours";
@@ -156,45 +209,55 @@ const AddBusiness = () => {
       }
       return acc;
     }, {});
-
+  
+    // Prepare FormData to send
     const formData = new FormData();
     formData.append("display_name", values.display_name);
-    formData.append("types", JSON.stringify([values.types]));
-    formData.append("address", values.address);
-    formData.append("street", values.street);
+    formData.append("types", values.types); // Send types as a list
+    formData.append("address", values.address1);
+    formData.append("street", values.address2);
     formData.append("city", values.city);
     formData.append("state", values.state);
     formData.append("postal_code", values.postal_code);
     formData.append("county", values.county);
     formData.append("country_code", values.country_code);
-    formData.append("latitude", values.latitude);
-    formData.append("longitude", values.longitude);
-    formData.append("phone", `${values.code}${values.phone}`);
+    formData.append("phone", values.phone_number);
     formData.append("place_link", values.place_link || "");
     formData.append("rating", values.rating || "");
     formData.append("reviews", values.reviews || "");
-    formData.append("working_hours", JSON.stringify(formattedWorkingHours));
-
+    formData.append("working_hours", JSON.stringify(formatWeeklyHours(updatedTime)));
+  
+    console.log(formData);
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
+  
+    // Append photos if available
     if (photos) {
       console.log(photos);
       Array.from(photos).map((file) => formData.append("photo", file));
     }
+  
     try {
-      const response = await axios.post(
-        "http://localhost:4001/business",
-        formData
-      );
+      // Make the API request
+      const response = await axios.post(`${baseUrl}business`, formData);
       console.log("Business submitted:", response.data);
-      console.log(values.code)
+  
+      // Reset form and clear photos/working hours after submission
       setPhotos(null);
       setWorkingHours([{ day: "", startTime: "", endTime: "" }]);
       if (fileInputRef.current) fileInputRef.current.value = null;
       resetForm();
-      setLoading(false);
+
+      Nnavigate("/business-listings");
     } catch (error) {
       console.error("Submission failed:", error);
+    } finally {
+      // Stop the spinner (set loading to false)
+      setLoading(false);
     }
   };
+  
 
   return (
     <div className="content-wrapper">
@@ -219,7 +282,7 @@ const AddBusiness = () => {
         <Formik
           initialValues={{
             display_name: "",
-            types: "",
+            types: [],
             address: "",
             street: "",
             city: "",
@@ -227,22 +290,115 @@ const AddBusiness = () => {
             postal_code: "",
             county: "",
             country_code: "",
-            latitude: "",
-            longitude: "",
+            // NOTE removed by akash as lat long will be add from backend
+            // latitude: "",
+            // longitude: "",
             phone: "",
-            code:"",
+            // code: "",
             place_link: "",
             reviews: "",
             rating: "",
-            working_hours: "",
+            // working_hours:"",
+            working_hours: [
+              {
+                day: "",
+                startTime: "",
+                endTime: "",
+                is24Hours: false,
+              },
+            ]
+            // working_hours: [
+            //   {
+            //     day: "",
+            //     startTime: "",
+            //     endTime: "",
+            //     is24Hours: false,
+            //   },
+            // ],
           }}
           validationSchema={Yup.object({
-            // display_name: Yup.string().required("Title is required"),
-            // types: Yup.string().required("Types Field is Required"),
+            display_name: Yup.string().required("Name is required"),
+            types: Yup.array()
+              .min(1, "At least one type is required")
+              .of(Yup.string().required("Each type must be a valid string"))
+              .required("Types field is required"),
+            address1: Yup.string().required("Address Line 1 is required"),
+            // // address2: Yup.string().required("Address is required"),
+
+            street: Yup.string(),
+            city: Yup.string().required("City is required"),
+            state: Yup.string().required("State is required"),
+            postal_code: Yup.string()
+              .required("Postal code is required"),
+            county: Yup.string().required("County is required"),
+            country_code: Yup.string()
+    .required('Country code is required')
+    .matches(/^\+\d{1,4}$/, 'Must be a valid country code like +1 or +91'),
+
+            // latitude: Yup.number()
+            //   .typeError("Latitude must be a number")
+            //   .required("Latitude is required")
+            //   .min(-90, "Latitude must be between -90 and 90")
+            //   .max(90, "Latitude must be between -90 and 90"),
+            // longitude: Yup.number()
+            //   .typeError("Longitude must be a number")
+            //   .required("Longitude is required")
+            //   .min(-180, "Longitude must be between -180 and 180")
+            //   .max(180, "Longitude must be between -180 and 180"),
+            phone_number: Yup.string()
+              .matches(/^\+?[1-9]\d{1,14}$/, "Invalid phone number")
+              .required("Phone number is required"),
+            place_link: Yup.string()
+              .url("Invalid URL format")
+              .required("Place link is required"),
+            reviews: Yup.number()
+              .min(0, "Reviews count cannot be negative")
+              .optional()
+              .required("Reviews count is required"),
+            rating: Yup.number()
+              .min(1, "Rating must be between 1 and 5")
+              .max(5, "Rating must be between 1 and 5")
+              .optional()
+              .required("Rating is required"),
+              working_hours: Yup.array().of(
+      Yup.object().shape({
+        day: Yup.string()
+          .required("Day is required")
+          .oneOf(daysOfWeek, "Invalid day"),
+        startTime: Yup.string().when("is24Hours", {
+          is: false,
+          then: (schema) => schema.notRequired(),
+          otherwise: (schema) => schema.notRequired(),
+        }),
+        endTime: Yup.string().when("is24Hours", {
+          is: false,
+          then: (schema) => schema.notRequired(),
+          otherwise: (schema) => schema.notRequired(),
+        }),
+        is24Hours: Yup.boolean(),
+      })
+    )
+    .min(1, "At least one working hour is required"),
+            // working_hours: Yup.array().of(
+            //   Yup.object().shape({
+            //     day: Yup.string().required("Day is required"),
+            //     startTime: Yup.string().when("is24Hours", {
+            //       is: false,
+            //       then: Yup.string().required("Start time is required"),
+            //       otherwise: Yup.string().nullable(),
+            //     }),
+            //     endTime: Yup.string().when("is24Hours", {
+            //       is: false,
+            //       then: Yup.string().required("End time is required"),
+            //       otherwise: Yup.string().nullable(),
+            //     }),
+            //     is24Hours: Yup.boolean().required("is24Hours is required"),
+            //   })
+            // ),
           })}
           onSubmit={handleSubmit}
         >
-          {({ values, setFieldValue }) => (
+          {({ values, setFieldValue , errors}) => (
             <Form className="form-wrapper">
               <div className="row">
                 <div className="col-12 col-md-12 col-lg-6">
@@ -271,65 +427,73 @@ const AddBusiness = () => {
                         {loading === true ? (
                           "Data Fetching"
                         ) : (
-                          <CreatableSelect
-                            name="types"
-                            options={filteredTypes}
-                            value={
-                              values.types.length > 0 &&
-                              values.types.map(
-                                (type) =>
-                                  allTypes.find(
-                                    (option) => option.value === type
-                                  ) || {
-                                    label: type,
-                                    value: type,
-                                  }
-                              )
-                            }
-                            onChange={(selected) =>
-                              setFieldValue(
-                                "types",
-                                selected.map((option) => option.value)
-                              )
-                            }
-                            onInputChange={(inputValue) => {
-                              const filtered = allTypes.filter((option) =>
-                                option.label
-                                  .toLowerCase()
-                                  .includes(inputValue.toLowerCase())
-                              );
-                              setFilteredTypes(filtered.slice(0, 20));
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" && e.target.value) {
-                                const newType = e.target.value.trim();
-                                if (
-                                  newType &&
-                                  !allTypes.some(
-                                    (option) => option.value === newType
-                                  )
-                                ) {
-                                  const newOption = {
-                                    label: newType,
-                                    value: newType,
-                                  };
-                                  setAllTypes((prev) => [...prev, newOption]);
-                                  setFilteredTypes((prev) => [
-                                    ...prev,
-                                    newOption,
-                                  ]);
-                                  setFieldValue("types", [
-                                    ...values.types,
-                                    newType,
-                                  ]);
-                                }
-                                e.preventDefault(); // Prevent the default behavior of the Enter key
+                          <>
+                            <CreatableSelect
+                              name="types"
+                              options={filteredTypes}
+                              value={
+                                values.types.length > 0 &&
+                                values.types.map(
+                                  (type) =>
+                                    allTypes.find(
+                                      (option) => option.value === type
+                                    ) || {
+                                      label: type,
+                                      value: type,
+                                    }
+                                )
                               }
-                            }}
-                            placeholder="Select or create a type..."
-                            isMulti
-                            isSearchable
-                          />
+                              onChange={(selected) =>
+                                setFieldValue(
+                                  "types",
+                                  selected.map((option) => option.value)
+                                )
+                              }
+                              onInputChange={(inputValue) => {
+                                const filtered = allTypes.filter((option) =>
+                                  option.label
+                                    .toLowerCase()
+                                    .includes(inputValue.toLowerCase())
+                                );
+                                setFilteredTypes(filtered.slice(0, 20));
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && e.target.value) {
+                                  const newType = e.target.value.trim();
+                                  if (
+                                    newType &&
+                                    !allTypes.some(
+                                      (option) => option.value === newType
+                                    )
+                                  ) {
+                                    const newOption = {
+                                      label: newType,
+                                      value: newType,
+                                    };
+                                    setAllTypes((prev) => [...prev, newOption]);
+                                    setFilteredTypes((prev) => [
+                                      ...prev,
+                                      newOption,
+                                    ]);
+                                    setFieldValue("types", [
+                                      ...values.types,
+                                      newType,
+                                    ]);
+                                  }
+                                  e.preventDefault(); // Prevent the default behavior of the Enter key
+                                }
+                              }}
+                              placeholder="Select or create a type..."
+                              isMulti
+                              isSearchable
+                            />
+                            {/* ErrorMessage corrected to "types" */}
+                            <ErrorMessage
+                              name="types"
+                              component="div"
+                              className="error text-danger"
+                            />
+                          </>
                         )}
                       </div>
                     </div>
@@ -341,23 +505,28 @@ const AddBusiness = () => {
                         <div className="row">
                           <div className="col-12 col-md-6 col-lg-6 mb-3">
                             <Field
-                              name="address"
+                              name="address1"
                               type="text"
                               className="form-input"
                               placeholder="Address line 1"
                             />
                             <ErrorMessage
-                              name="address"
+                              name="address1"
                               component="div"
                               className="error text-danger"
                             />
                           </div>
                           <div className="col-12 col-md-6 col-lg-6 mb-3">
                             <Field
-                              name="street"
+                              name="address2"
                               type="text"
                               className="form-input"
                               placeholder="Address line 2"
+                            />{" "}
+                            <ErrorMessage
+                              name="address2"
+                              component="div"
+                              className="error text-danger"
                             />
                           </div>
                           <div className="col-12 col-md-6 col-lg-6 mb-3">
@@ -367,6 +536,11 @@ const AddBusiness = () => {
                               className="form-input"
                               placeholder="City"
                             />
+                            <ErrorMessage
+                              name="city"
+                              component="div"
+                              className="error text-danger"
+                            />
                           </div>
                           <div className="col-12 col-md-6 col-lg-6 mb-3">
                             <Field
@@ -374,6 +548,11 @@ const AddBusiness = () => {
                               type="text"
                               className="form-input"
                               placeholder="State / Province / Region"
+                            />
+                            <ErrorMessage
+                              name="state"
+                              component="div"
+                              className="error text-danger"
                             />
                           </div>
                           <div className="col-12 col-md-6 col-lg-6 mb-3">
@@ -383,6 +562,11 @@ const AddBusiness = () => {
                               className="form-input"
                               placeholder="Postal code / Zip code"
                             />
+                            <ErrorMessage
+                              name="postal_code"
+                              component="div"
+                              className="error text-danger"
+                            />
                           </div>
                           <div className="col-12 col-md-6 col-lg-6 mb-3">
                             <Field
@@ -391,20 +575,48 @@ const AddBusiness = () => {
                               className="form-input"
                               placeholder="County"
                             />
-                          </div>
-                          <div className="col-12 col-md-6 col-lg-6 mb-3">
-                            <Field
-                              name="country_code"
-                              type="text"
-                              className="form-input"
-                              placeholder="CA"
+                            <ErrorMessage
+                              name="county"
+                              component="div"
+                              className="error text-danger"
                             />
                           </div>
+                          <div className="col-12 col-md-6 col-lg-6 mb-3">
+  <Field name="country_code">
+    {({ field, form }) => (
+      <input
+        {...field}
+        type="text"
+        className="form-input"
+        placeholder="+91"
+        onChange={(e) => {
+          let val = e.target.value;
+
+          // Auto-prepend "+" if missing and remove non-numeric characters
+          if (!val.startsWith('+')) {
+            val = '+' + val.replace(/[^0-9]/g, '');
+          } else {
+            val = '+' + val.slice(1).replace(/[^0-9]/g, '');
+          }
+
+          form.setFieldValue('country_code', val);
+        }}
+      />
+    )}
+  </Field>
+
+  <ErrorMessage
+    name="country_code"
+    component="div"
+    className="error text-danger"
+  />
+</div>
+
                         </div>
                       </div>
                     </div>
                     {/* Latitude */}
-                    <div className="col-12 col-md-12 col-lg-6 mb-3">
+                    {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
                       <div className="form-group">
                         <label className="form-label">Latitude</label>
                         <Field
@@ -419,9 +631,9 @@ const AddBusiness = () => {
                           className="error text-danger"
                         />
                       </div>
-                    </div>
+                    </div> */}
                     {/* Longitude */}
-                    <div className="col-12 col-md-12 col-lg-6 mb-3">
+                    {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
                       <div className="form-group">
                         <label className="form-label">Longitude</label>
                         <Field
@@ -436,7 +648,7 @@ const AddBusiness = () => {
                           className="error text-danger"
                         />
                       </div>
-                    </div>
+                    </div> */}
                     {/* image */}
                     <div className="col-12 col-md-12 col-lg-12 mb-3">
                       <div className="form-group">
@@ -460,27 +672,26 @@ const AddBusiness = () => {
                               photos.map((file, index) => (
                                 <div
                                   key={index}
-                                  className="uploaded-file row  py-2"
+                                  className="uploaded-file row py-2"
                                 >
-                                  <div className=" col">
-                                    <span className="">{file.name}</span>
+                                  <div className="col">
+                                    <span>{file.name}</span>
                                   </div>
                                   <div className="col">
                                     <button
                                       type="button"
-                                      className="remove-btn btn btn-sm btn-sm "
+                                      className="remove-btn btn btn-sm btn-sm"
                                       onClick={() => handleRemoveImage(index)}
                                     >
                                       <Delete className="text-danger" />
                                     </button>
                                   </div>
-
-                                  <div className=""></div>
                                 </div>
                               ))
                             ) : (
                               <p>Choose files or drag and drop here</p>
                             )}
+
                             {photoError && (
                               <div className="error text-danger">
                                 {photoError}
@@ -489,6 +700,15 @@ const AddBusiness = () => {
                           </div>
                         </div>
                       </div>
+
+                      {/* Add note below the file upload section */}
+                      <p
+                        className="note text-muted"
+                        style={{ fontSize: "0.875rem" }}
+                      >
+                        Note: Upload images in JPEG, PNG, GIF, or SVG format,
+                        max 5MB, and between 800x600 pixels.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -498,24 +718,23 @@ const AddBusiness = () => {
                     <div className="col-12 col-md-12 col-lg-12 mb-3">
                       <div className="form-group">
                         <label className="form-label">Phone number</label>
-                        <div className="d-flex gap-2">
-                          {/* Country Code Select */}
-                          <Field as="select" name="code" className="form-control w-25">
-                            <option value="+1">+1 (USA)</option>
-                            <option value="+91">+91 (India)</option>
-                            <option value="+44">+44 (UK)</option>
-                            <option value="+61">+61 (Australia)</option>
-                            <option value="+81">+81 (Japan)</option>
-                          </Field>
-
-                          {/* Phone Number Input */}
+                        {/* <div className="col-12 col-md-12 col-lg-12 mb-3">
+                        <div className="form-group"> */}
+                          {/* <label className="form-label">Phone number</label> */}
+                         
                           <Field
-                            name="phone"
-                            type="text"
-                            className="form-input w-75"
+                            name="phone_number"
+                            type="number"
+                            className="form-input"
                             placeholder="Phone number"
                           />
-                        </div>
+                        {/* </div> */}
+                      {/* </div> */}
+                        <ErrorMessage
+                          name="phone_number"
+                          component="div"
+                          className="error text-danger"
+                        />
                       </div>
                     </div>
                     {/* place link */}
@@ -524,9 +743,9 @@ const AddBusiness = () => {
                         <label className="form-label">Place Link</label>
                         <Field
                           name="place_link"
-                          type="text"
+                          type="url"
                           className="form-input"
-                          placeholder="Place Link"
+                          placeholder="Place map link"
                         />
                         <ErrorMessage
                           name="place_link"
@@ -536,7 +755,39 @@ const AddBusiness = () => {
                       </div>
                     </div>
                     {/* rating */}
-                    <div className="col-12 col-md-6 col-lg-6 mb-3">
+
+                    <div className="col-12 col-md-6 col-lg-6 mb-4">
+                      <div className="form-group">
+                        <label className="form-label">Rating</label>
+                        <div className="position-relative">
+                          <Field
+                            name="rating"
+                            type="number"
+                            step="0.1"
+                            className="form-input pe-5"
+                            placeholder="Enter number of ratings"
+                          />
+
+                          <Star
+                            className="ratingInputStar"
+                            style={{
+                              position: "absolute",
+                              top: "50%",
+                              right: "10px",
+                              transform: "translateY(-50%)",
+                              pointerEvents: "none",
+                            }}
+                          />
+                        </div>
+                        <ErrorMessage
+                          name="rating"
+                          component="div"
+                          className="error text-danger"
+                        />
+                      </div>
+                    </div>
+
+                    {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
                       <div className="form-group">
                         <label className="form-label">Rating</label>
                         <div className="ratinginput">
@@ -554,7 +805,7 @@ const AddBusiness = () => {
                               className="error text-danger"
                             />
                           </div>
-                          <div className="position-relative">
+                           <div className="position-relative">
                             <Field
                               name="rating"
                               type="text"
@@ -566,19 +817,20 @@ const AddBusiness = () => {
                               component="div"
                               className="error text-danger"
                             />
-                          </div>
+                          </div> 
                         </div>
                       </div>
-                    </div>
+                    </div> */}
                     <div className="col-12 col-md-6 col-lg-6 mb-4">
                       <div className="form-group">
                         <label className="form-label">Review</label>
                         <Field
                           name="reviews"
-                          type="text"
+                          type="number"
                           className="form-input"
-                          placeholder=""
+                          placeholder="Enter number of reviews"
                         />
+
                         <ErrorMessage
                           name="reviews"
                           component="div"
@@ -594,7 +846,138 @@ const AddBusiness = () => {
                     </div>
                     {/* fields */}
                     {/* Working HOurs section */}
-                    <div className="custom-days">
+                   
+
+          <FieldArray name="working_hours">
+            {({ push, remove }) => (
+              <div className="custom-days">
+                {values.working_hours.map((day, index) => (
+                  <div
+                    key={index}
+                    className="custom-day-row mb-2 d-flex gap-2 align-items-start"
+                  >
+                    {/* Day Select */}
+                    <div className="w-25">
+                      <Field
+                        as="select"
+                        name={`working_hours[${index}].day`}
+                        className="form-control"
+                      >
+                        <option value="" disabled>
+                          Select a day
+                        </option>
+                        {daysOfWeek.map((dayName) => (
+                          <option
+                            key={dayName}
+                            value={dayName}
+                            disabled={values.working_hours.some(
+                              (item, idx) =>
+                                item.day === dayName && idx !== index
+                            )}
+                          >
+                            {dayName}
+                          </option>
+                        ))}
+                      </Field>
+                      <ErrorMessage
+                        name={`working_hours[${index}].day`}
+                        component="div"
+                        className="text-danger"
+                      />
+                    </div>
+
+                    {/* Start Time */}
+                    <div className="w-25">
+                    
+                      <Field
+                        type="time"
+                        name={`working_hours[${index}].startTime`}
+                        className="form-control"
+                        disabled={day.is24Hours}
+                      />
+                      <ErrorMessage
+                        name={`working_hours[${index}].startTime`}
+                        component="div"
+                        className="text-danger"
+                      />
+                    </div>
+
+                    {/* End Time */}
+                    <div className="w-25">
+                      <Field
+                        type="time"
+                        name={`working_hours[${index}].endTime`}
+                        className="form-control"
+                        disabled={day.is24Hours}
+                      />
+                      <ErrorMessage
+                        name={`working_hours[${index}].endTime`}
+                        component="div"
+                        className="text-danger"
+                      />
+                    </div>
+
+                    {/* 24 Hours Checkbox */}
+                    <div className="form-check mt-2">
+                      <Field
+                        type="checkbox"
+                        name={`working_hours[${index}].is24Hours`}
+                        checked={day.is24Hours}
+                        onChange={(e) => {
+                          setFieldValue(
+                            `working_hours[${index}].is24Hours`,
+                            e.target.checked
+                          );
+                          if (e.target.checked) {
+                            setFieldValue(
+                              `working_hours[${index}].startTime`,
+                              ""
+                            );
+                            setFieldValue(`working_hours[${index}].endTime`, "");
+                          }
+                        }}
+                      />
+                      <label className="form-check-label ms-2">
+                        24 Hours
+                      </label>
+                    </div>
+
+                    {/* Add / Remove Buttons */}
+                    <div className="d-flex flex-column mt-1">
+                      {index === 0 && values.working_hours.length < 7 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            push({
+                              day: "",
+                              startTime: "",
+                              endTime: "",
+                              is24Hours: false,
+                            })
+                          }
+                          className="btn btn-sm btn-primary mb-2"
+                        >
+                          <Add/>
+                        </button>
+                      )}
+                      {values.working_hours.length > 1 && index !== 0 && (
+                        <button
+                          type="button"
+                          onClick={() => remove(index)}
+                          className="btn btn-sm btn-danger"
+                        >
+                          <Remove/>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </FieldArray>
+
+    
+                    {/* <div className="custom-days">
                       {workingHours.map((day, index) => (
                         <div
                           key={index}
@@ -611,7 +994,7 @@ const AddBusiness = () => {
                                 e.target.value
                               )
                             }
-                            className="form-control w-25" // optional Bootstrap or your own styling
+                            className="form-control w-25"
                           >
                             <option value="" disabled>
                               Select a day
@@ -626,7 +1009,7 @@ const AddBusiness = () => {
                           </Field>
 
                           <Field
-                            className="form-control w-25" // optional Bootstrap or your own styling
+                            className="form-control w-25"
                             type="time"
                             placeholder="Start Time"
                             value={day.startTime}
@@ -639,7 +1022,7 @@ const AddBusiness = () => {
                             }
                           />
                           <Field
-                            className="form-control w-25" // optional Bootstrap or your own styling
+                            className="form-control w-25"
                             type="time"
                             placeholder="End Time"
                             value={day.endTime}
@@ -693,7 +1076,7 @@ const AddBusiness = () => {
                           )}
                         </div>
                       ))}
-                    </div>
+                    </div> */}
                   </div>
                 </div>
                 {/* Submit Button */}
@@ -704,12 +1087,19 @@ const AddBusiness = () => {
                     <button className="theme-btn btn-border" type="button">
                       Clear
                     </button>
-                    <button className="theme-btn btn-main" type="submit">
-                      Save
-                    </button>
+                    <button className="theme-btn btn-main" type="submit" disabled={loading}>
+  {loading ? (
+    <>
+      <i className="fa fa-spinner fa-spin" style={{ marginRight: 8 }}></i> Saving...
+    </>
+  ) : (
+    "Save"
+  )}
+</button>
                   </div>
                 </div>
               </div>
+            {console.log(errors, "formik errors")}
             </Form>
           )}
         </Formik>

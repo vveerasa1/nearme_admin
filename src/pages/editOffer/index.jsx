@@ -18,7 +18,7 @@ dayjs.extend(isBetween);
 const { RangePicker } = DatePicker;
 
 const EditOffer = () => {
-  const { _id } = useParams();
+  const { type, _id } = useParams();
   const [customDays, setCustomDays] = useState([
     { day: "", startTime: "", endTime: "" },
   ]);
@@ -321,7 +321,7 @@ const EditOffer = () => {
       {/* breadcrumb */}
       <div className="breadcrumb-wrapper">
         <div className="breadcrumb-block">
-          <h2 className="page-heading">Edit Offer</h2>
+          <h2 className="page-heading">Edit {type}</h2>
           <ul className="breadcrumb-list">
             <li className="breadcrumb-item">
               <Link to={"/dashboard"} className="breadcrumb-link">
@@ -329,7 +329,7 @@ const EditOffer = () => {
               </Link>
             </li>
             <li className="breadcrumb-item">
-              <a className="breadcrumb-link">Offer</a>
+              <a className="breadcrumb-link">{type}</a>
             </li>
           </ul>
         </div>

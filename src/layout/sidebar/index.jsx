@@ -9,7 +9,6 @@ const Sidebar = () => {
     const [activePath, setActivePath] = useState(location.pathname);
 
     useEffect(() => {
-        // Update active path whenever the location changes
         setActivePath(location.pathname);
     }, [location]);
 
@@ -17,7 +16,7 @@ const Sidebar = () => {
         { label: 'Dashboard', icon: <Home />, path: '/dashboard' },
         { label: 'Business Listings', icon: <Business />, path: '/business-listings' },
         { label: 'Deals', icon: <LocalOffer />, path: '/deals' },
-        { label: 'Discounts', icon: <LocalOffer />, path: '/discounts' },
+        { label: 'Discountttttttttttttttts', icon: <LocalOffer />, path: '/discounts' },
         { label: 'Coupons', icon: <LocalOffer />, path: '/coupons' },
     ];
 
@@ -30,10 +29,10 @@ const Sidebar = () => {
                     to={item.path}
                     className='menuItemBtn'
                     sx={{
-                        backgroundColor: activePath === item.path ? '#0689C7' : 'transparent',
+                        backgroundColor: activePath === item.path ? '#FF5722' : 'transparent',
                         color: activePath === item.path ? '#fff' : 'inherit',
                         '&:hover': {
-                            backgroundColor: '#0689C7',
+                            backgroundColor: '#FF5722',
                         },
                     }}
                 >
