@@ -1,45 +1,64 @@
 import { useState, useEffect } from "react";
 import "./style.css";
+import {Spin} from "antd";
 import { Link } from "react-router-dom";
 import DeleteConfirmationModal from "../../components/deleteConfirmation";
 import axios from "axios";
 import { Card, Pagination, Button, Popconfirm, message } from "antd";
 import { Edit, Delete } from "@mui/icons-material";
-
+import { debounce } from "lodash";
+import fallbackImage from "../../assets/images/landingPage.png";
 const Discount = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [getDiscount, setGetDiscount] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(12); // Number of items per page
+    const [loading,setLoading] = useState(false)
+  
   const formatDateTime = (dateStr, timeStr) => {
     const date = new Date(dateStr);
     const options = { day: "2-digit", month: "long" }; // e.g., 30 April
     return `${date.toLocaleDateString("en-GB", options)} ${timeStr}`;
   };
+  const hostUrl = import.meta.env.VITE_BASE_URL;
 
   // This will hold the current page's coupons to be displayed
-  const [paginatedDiscounts, setPaginatedDiscounts] = useState([]);
+
+  useEffect(()=>{
+    fetchData()
+  },[])
+
+  const fetchData = async (searchText) => {
+    try {
+      setLoading(true)
+      const baseUrl = `${hostUrl}coupons?discountType=Discount`;
+      const url = searchText
+        ? `${baseUrl}&keyword=${encodeURIComponent(searchText)}`
+        : baseUrl;      
+      const response = await axios.get(url);
+      console.log(response)
+      setGetDiscount(response.data.data.couponInfo);
+      setLoading(false)
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  
+ const handleSearchChange = (e) => {
+    const value = e.target.value;
+    debouncedFetchData(value);
+  };
+  
+  const debouncedFetchData = debounce((searchText) => {
+    setCurrentPage(1);
+    fetchData(searchText);
+  }, 500);
+  
+  
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const url = "http://localhost:4001/coupons?discountType=Discount";
-        const response = await axios.get(url);
-        console.log(response.data.data);
-        setGetDiscount(response.data.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    fetchData();
-  }, []);
 
-  // Update paginatedCoupons whenever the data or currentPage changes
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = currentPage * pageSize;
-    setPaginatedDiscounts(getDiscount.slice(startIndex, endIndex));
-  }, [currentPage, getDiscount]);
+}, [currentPage, getDiscount]);
 
   const handleConfirmDelete = () => {
     console.log("Item deleted");
@@ -53,7 +72,7 @@ const Discount = () => {
   const handleDelete = async (_id) => {
     try {
       const response = await axios.delete(
-        `http://localhost:4001/coupons/${_id}`
+        `${hostUrl}coupons/${_id}`
       );
       console.log(response);
     } catch (err) {
@@ -66,21 +85,7 @@ const Discount = () => {
     message.error("Click on No");
   };
 
-  const handleSearchText = (searchText) => {
-    if (!searchText) {
-      const startIndex = (currentPage - 1) * pageSize;
-      const endIndex = currentPage * pageSize;
-      setPaginatedDiscounts(getDiscount.slice(startIndex, endIndex));
-      return;
-    }
-
-    const searchData = getDiscount.filter((item) =>
-      item.title.toLowerCase().includes(searchText.toLowerCase())
-    );
-
-    setPaginatedDiscounts(searchData);
-    setCurrentPage(1);
-  };
+  
 
   return (
     <>
@@ -117,7 +122,7 @@ const Discount = () => {
                         className="lfs-input"
                         type="text"
                         placeholder="Search here..."
-                        onChange={(e) => handleSearchText(e.target.value)}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                       />
                       <div className="search-icon-container">
                         <div type="button"></div>
@@ -128,8 +133,10 @@ const Discount = () => {
 
                 {/* Discount Cards */}
                 <div className="row">
-                  {paginatedDiscounts.length > 0 ? (
-                    paginatedDiscounts.map((item) => {
+                  {
+                  loading === true ? <Spin/> :
+                  getDiscount.length > 0 ? (
+                    getDiscount.map((item) => {
                       const isDisabled = item.active === false;
 
                       return (

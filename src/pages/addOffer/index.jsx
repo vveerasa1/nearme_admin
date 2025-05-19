@@ -92,30 +92,41 @@ const AddOffer = () => {
   const [range, setRange] = useState([dayjs(), dayjs()]);
   const [disabledDays, setDisabledDays] = useState([]);
   const [loading, setLoading] = useState(false);
-  const { _id } = useParams();
+
+  const hostUrl = import.meta.env.VITE_BASE_URL;
 
   const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
-  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
   const MAX_IMAGES = 5;
+
+  const { _id } = useParams();
 
   const resizeImage = (file, width, height) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       const reader = new FileReader();
-      reader.onload = (e) => (img.src = e.target.result);
+
+      reader.onload = (e) => {
+        img.src = e.target.result;
+      };
+
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
+
         canvas.width = width;
         canvas.height = height;
         ctx.drawImage(img, 0, 0, width, height);
+
         canvas.toBlob(
           (blob) => resolve(new File([blob], file.name, { type: file.type })),
           file.type,
           1
         );
       };
+
       img.onerror = (err) => reject(err);
+
       reader.readAsDataURL(file);
     });
   };
@@ -124,6 +135,7 @@ const AddOffer = () => {
     const files = Array.from(e.target.files);
     let error = "";
 
+    // Validate file count
     if (files.length + images.length > MAX_IMAGES) {
       error = `You can upload a maximum of ${MAX_IMAGES} images.`;
     }

@@ -61,7 +61,7 @@ const EditBusiness = () => {
         endTime: "",
         is24Hours: false,
       },
-    ]
+    ],
   });
 
   useEffect(() => {
@@ -101,7 +101,7 @@ const EditBusiness = () => {
                 return [];
               }
             })();
-  
+
         // Parse working hours safely
         const parsedWorkingHours = (() => {
           try {
@@ -167,17 +167,16 @@ const EditBusiness = () => {
           reviews: data.reviews || "",
           working_hours: transformedWorkingHours,
         });
-  
+
         setLoading(false);
       } catch (err) {
         console.error("Error fetching offer data:", err);
         setLoading(false);
       }
     };
-  
+
     fetchData();
   }, [_id]);
-  
 
   const resizeImage = (file, width, height) => {
     return new Promise((resolve, reject) => {
@@ -282,10 +281,10 @@ const EditBusiness = () => {
     console.log("hey", values.working_hours);
     const updatedTime = values.working_hours.map((date) => ({
       day: date.day,
-      startTime: convert24hTo12h( date.startTime),
+      startTime: convert24hTo12h(date.startTime),
       endTime: convert24hTo12h(date.endTime),
-      is24Hours: date.is24Hours
-    }))
+      is24Hours: date.is24Hours,
+    }));
     console.log(updatedTime);
     const formData = new FormData();
     formData.append("display_name", values.display_name);
@@ -371,14 +370,14 @@ const EditBusiness = () => {
           <Spin />
         ) : (
           <Formik
-          initialValues={initialValues}
-          enableReinitialize
-          validationSchema={Yup.object({
-            display_name: Yup.string().required("Title is required"),
-            // Add other validations here
-          })}
-          onSubmit={handleSubmit}
-        >
+            initialValues={initialValues}
+            enableReinitialize
+            validationSchema={Yup.object({
+              display_name: Yup.string().required("Title is required"),
+              // Add other validations here
+            })}
+            onSubmit={handleSubmit}
+          >
             {({ values, setFieldValue }) => (
               <Form className="form-wrapper">
                 <div className="row">
@@ -654,7 +653,7 @@ const EditBusiness = () => {
                       <div className="col-12 col-md-12 col-lg-12 mb-3">
                         <div className="form-group">
                           <label className="form-label">Phone number</label>
-                         
+
                           <Field
                             name="phone"
                             type="number"
@@ -677,37 +676,37 @@ const EditBusiness = () => {
                       </div>
                       {/* rating */}
                       <div className="col-12 col-md-6 col-lg-6 mb-4">
-                      <div className="form-group">
-                        <label className="form-label">Rating</label>
-                        <div className="position-relative">
-                          <Field
-                            name="rating"
-                            type="number"
-                            step="0.1"
-                            className="form-input pe-5"
-                            placeholder="Enter number of ratings"
-                          />
+                        <div className="form-group">
+                          <label className="form-label">Rating</label>
+                          <div className="position-relative">
+                            <Field
+                              name="rating"
+                              type="number"
+                              step="0.1"
+                              className="form-input pe-5"
+                              placeholder="Enter number of ratings"
+                            />
 
-                          <Star
-                            className="ratingInputStar"
-                            style={{
-                              position: "absolute",
-                              top: "50%",
-                              right: "10px",
-                              transform: "translateY(-50%)",
-                              pointerEvents: "none",
-                            }}
+                            <Star
+                              className="ratingInputStar"
+                              style={{
+                                position: "absolute",
+                                top: "50%",
+                                right: "10px",
+                                transform: "translateY(-50%)",
+                                pointerEvents: "none",
+                              }}
+                            />
+                          </div>
+                          <ErrorMessage
+                            name="rating"
+                            component="div"
+                            className="error text-danger"
                           />
                         </div>
-                        <ErrorMessage
-                          name="rating"
-                          component="div"
-                          className="error text-danger"
-                        />
                       </div>
-                    </div>
 
-                    {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
+                      {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
                       <div className="form-group">
                         <label className="form-label">Rating</label>
                         <div className="ratinginput">
@@ -741,69 +740,72 @@ const EditBusiness = () => {
                         </div>
                       </div>
                     </div> */}
-                    <div className="col-12 col-md-6 col-lg-6 mb-4">
-                      <div className="form-group">
-                        <label className="form-label">Review</label>
-                        <Field
-                          name="reviews"
-                          type="number"
-                          className="form-input"
-                          placeholder="Enter number of reviews"
-                        />
+                      <div className="col-12 col-md-6 col-lg-6 mb-4">
+                        <div className="form-group">
+                          <label className="form-label">Review</label>
+                          <Field
+                            name="reviews"
+                            type="number"
+                            className="form-input"
+                            placeholder="Enter number of reviews"
+                          />
 
-                        <ErrorMessage
-                          name="reviews"
-                          component="div"
-                          className="error text-danger"
-                        />
+                          <ErrorMessage
+                            name="reviews"
+                            component="div"
+                            className="error text-danger"
+                          />
+                        </div>
                       </div>
-                    </div>
                       {/* working hours */}
 
                       {/* Custom days section */}
                       <div className="col-12 col-md-12 col-lg-12 mb-4">
-                      <div className="form-group">
-                        <label className="form-label">Working hours</label>
+                        <div className="form-group">
+                          <label className="form-label">Working hours</label>
+                        </div>
                       </div>
-                    </div>
-                    <FieldArray name="working_hours">
-  {({ push, remove }) => (
-    <div className="custom-days">
-      {Array.isArray(values.working_hours) &&
-        values.working_hours.map((day, index) => (
-          <div
-            key={index}
-            className="custom-day-row mb-2 d-flex gap-2 align-items-start"
-          >
-            {/* Day Select */}
-            <div className="w-25">
-              <Field
-                as="select"
-                name={`working_hours[${index}].day`}
-                className="form-control"
-              >
-                <option value="" disabled>
-                  Select a day
-                </option>
-                {daysOfWeek.map((dayName) => (
-                  <option
-                    key={dayName}
-                    value={dayName}
-                    disabled={values.working_hours.some(
-                      (item, idx) =>
-                        item.day === dayName && idx !== index
-                    )}
-                  >
-                    {dayName}
-                  </option>
-                ))}
-              </Field>
-              <ErrorMessage
-                name={`working_hours[${index}].day`}
-                component="div"
-                className="text-danger"
-              />
-            </div>
+                      <FieldArray name="working_hours">
+                        {({ push, remove }) => (
+                          <div className="custom-days">
+                            {console.info("WORKING HOURS", workingHours)}
+                            {(values.working_hours) &&
+                              values.working_hours.map((day, index) => (
+                                <div
+                                  key={index}
+                                  className="custom-day-row mb-2 d-flex gap-2 align-items-start"
+                                >
+                                  {/* Day Select */}
+                                  <div className="w-25">
+                                    <Field
+                                      as="select"
+                                      name={`working_hours[${index}].day`}
+                                      className="form-control"
+                                    >
+                                      <option value="" disabled>
+                                        Select a day
+                                      </option>
+                                      {console.log("daysOfWeek", daysOfWeek)}
+                                      {daysOfWeek.map((dayName) => (
+                                        <option
+                                          key={dayName}
+                                          value={dayName}
+                                          disabled={values.working_hours.some(
+                                            (item, idx) =>
+                                              item.day === dayName &&
+                                              idx !== index
+                                          )}
+                                        >
+                                          {dayName}
+                                        </option>
+                                      ))}
+                                    </Field>
+                                    <ErrorMessage
+                                      name={`working_hours[${index}].day`}
+                                      component="div"
+                                      className="text-danger"
+                                    />
+                                  </div>
 
             {/* Start Time */}
             <div className="w-25 d-flex align-items-center">
@@ -835,61 +837,70 @@ const EditBusiness = () => {
               </span> */}
             </div>
 
-            {/* 24 Hours Checkbox */}
-            <div className="form-check mt-2">
-              <Field
-                type="checkbox"
-                name={`working_hours[${index}].is24Hours`}
-                checked={day.is24Hours}
-                onChange={(e) => {
-                  const checked = e.target.checked;
-                  setFieldValue(
-                    `working_hours[${index}].is24Hours`,
-                    checked
-                  );
-                  if (checked) {
-                    setFieldValue(`working_hours[${index}].startTime`, "");
-                    setFieldValue(`working_hours[${index}].endTime`, "");
-                  }
-                }}
-              />
-              <label className="form-check-label ms-2">24 Hours</label>
-            </div>
+                                  {/* 24 Hours Checkbox */}
+                                  <div className="form-check mt-2">
+                                    <Field
+                                      type="checkbox"
+                                      name={`working_hours[${index}].is24Hours`}
+                                      checked={day.is24Hours}
+                                      onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setFieldValue(
+                                          `working_hours[${index}].is24Hours`,
+                                          checked
+                                        );
+                                        if (checked) {
+                                          setFieldValue(
+                                            `working_hours[${index}].startTime`,
+                                            ""
+                                          );
+                                          setFieldValue(
+                                            `working_hours[${index}].endTime`,
+                                            ""
+                                          );
+                                        }
+                                      }}
+                                    />
+                                    <label className="form-check-label ms-2">
+                                      24 Hours
+                                    </label>
+                                  </div>
 
-            {/* Add / Remove Buttons */}
-            <div className="d-flex flex-column mt-1">
-              {index === 0 && values.working_hours.length < 7 && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    push({
-                      day: "",
-                      startTime: "",
-                      endTime: "",
-                      is24Hours: false,
-                    })
-                  }
-                  className="btn btn-sm btn-primary mb-2"
-                >
-                  <Add />
-                </button>
-              )}
-              {values.working_hours.length > 1 && index !== 0 && (
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="btn btn-sm btn-danger"
-                >
-                  <Remove />
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-    </div>
-  )}
-</FieldArray>
-
+                                  {/* Add / Remove Buttons */}
+                                  <div className="d-flex flex-column mt-1">
+                                    {index === 0 &&
+                                      values.working_hours.length < 7 && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            push({
+                                              day: "",
+                                              startTime: "",
+                                              endTime: "",
+                                              is24Hours: false,
+                                            })
+                                          }
+                                          className="btn btn-sm btn-primary mb-2"
+                                        >
+                                          <Add />
+                                        </button>
+                                      )}
+                                    {values.working_hours.length > 1 &&
+                                      index !== 0 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => remove(index)}
+                                          className="btn btn-sm btn-danger"
+                                        >
+                                          <Remove />
+                                        </button>
+                                      )}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </FieldArray>
 
                       {/* <div className="custom-days">
                         <label className="form-label">Working hours</label>

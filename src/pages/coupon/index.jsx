@@ -1,43 +1,64 @@
 import { useState, useEffect } from "react";
 import "./style.css";
+import {Spin} from "antd";
 import { Link } from "react-router-dom";
 import DeleteConfirmationModal from "../../components/deleteConfirmation";
 import axios from "axios";
 import { Card, Pagination, Button, Popconfirm, message } from "antd";
 import { Edit, Delete } from "@mui/icons-material";
+import { debounce } from "lodash";
+import fallbackImage from "../../assets/images/landingPage.png";
 
 const Coupon = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [getCoupon, setGetCoupon] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(12);
-  const [paginatedCoupons, setPaginatedCoupons] = useState([]);
-  const formatDateTime = (dateStr, timeStr) => {
+  const [loading,setLoading] = useState(false)
+  const formatDateTime = (dateStr) => {
     const date = new Date(dateStr);
     const options = { day: "2-digit", month: "long" };
-    return `${date.toLocaleDateString("en-GB", options)} ${timeStr}`;
+    return `${date.toLocaleDateString("en-GB", options)} `;
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const url = "http://localhost:4001/coupons?discountType=Coupon";
-        const response = await axios.get(url);
-        console.log(response.data.data);
-        setGetCoupon(response.data.data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    fetchData();
-  }, []);
+  const hostUrl = import.meta.env.VITE_BASE_URL;
 
-  // Update paginatedCoupons whenever the data or currentPage changes
+
+  useEffect(()=>{
+    fetchData()
+  },[])
+
+  const fetchData = async (searchText) => {
+    try {
+      setLoading(true)
+      const baseUrl = `${hostUrl}coupons?discountType=Coupon`;
+      const url = searchText
+        ? `${baseUrl}&keyword=${encodeURIComponent(searchText)}`
+        : baseUrl;      
+      const response = await axios.get(url);
+      console.log(response)
+      setGetCoupon(response.data.data.couponInfo);
+      setLoading(false)
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    debouncedFetchData(value);
+  };
+  
+  const debouncedFetchData = debounce((searchText) => {
+    setCurrentPage(1);
+    fetchData(searchText);
+  }, 500);
+  
+  
+
   useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = currentPage * pageSize;
-    setPaginatedCoupons(getCoupon.slice(startIndex, endIndex));
-  }, [currentPage, getCoupon]);
+
+}, [currentPage, getCoupon]);
 
   const handleConfirmDelete = () => {
     console.log("Item deleted");
@@ -51,7 +72,7 @@ const Coupon = () => {
   const handleDelete = async (_id) => {
     try {
       const response = await axios.delete(
-        `http://localhost:4001/coupons/${_id}`
+        `${hostUrl}coupons/${_id}`
       );
       console.log(response);
     } catch (err) {
@@ -64,21 +85,6 @@ const Coupon = () => {
     message.error("Click on No");
   };
 
-  const handleSearchText = (searchText) => {
-    if (!searchText) {
-      const startIndex = (currentPage - 1) * pageSize;
-      const endIndex = currentPage * pageSize;
-      setPaginatedCoupons(getCoupon.slice(startIndex, endIndex));
-      return;
-    }
-
-    const searchData = getCoupon.filter((item) =>
-      item.title.toLowerCase().includes(searchText.toLowerCase())
-    );
-
-    setPaginatedCoupons(searchData);
-    setCurrentPage(1);
-  };
 
   return (
     <>
@@ -117,7 +123,7 @@ const Coupon = () => {
                         className="lfs-input"
                         type="text"
                         placeholder="Search here..."
-                        onChange={(e) => handleSearchText(e.target.value)}
+                        onChange={handleSearchChange}
                       />
                       <div className="search-icon-container">
                         <div type="button"></div>
@@ -128,8 +134,11 @@ const Coupon = () => {
 
                 {/* Coupons list */}
                 <div className="row">
-                  {paginatedCoupons.length > 0 ? (
-                    paginatedCoupons.map((item) => {
+                {console.log(getCoupon,"GETCOUPIN")}
+
+                  {loading === true ? <Spin /> :
+                  getCoupon.length > 0 ? (
+                    getCoupon.map((item) => {
                       const isDisabled = item.active === false;
 
                       return (
@@ -184,17 +193,16 @@ const Coupon = () => {
                                   <h5 className="card-title mb-2">
                                     {item.title}
                                   </h5>
+                                  <p>
+                                    <strong>Store: </strong>
+                                    {item.storeInfo.display_name}
+                                  </p>
                                   <p className="mb-1">
                                     <strong>Valid:</strong>{" "}
-                                    {formatDateTime(
-                                      item.dateRange.startDate,
-                                      item.activeTime.startTime
-                                    )}{" "}
-                                    -{" "}
-                                    {formatDateTime(
-                                      item.dateRange.endDate,
-                                      item.activeTime.endTime
-                                    )}
+                                    {formatDateTime(item.dateRange.startDate)}
+                                    -
+                                    {formatDateTime(item.dateRange.endDate)}
+                                    
                                   </p>
                                   <Link
                                     className="text-decoration-underline text-primary fw-semibold"
