@@ -9,6 +9,7 @@ import { useParams } from "react-router-dom";
 import CreatableSelect from "react-select/creatable";
 import { Spin } from "antd";
 import { convert24hTo12h, formatWeeklyHours } from "./constant";
+import toast from "react-hot-toast";
 
 const EditBusiness = () => {
   const daysOfWeek = [
@@ -90,10 +91,6 @@ const EditBusiness = () => {
         setLoading(true);
         const res = await axios.get(`${baseUrl}business/${_id}`);
         const data = res.data.data;
-  console.log('hii', data.photo);
-  console.log('hii1 this is data', data.working_hours);
-
-        // Parse types safely
         const parsedTypes = Array.isArray(data.types)
           ? data.types
           : (() => {
@@ -117,13 +114,12 @@ const EditBusiness = () => {
         })();
 
         function cleanTimeString(time) {
-          // Removes extra spaces and multiple am/pm occurrences
           return time
             .toLowerCase()
-            .replace(/[^0-9:.apm]/g, '')       // Keep only digits, dot, colon, a/p/m
-            .replace(/(\s?am|\s?pm){2,}/g, '') // Remove duplicate am/pm
-            .replace(/\s+/g, '')               // Remove all spaces
-            .replace(/(am|pm)/, ' $1')         // Ensure single space before am/pm
+            .replace(/[^0-9:.apm]/g, '')
+            .replace(/(\s?am|\s?pm){2,}/g, '') 
+            .replace(/\s+/g, '')               
+            .replace(/(am|pm)/, ' $1')         
             .trim();
         }
   
@@ -317,7 +313,7 @@ const EditBusiness = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:4001/business/${_id}`,
+        `${baseUrl}business/${_id}`,
         formData
       );
       console.log("Business submitted:", response.data);
@@ -325,6 +321,7 @@ const EditBusiness = () => {
       setWorkingHours([{ day: "", startTime: "", endTime: "" }]);
       if (fileInputRef.current) fileInputRef.current.value = null;
       resetForm();
+      toast('Buisness Updated sucessfully');
     } catch (error) {
       console.error("Submission failed:", error);
     }
@@ -332,10 +329,10 @@ const EditBusiness = () => {
 
   const handleImageDelete = async (url) => {
     try {
-      const deleteUrl = `http://localhost:4001/business/${_id}/image`; // Ensure _id is defined
+      const deleteUrl = `${baseUrl}business/${_id}/image`;
 
       const deleteResponse = await axios.delete(deleteUrl, {
-        data: { imageUrl: url }, // Pass imageUrl in the data object
+        data: { imageUrl: url },
       });
 
       console.log("Image URL:", url);
@@ -809,7 +806,7 @@ const EditBusiness = () => {
             </div>
 
             {/* Start Time */}
-            <div className="w-25">
+            <div className="w-25 d-flex align-items-center">
               <Field
                 type="time"
                 name={`working_hours[${index}].startTime`}
@@ -817,15 +814,14 @@ const EditBusiness = () => {
                 value={day.startTime}
                 disabled={day.is24Hours}
               />
-              <ErrorMessage
-                name={`working_hours[${index}].startTime`}
-                component="div"
-                className="text-danger"
-              />
+              {/* Show 12hr format */}
+              {/* <span className="ms-2">
+                {day.startTime ? convert24hTo12h(day.startTime) : ""}
+              </span> */}
             </div>
 
             {/* End Time */}
-            <div className="w-25">
+            <div className="w-25 d-flex align-items-center">
               <Field
                 type="time"
                 name={`working_hours[${index}].endTime`}
@@ -833,11 +829,10 @@ const EditBusiness = () => {
                 value={day.endTime}
                 disabled={day.is24Hours}
               />
-              <ErrorMessage
-                name={`working_hours[${index}].endTime`}
-                component="div"
-                className="text-danger"
-              />
+              {/* Show 12hr format */}
+              {/* <span className="ms-2">
+                {day.endTime ? convert24hTo12h(day.endTime) : ""}
+              </span> */}
             </div>
 
             {/* 24 Hours Checkbox */}

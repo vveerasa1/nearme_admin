@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Add, Remove, Delete } from "@mui/icons-material";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -12,6 +11,7 @@ import dayjs from "dayjs";
 import weekday from "dayjs/plugin/weekday";
 import isBetween from "dayjs/plugin/isBetween";
 import { Toaster, toast } from "react-hot-toast";
+import CircularProgress from "@mui/material/CircularProgress";
 
 dayjs.extend(weekday);
 dayjs.extend(isBetween);
@@ -22,15 +22,12 @@ const EditOffer = () => {
   const [customDays, setCustomDays] = useState([
     { day: "", startTime: "", endTime: "" },
   ]);
-
-  
   const fileInputRef = useRef(null);
   const [existingImages, setExistingImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
-  const [imageError, setImageError] = useState(""); // State for image validation errors
-
+  const [imageError, setImageError] = useState("");
   const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const MAX_IMAGES = 5;
   const [range, setRange] = useState([dayjs(), dayjs()]);
   const [disabledDays, setDisabledDays] = useState([]);
@@ -47,19 +44,14 @@ const EditOffer = () => {
     endTime: "23:59",
   });
 
-
-
-
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await axios.get(`http://localhost:4001/coupons/${_id}`);
         const data = res.data.data;
         if (data.images && data.images.length > 0) {
-          setExistingImages(data.images); // assuming it's an array of URLs or paths
+          setExistingImages(data.images);
         }
-
-        console.log("Fetched Data:", data);
         setInitialValues({
           title: data.title || "",
           description: data.description || "",
@@ -72,7 +64,6 @@ const EditOffer = () => {
           startTime: data.startTime || "00:00",
           endTime: data.endTime || "23:59",
         });
-
         if (data.type) {
           setCustomDays(
             data.customDays || [{ day: "", startTime: "", endTime: "" }]
@@ -90,58 +81,40 @@ const EditOffer = () => {
 
   const resizeImage = (file, width, height) => {
     return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
-  
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
-  
+      const img = new window.Image();
+      const reader = new window.FileReader();
+      reader.onload = (e) => { img.src = e.target.result; };
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-  
         canvas.width = width;
         canvas.height = height;
-  
-        // Draw the image on the canvas with the specified dimensions
         ctx.drawImage(img, 0, 0, width, height);
-  
         canvas.toBlob(
-          (blob) => {
-            resolve(new File([blob], file.name, { type: file.type }));
-          },
+          (blob) => resolve(new File([blob], file.name, { type: file.type })),
           file.type,
           1
         );
       };
-  
       img.onerror = (err) => reject(err);
-  
       reader.readAsDataURL(file);
     });
   };
 
-
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     let error = "";
-  
-    // Validate file count
     if (files.length + newImages.length > MAX_IMAGES) {
       error = `You can upload a maximum of ${MAX_IMAGES} images.`;
     }
-  
     const resizedImages = [];
     for (const file of files) {
-      // Validate file type and size
       if (!SUPPORTED_FORMATS.includes(file.type)) {
         error = "Only JPEG, JPG, and PNG formats are allowed.";
       } else if (file.size > MAX_FILE_SIZE) {
         error = "Each file must not exceed 5 MB.";
       } else {
         try {
-          // Resize the image to a standard size (e.g., 500x500 pixels)
           const resizedImage = await resizeImage(file, 400, 400);
           resizedImages.push(resizedImage);
         } catch (err) {
@@ -149,19 +122,16 @@ const EditOffer = () => {
         }
       }
     }
-  
-    if (error) {
-      setImageError(error);
-    } else {
-      setImageError(""); // Clear error if validation passes
+    if (error) setImageError(error);
+    else {
+      setImageError("");
       setNewImages((prevImages) => [...prevImages, ...resizedImages]);
     }
   };
 
-
-  // const handleRemoveNewImage = (indexToRemove) => {
-  //   setNewImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-  // };
+  const handleRemoveNewImage = (indexToRemove) => {
+    setNewImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
 
   const handleCustomDayChange = (index, field, value) => {
     const updatedDays = [...customDays];
@@ -171,14 +141,10 @@ const EditOffer = () => {
 
   const handleAddDay = () => {
     const lastDay = customDays[customDays.length - 1];
-  
-    // Validate that the last day has a selected day
     if (!lastDay.day) {
       toast.error("Please select a day before adding another.");
       return;
     }
-  
-    // Add a new custom day with default startTime and endTime
     setCustomDays([
       ...customDays,
       { day: "", startTime: "00:00", endTime: "23:59" },
@@ -192,101 +158,71 @@ const EditOffer = () => {
   };
 
   const handleRangeChange = (dates) => {
-      if (dates) {
-        const start = dayjs(dates[0]);
-        const end = dayjs(dates[1]);
-  
-        // Ensure the start date is always before or the same as the end date
-        if (start.isAfter(end)) {
-          // If start date is after end date, reset the range to ensure correct order
-          setRange([end, start]);
-        } else {
-          setRange([start, end]);
-        }
-  
-        // Check if both dates are in the same month
-        const isSameMonth =
-          start.month() === end.month() && start.year() === end.year();
-  
-        if (isSameMonth) {
-          const daysInRange = [];
-  
-          for (
-            let d = start;
-            d.isBefore(end) || d.isSame(end);
-            d = d.add(1, "day")
-          ) {
-            const weekday = d.format("dddd");
-            if (!daysInRange.includes(weekday)) {
-              daysInRange.push(weekday);
-            }
-          }
-  
-          // Only disable days NOT in selected range
-          const allWeekdays = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
-          ];
-          const disabled = allWeekdays.filter(
-            (day) => !daysInRange.includes(day)
-          );
-          setDisabledDays(disabled);
-        } else {
-          // If range spans months, enable all days
-          setDisabledDays([]);
-        }
+    if (dates) {
+      const start = dayjs(dates[0]);
+      const end = dayjs(dates[1]);
+      if (start.isAfter(end)) {
+        setRange([end, start]);
       } else {
-        setRange([null, null]);
-        setDisabledDays([]);
+        setRange([start, end]);
       }
-    };
+      const isSameMonth =
+        start.month() === end.month() && start.year() === end.year();
+      if (isSameMonth) {
+        const daysInRange = [];
+        for (
+          let d = start;
+          d.isBefore(end) || d.isSame(end);
+          d = d.add(1, "day")
+        ) {
+          const weekday = d.format("dddd");
+          if (!daysInRange.includes(weekday)) {
+            daysInRange.push(weekday);
+          }
+        }
+        const allWeekdays = [
+          "Monday", "Tuesday", "Wednesday", "Thursday",
+          "Friday", "Saturday", "Sunday"
+        ];
+        const disabled = allWeekdays.filter(
+          (day) => !daysInRange.includes(day)
+        );
+        setDisabledDays(disabled);
+      } else setDisabledDays([]);
+    } else {
+      setRange([null, null]);
+      setDisabledDays([]);
+    }
+  };
+
   const handleSubmit = async (values, { resetForm }) => {
     setLoading(true);
-    const formData = new FormData();
-
-    // Add form fields
+    const formData = new window.FormData();
     formData.append("title", values.title);
     formData.append("description", values.description);
     formData.append("discountType", values.discountType);
     formData.append("type", values.type);
     formData.append("startDate", range[0]);
     formData.append("endDate", range[1]);
-
     if (values.type) {
       formData.append("customDays", JSON.stringify(customDays));
     } else {
       formData.append("startTime", values.startTime);
       formData.append("endTime", values.endTime);
     }
-
     if (values.discountType === "Discount") {
       formData.append("discountValue", values.discountValue);
     }
-
-    // Add existing images (after removal)
     formData.append("existingImages", JSON.stringify(existingImages));
-
-    // Add new images
     if (newImages.length > 0) {
       newImages.forEach((file) => formData.append("newImages", file));
     }
-
     try {
-      // Update existing offer
       const updateResponse = await axios.put(
         `http://localhost:4001/coupons/${_id}`,
         formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
-      console.log("Updated:", updateResponse.data);
-
       resetForm();
       setLoading(false);
     } catch (err) {
@@ -295,21 +231,17 @@ const EditOffer = () => {
     }
   };
 
-  const handleImageDelete = async (url) => {
+  const handleImageDelete = async (urlOrIdx) => {
+    // If deleting a new image (by index), else existing image (by url)
+    if (typeof urlOrIdx === "number") {
+      handleRemoveNewImage(urlOrIdx);
+      return;
+    }
     try {
-      const deleteUrl = `http://localhost:4001/coupons/${_id}/image`; // Ensure _id is defined
-  
-      const deleteResponse = await axios.delete(deleteUrl, {
-        data: { imageUrl: url }, // Pass imageUrl in the data object
-      });
-  
-      console.log("Image URL:", url);
-      console.log("Delete Response:", deleteResponse);
-  
-      // Optionally, update the UI to remove the deleted image
-      // For example, you can filter out the deleted image from the existingImages array
+      const deleteUrl = `http://localhost:4001/coupons/${_id}/image`;
+      await axios.delete(deleteUrl, { data: { imageUrl: urlOrIdx } });
       setExistingImages((prevImages) =>
-        prevImages.filter((image) => image !== url)
+        prevImages.filter((image) => image !== urlOrIdx)
       );
     } catch (err) {
       console.error("Error deleting image:", err.response?.data || err.message);
@@ -318,24 +250,22 @@ const EditOffer = () => {
 
   return (
     <div className="content-wrapper">
-      {/* breadcrumb */}
+      {/* Breadcrumb */}
       <div className="breadcrumb-wrapper">
         <div className="breadcrumb-block">
           <h2 className="page-heading">Edit {type}</h2>
           <ul className="breadcrumb-list">
             <li className="breadcrumb-item">
-              <Link to={"/dashboard"} className="breadcrumb-link">
-                Home
-              </Link>
+              <Link to={"/dashboard"} className="breadcrumb-link">Home</Link>
             </li>
             <li className="breadcrumb-item">
-              <a className="breadcrumb-link">{type}</a>
+              <span className="breadcrumb-link">{type}</span>
             </li>
           </ul>
         </div>
       </div>
-      {/* add form */}
-      <div className="form-container ">
+      {/* Add form */}
+      <div className="form-container">
         <Formik
           initialValues={initialValues}
           enableReinitialize={true}
@@ -348,14 +278,10 @@ const EditOffer = () => {
           {({ values, handleChange }) => (
             <Form className="form-wrapper">
               <div className="row ">
-                <div className="row">
-                  <div className="col"></div>
-                  <div className="col"></div>
-                </div>
                 <div className="col-12 col-md-12 col-lg-6">
                   <div className="row">
-                    {/* title */}
-                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                    {/* Title */}
+                    <div className="col-12 mb-3">
                       <div className="form-group">
                         <label className="form-label">Title</label>
                         <Field
@@ -371,8 +297,8 @@ const EditOffer = () => {
                         />
                       </div>
                     </div>
-                    {/* description */}
-                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                    {/* Description */}
+                    <div className="col-12 mb-3">
                       <div className="form-group">
                         <label className="form-label">Description</label>
                         <Field
@@ -390,8 +316,8 @@ const EditOffer = () => {
                         />
                       </div>
                     </div>
-                    {/* discount type */}
-                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                    {/* Offer Type */}
+                    <div className="col-12 mb-3">
                       <div className="form-group">
                         <label className="form-label">Offer Type</label>
                         <Field
@@ -400,14 +326,13 @@ const EditOffer = () => {
                           className="form-input"
                         >
                           <option value="">Select Offer</option>
-
                           <option>Deal</option>
                           <option>Discount</option>
                           <option>Coupon</option>
                         </Field>
                       </div>
-                      {/* discount */}
-                      {values.discountType === "Discount" ? (
+                      {/* Discount Value */}
+                      {values.discountType === "Discount" && (
                         <div className="mt-4">
                           <label className="form-label">Percentage</label>
                           <Field
@@ -417,12 +342,10 @@ const EditOffer = () => {
                             placeholder="%"
                           />
                         </div>
-                      ) : (
-                        ""
                       )}
                     </div>
-                    {/* image */}
-                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                    {/* Image Upload */}
+                    <div className="col-12 mb-3">
                       <div className="form-group">
                         <label className="form-label">Image</label>
                         <div className="file-upload-container">
@@ -432,21 +355,16 @@ const EditOffer = () => {
                               type="file"
                               id="fileUpload"
                               ref={fileInputRef}
-                              accept=".jpeg, .png, .gif, .svg"
+                              accept=".jpeg, .png, .jpg"
                               onChange={handleFileChange}
                               multiple
                               style={{ display: "none" }}
                             />
                           </label>
-
                           <div className="file-info">
-                            {/* Existing images */}
                             {existingImages.length > 0 &&
                               existingImages.map((url, index) => (
-                                <div
-                                  key={`existing-${index}`}
-                                  className="uploaded-file row py-2"
-                                >
+                                <div key={`existing-${index}`} className="uploaded-file row py-2">
                                   <div className="col-5 mb-2">
                                     <img src={url} alt="uploaded" height="60" />
                                   </div>
@@ -454,23 +372,16 @@ const EditOffer = () => {
                                     <button
                                       type="button"
                                       className="remove-btn btn btn-sm"
-                                      onClick={() =>
-                                        handleImageDelete(url)
-                                      }
+                                      onClick={() => handleImageDelete(url)}
                                     >
                                       <Delete className="text-danger" />
                                     </button>
                                   </div>
                                 </div>
                               ))}
-
-                            {/* New images */}
                             {newImages.length > 0 &&
                               newImages.map((file, index) => (
-                                <div
-                                  key={`new-${index}`}
-                                  className="uploaded-file row py-2"
-                                >
+                                <div key={`new-${index}`} className="uploaded-file row py-2">
                                   <div className="col">
                                     <span>{file.name}</span>
                                   </div>
@@ -478,28 +389,23 @@ const EditOffer = () => {
                                     <button
                                       type="button"
                                       className="remove-btn btn btn-sm"
-                                      onClick={() =>
-                                        handleImageDelete(index)
-                                      }
+                                      onClick={() => handleImageDelete(index)}
                                     >
                                       <Delete className="text-danger" />
                                     </button>
                                   </div>
                                 </div>
                               ))}
-
-                            {existingImages.length === 0 &&
-                              newImages.length ===  0 && (
-                                <p>Choose files or drag and drop here</p>
-                              )}
+                            {existingImages.length === 0 && newImages.length === 0 && (
+                              <p>Choose files or drag and drop here</p>
+                            )}
+                            {imageError && <div className="error">{imageError}</div>}
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="row ">
-                    {/* validity */}
-                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                    {/* Offer Validity */}
+                    <div className="col-12 mb-3">
                       <div className="form-group">
                         <label className="form-label">
                           Offer Validity Period
@@ -512,180 +418,167 @@ const EditOffer = () => {
                           />
                         </div>
                         <p className="form-note">
-                          Note: Specify the duration for which the coupon is
-                          valid, including both the start and end dates.
+                          Note: Specify the duration for which the coupon is valid, including both the start and end dates.
                         </p>
                       </div>
                     </div>
-                    {/* time */}
-                    <div
-                      hidden={values.type}
-                      className="col-12 col-md-6 col-lg-6 mb-3"
-                    >
-                      <div className="form-group">
-                        <label className="form-label">
-                          Offer Active Start time
-                        </label>
+                    {/* Custom Days Toggle */}
+                    <div className="col-12 mb-4">
+                      <div className="form-group d-flex align-items-center">
                         <Field
-                          name="startTime"
-                          type="time"
-                          className="form-input"
+                          type="checkbox"
+                          name="type"
+                          checked={values.type}
+                          onChange={handleChange}
+                          className="me-2"
                         />
+                        <span>Custom Days</span>
                       </div>
                     </div>
-                    <div
-                      hidden={values.type}
-                      className="col-12 col-md-6 col-lg-6 mb-4"
-                    >
-                      <div className="form-group">
-                        <label className="form-label">
-                          Offer Active End time
-                        </label>
-                        <Field
-                          name="endTime"
-                          type="time"
-                          className="form-input"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Custom days checkbox */}
-                    <div className="col-12 col-md-12 col-lg-12 mb-4">
-                      <div className="form-group ">
-                        <label className="form-label d-flex">
-                          <Field
-                            className=""
-                            type="checkbox"
-                            name="type"
-                            checked={values.type}
-                            onChange={handleChange}
-                          />
-                          <span className="">Custom Days</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Custom days section */}
-                    {values.type && (
-                      <div className="custom-days  ">
-                        {customDays.map((day, index) => (
-                          <div key={index} className="custom-day-row mb-3">
-                            <Field
-                              className="w-25 py-1"
-                              as="select"
-                              placeholder="Day"
-                              value={day.day}
-                              onChange={(e) =>
-                                handleCustomDayChange(
-                                  index,
-                                  "day",
-                                  e.target.value
-                                )
-                              }
+                    {/* Custom Days OR Start/End Time */}
+                    <div className="col-12 mb-3">
+                      {values.type ? (
+                         <div className="custom-days">
+                          {customDays.map((day, index) => (
+                            <div
+                              key={index}
+                              className="custom-day-row mb-3 d-flex align-items-center gap-2"
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1.5fr 1fr 1fr auto auto',
+                                gap: '8px',
+                                alignItems: 'center',
+                              }}
                             >
-                              <option value="">Select Day</option>
-                              <option
-                                value="Monday"
-                                disabled={disabledDays.includes("Monday")}
+                              <Field
+                                as="select"
+                                className="form-input"
+                                value={day.day}
+                                style={{ minWidth: 120 }}
+                                onChange={(e) =>
+                                  handleCustomDayChange(
+                                    index,
+                                    "day",
+                                    e.target.value
+                                  )
+                                }
                               >
-                                Monday
-                              </option>
-                              <option
-                                value="Tuesday"
-                                disabled={disabledDays.includes("Tuesday")}
-                              >
-                                Tuesday
-                              </option>
-                              <option
-                                value="Wednesday"
-                                disabled={disabledDays.includes("Wednesday")}
-                              >
-                                Wednesday
-                              </option>
-                              <option
-                                value="Thursday"
-                                disabled={disabledDays.includes("Thursday")}
-                              >
-                                Thursday
-                              </option>
-                              <option
-                                value="Friday"
-                                disabled={disabledDays.includes("Friday")}
-                              >
-                                Friday
-                              </option>
-                              <option
-                                value="Saturday"
-                                disabled={disabledDays.includes("Saturday")}
-                              >
-                                Saturday
-                              </option>
-                              <option
-                                value="Sunday"
-                                disabled={disabledDays.includes("Sunday")}
-                              >
-                                Sunday
-                              </option>
-                            </Field>
-                            <Field
-                              className="mx-3 py-1"
-                              type="time"
-                              placeholder="Start Time"
-                              value={day.startTime}
-                              onChange={(e) =>
-                                handleCustomDayChange(
-                                  index,
-                                  "startTime",
-                                  e.target.value
-                                )
-                              }
-                            />
-                            <Field
-                              className="w-25 py-1"
-                              type="time"
-                              placeholder="End Time"
-                              value={day.endTime}
-                              onChange={(e) =>
-                                handleCustomDayChange(
-                                  index,
-                                  "endTime",
-                                  e.target.value
-                                )
-                              }
-                            />
-
-                            {/* Add button should only be visible for the first row */}
-                            {index === 0 && (
-                              <button
-                                type="button"
-                                onClick={handleAddDay}
-                                className="btn btn-sm btn-primary mx-3 p-1 mb-1 px-2"
-                              >
-                                <Add />
-                              </button>
-                            )}
-
-                            {/* Remove button should be visible for all rows except the first one */}
-                            {customDays.length > 1 && index !== 0 && (
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveDay(index)}
-                                className="btn btn-sm btn-danger  mx-3 p-1 mb-1 px-2"
-                              >
-                                <Remove />
-                              </button>
-                            )}
+                                <option value="">Select Day</option>
+                                {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
+                                  <option key={d} value={d} disabled={disabledDays.includes(d)}>{d}</option>
+                                ))}
+                              </Field>
+                              <Field
+                                className="form-input"
+                                type="time"
+                                value={day.startTime}
+                                style={{ minWidth: 100 }}
+                                onChange={(e) =>
+                                  handleCustomDayChange(
+                                    index,
+                                    "startTime",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                              <Field
+                                className="form-input"
+                                type="time"
+                                value={day.endTime}
+                                style={{ minWidth: 100 }}
+                                onChange={(e) =>
+                                  handleCustomDayChange(
+                                    index,
+                                    "endTime",
+                                    e.target.value
+                                  )
+                                }
+                              />
+                              {index === 0 && (
+                                <button
+                                  type="button"
+                                  onClick={handleAddDay}
+                                  className="btn btn-sm btn-primary"
+                                >
+                                  <Add />
+                                </button>
+                              )}
+                              {customDays.length > 1 && index !== 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveDay(index)}
+                                  className="btn btn-sm btn-danger"
+                                >
+                                  <Remove />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="row">
+                          <div className="col-6 mb-3">
+                            <div className="form-group">
+                              <label className="form-label">Offer Active Start Time</label>
+                              <Field
+                                name="startTime"
+                                type="time"
+                                className="form-input"
+                              />
+                            </div>
                           </div>
-                        ))}
+                          <div className="col-6 mb-3">
+                            <div className="form-group">
+                              <label className="form-label">Offer Active End Time</label>
+                              <Field
+                                name="endTime"
+                                type="time"
+                                className="form-input"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* Submit Button - aligned right */}
+                    {/* <div className="col-12">
+                      <div className="d-flex justify-content-end">
+                        <button
+                          type="submit"
+                          className="btn btn-primary d-flex align-items-center"
+                          disabled={loading}
+                        >
+                          {loading && <CircularProgress size={16} color="inherit" className="me-2" />}
+                          {loading ? "Submitting..." : "Update Offer"}
+                        </button>
                       </div>
-                    )}
+                    </div> */}
+                      {/* <div className="col-12 col-md-12 col-lg-12"> */}
+                      <div className="mt-4 text-end">
+                <button className="theme-btn btn-border me-2" type="button">
+                  Clear
+                </button>
+                <button
+                  className="theme-btn btn-main"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm me-2"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
+                      Saving...
+                    </>
+                  ) : (
+                    "Update offer"
+                  )}
+                </button>
+              </div>
+                  {/* </div> */}
                   </div>
-                </div>
-                {/* Submit Button */}
-                <div className="col-12">
-                  <button type="submit" className="btn btn-primary">
-                    {loading === true ? "Submitting..." : "Update Offer"}
-                  </button>
                 </div>
               </div>
             </Form>
