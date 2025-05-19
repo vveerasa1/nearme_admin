@@ -32,6 +32,7 @@
     "react-datepicker": "^8.3.0",
     "react-dom": "^19.1.0",
     "react-hot-toast": "^2.5.2",
+    "react-responsive": "^10.0.1",
     "react-router-dom": "^7.5.0",
     "react-select": "^5.10.1",
     "react-slick": "^0.30.3",

@@ -18,70 +18,88 @@ import {
   Menu,
   Avatar,
   Dropdown,
-  theme,
+  Drawer,
   Space,
+  theme,
 } from "antd";
 import { Link, useLocation } from "react-router-dom";
+import { useMediaQuery } from "react-responsive";
 
 import Logo from "../assets/images/logo-long.png";
 import MLogo from "../assets/images/icon.png";
-import '../../src/layout/style.css'
+import "../../src/layout/style.css";
 
 const { Header, Sider, Content } = Layout;
 
 const AppLayout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const location = useLocation();
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+
   const {
     token: { colorBgContainer },
   } = theme.useToken();
 
   const getSelectedKey = () => {
     const path = location.pathname;
-  
     if (path.startsWith("/dashboard")) return "1";
-  
     if (
       path.startsWith("/business-listings") ||
       path.startsWith("/add-new-business") ||
       path.startsWith("/add-offer") ||
       path.startsWith("/edit-business") ||
       path.startsWith("/view-business")
-      
-    ) {
+    )
       return "2";
-    }
-  
     if (
       path.startsWith("/deals") ||
-      path.startsWith("/edit-offer/Deal")||
+      path.startsWith("/edit-offer/Deal") ||
       path.startsWith("/view/Deal")
-
-    ) {
+    )
       return "3";
-    }
-  
     if (
       path.startsWith("/discounts") ||
-      path.startsWith("/edit-offer/Discount")||
+      path.startsWith("/edit-offer/Discount") ||
       path.startsWith("/view/Discount")
-
-    ) {
+    )
       return "4";
-    }
-  
     if (
       path.startsWith("/coupons") ||
-      path.startsWith("/edit-offer/Coupon")||
+      path.startsWith("/edit-offer/Coupon") ||
       path.startsWith("/view/Coupon")
-
-    ) {
+    )
       return "5";
-    }
-  
-    return "1"; // Default fallback to dashboard
+    return "1";
   };
-  
+
+  const menuItems = [
+    {
+      key: "1",
+      icon: <FontAwesomeIcon icon={faHome} />,
+      label: <Link to="/dashboard">Dashboard</Link>,
+    },
+    {
+      key: "2",
+      icon: <FontAwesomeIcon icon={faBriefcase} />,
+      label: <Link to="/business-listings">Business Listings</Link>,
+    },
+    {
+      key: "3",
+      icon: <FontAwesomeIcon icon={faStar} />,
+      label: <Link to="/deals">Deals</Link>,
+    },
+    {
+      key: "4",
+      icon: <FontAwesomeIcon icon={faTag} />,
+      label: <Link to="/discounts">Discounts</Link>,
+    },
+    {
+      key: "5",
+      icon: <FontAwesomeIcon icon={faTicket} />,
+      label: <Link to="/coupons">Coupons</Link>,
+    },
+  ];
 
   const profileMenu = (
     <Menu
@@ -94,77 +112,72 @@ const AppLayout = ({ children }) => {
 
   return (
     <Layout style={{ height: "100vh" }}>
-      <Sider
-        collapsible
-        collapsed={collapsed}
-        trigger={null}
-        style={{
-          backgroundColor: "#31A5DC",
-          height: "100vh",
-          position: "fixed",
-          left: 0,
-          top: 0,
-          bottom: 0,
-        }}
-      >
-        <div
-          style={{
-            textAlign: "center",
-            padding: collapsed ? "12px" : "20px",
-            backgroundColor: "#fff",
-          }}
+      {/* Sidebar or Drawer */}
+      {isMobile ? (
+        <Drawer
+          title={
+            <img src={Logo} alt="Logo" style={{ maxWidth: "120px" }} />
+          }
+          placement="left"
+          onClose={() => setMobileDrawerOpen(false)}
+          open={mobileDrawerOpen}
+          bodyStyle={{ padding: 0 }}
         >
-          <img
-            src={collapsed ? MLogo : Logo}
-            alt="Logo"
-            style={{
-              maxWidth: collapsed ? "40px" : "140px",
-              transition: "0.3s ease",
-            }}
+          <Menu
+            mode="inline"
+            selectedKeys={[getSelectedKey()]}
+            items={menuItems}
+            onClick={() => setMobileDrawerOpen(false)}
           />
-        </div>
-        <div style={{ height: 35 }} />
-        <Menu
-          mode="inline"
-          selectedKeys={[getSelectedKey()]}
-          theme="dark"
+        </Drawer>
+      ) : (
+        <Sider
+          collapsible
+          collapsed={collapsed}
+          trigger={null}
           style={{
             backgroundColor: "#31A5DC",
-            fontSize: "16px",
-            padding: "0 8px",
-            borderRight: "none",
+            height: "100vh",
+            position: "fixed",
+            left: 0,
+            top: 0,
+            bottom: 0,
           }}
-          items={[
-            {
-              key: "1",
-              icon: <FontAwesomeIcon icon={faHome} />,
-              label: <Link to="/dashboard">Dashboard</Link>,
-            },
-            {
-              key: "2",
-              icon: <FontAwesomeIcon icon={faBriefcase} />,
-              label: <Link to="/business-listings">Business Listings</Link>,
-            },
-            {
-              key: "3",
-              icon: <FontAwesomeIcon icon={faStar} />,
-              label: <Link to="/deals">Deals</Link>,
-            },
-            {
-              key: "4",
-              icon: <FontAwesomeIcon icon={faTag} />,
-              label: <Link to="/discounts">Discounts</Link>,
-            },
-            {
-              key: "5",
-              icon: <FontAwesomeIcon icon={faTicket} />,
-              label: <Link to="/coupons">Coupons</Link>,
-            },
-          ]}
-        />
-      </Sider>
+        >
+          <div
+            style={{
+              textAlign: "center",
+              padding: collapsed ? "12px" : "20px",
+              backgroundColor: "#fff",
+            }}
+          >
+            <img
+              src={collapsed ? MLogo : Logo}
+              alt="Logo"
+              style={{
+                maxWidth: collapsed ? "40px" : "140px",
+                transition: "0.3s ease",
+              }}
+            />
+          </div>
+          <div style={{ height: 35 }} />
+          <Menu
+            mode="inline"
+            selectedKeys={[getSelectedKey()]}
+            theme="dark"
+            style={{
+              backgroundColor: "#31A5DC",
+              fontSize: "16px",
+              padding: "0 8px",
+              borderRight: "none",
+            }}
+            items={menuItems}
+          />
+        </Sider>
+      )}
 
-      <Layout style={{ marginLeft: collapsed ? 80 : 200 }}>
+      {/* Main Layout */}
+      <Layout style={{ marginLeft: isMobile ? 0 : collapsed ? 80 : 200 }}>
         <Header
           style={{
             background: "#fff",
@@ -174,7 +187,7 @@ const AppLayout = ({ children }) => {
             justifyContent: "space-between",
             position: "fixed",
             top: 0,
-            left: collapsed ? 80 : 200,
+            left: isMobile ? 0 : collapsed ? 80 : 200,
             right: 0,
             zIndex: 100,
             height: 64,
@@ -182,37 +195,40 @@ const AppLayout = ({ children }) => {
           }}
         >
           <Button
-  type="text"
-  onClick={() => setCollapsed(!collapsed)}
-  style={{
-    width: 36,
-    height: 36,
-    padding: 4,
-    border: "1.5px solid #ddd",
-    borderRadius: "10px",
-    background: "#fff",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 3,
-  }}
->
-  {[...Array(3)].map((_, i) => (
-    <span
-      key={i}
-      style={{
-        width: "16px",
-        height: "2px",
-        backgroundColor: "#222",
-        borderRadius: "1px",
-      }}
-    />
-  ))}
-</Button>
-
-
-
+            type="text"
+            onClick={() => {
+              if (isMobile) {
+                setMobileDrawerOpen(true);
+              } else {
+                setCollapsed(!collapsed);
+              }
+            }}
+            style={{
+              width: 36,
+              height: 36,
+              padding: 4,
+              border: "1.5px solid #ddd",
+              borderRadius: "10px",
+              background: "#fff",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 3,
+            }}
+          >
+            {[...Array(3)].map((_, i) => (
+              <span
+                key={i}
+                style={{
+                  width: "16px",
+                  height: "2px",
+                  backgroundColor: "#222",
+                  borderRadius: "1px",
+                }}
+              />
+            ))}
+          </Button>
 
           <Space>
             <span style={{ fontSize: 16 }}>Admin</span>

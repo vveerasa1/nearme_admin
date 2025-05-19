@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import "./style.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Star, Add, Remove, Delete } from "@mui/icons-material";
 import { Formik, Form, Field, ErrorMessage, FieldArray } from "formik";
 import * as Yup from "yup";
@@ -28,7 +28,7 @@ const AddBusiness = () => {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
   const [photoError, setPhotoError] = useState(""); // State for image validation errors
-  
+  const navigate = useNavigate();
 
   const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -55,7 +55,6 @@ const AddBusiness = () => {
         canvas.width = width;
         canvas.height = height;
 
-        // Draw the image on the canvas with the specified dimensions
         ctx.drawImage(img, 0, 0, width, height);
 
         canvas.toBlob(
@@ -103,7 +102,7 @@ const AddBusiness = () => {
     if (error) {
       setPhotoError(error);
     } else {
-      setPhotoError(""); // Clear error if validation passes
+      setPhotoError(""); 
       setPhotos((prevPhotos) => [...(prevPhotos || []), ...resizedImages]);
     }
   };
@@ -248,8 +247,7 @@ const AddBusiness = () => {
       setWorkingHours([{ day: "", startTime: "", endTime: "" }]);
       if (fileInputRef.current) fileInputRef.current.value = null;
       resetForm();
-
-      Nnavigate("/business-listings");
+      navigate("/business-listings");
     } catch (error) {
       console.error("Submission failed:", error);
     } finally {
