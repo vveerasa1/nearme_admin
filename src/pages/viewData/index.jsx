@@ -113,6 +113,18 @@ const ViewData = () => {
               <div>
                 <p>{data.description}</p>
               </div>
+              <div className="">
+                <strong>Store Name </strong>
+                <p className="">
+                  {data.storeInfo.display_name}
+                </p>
+              </div>
+              <div className=" gap-2">
+                <strong>Address </strong>
+                <p className="">
+                  {data.storeInfo.address}
+                </p>
+              </div>
               <div>
                 <p>
                   <b>Date:</b> {formatDate(data.dateRange.startDate)} -{" "}

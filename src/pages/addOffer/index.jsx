@@ -30,6 +30,9 @@ const AddOffer = () => {
   const [range, setRange] = useState([dayjs(), dayjs()]);
   const [disabledDays, setDisabledDays] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const hostUrl = import.meta.env.VITE_BASE_URL;
+
   const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
   const MAX_IMAGES = 5;
@@ -40,19 +43,19 @@ const AddOffer = () => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       const reader = new FileReader();
-  
+
       reader.onload = (e) => {
         img.src = e.target.result;
       };
-  
+
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-  
+
         canvas.width = width;
         canvas.height = height;
         ctx.drawImage(img, 0, 0, width, height);
-  
+
         canvas.toBlob(
           (blob) => {
             resolve(new File([blob], file.name, { type: file.type }));
@@ -61,9 +64,9 @@ const AddOffer = () => {
           1
         );
       };
-  
+
       img.onerror = (err) => reject(err);
-  
+
       reader.readAsDataURL(file);
     });
   };
@@ -71,12 +74,12 @@ const AddOffer = () => {
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     let error = "";
-  
+
     // Validate file count
     if (files.length + images.length > MAX_IMAGES) {
       error = `You can upload a maximum of ${MAX_IMAGES} images.`;
     }
-  
+
     const resizedImages = [];
     for (const file of files) {
       if (!SUPPORTED_FORMATS.includes(file.type)) {
@@ -92,7 +95,7 @@ const AddOffer = () => {
         }
       }
     }
-  
+
     if (error) {
       setImageError(error);
     } else {
@@ -114,7 +117,7 @@ const AddOffer = () => {
 
   const handleAddDay = () => {
     const lastDay = customDays[customDays.length - 1];
-  
+
     if (!lastDay.day) {
       toast.error("Please select a day before adding another.");
       return;
@@ -214,7 +217,7 @@ const AddOffer = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:4001/coupons/",
+        `${hostUrl}coupons/`,
         formData
       );
       console.log("Submitted:", response.data);
@@ -489,23 +492,25 @@ const AddOffer = () => {
 
                     {/* Custom days checkbox */}
                     <div className="col-12 col-md-12 col-lg-12 mb-4">
-  <div className="form-group">
-    <div className="d-flex align-items-center">
-      <Field
-        className="me-2"
-        type="checkbox"
-        name="type"
-        checked={values.type}
-        onChange={handleChange}
-        id="custom-days-checkbox"
-      />
-      <label htmlFor="custom-days-checkbox" className="form-label mb-0">
-        Custom Days
-      </label>
-    </div>
-  </div>
-</div>
-
+                      <div className="form-group">
+                        <div className="d-flex align-items-center">
+                          <Field
+                            className="me-2"
+                            type="checkbox"
+                            name="type"
+                            checked={values.type}
+                            onChange={handleChange}
+                            id="custom-days-checkbox"
+                          />
+                          <label
+                            htmlFor="custom-days-checkbox"
+                            className="form-label mb-0"
+                          >
+                            Custom Days
+                          </label>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Custom days section */}
                     {values.type && (
@@ -515,6 +520,7 @@ const AddOffer = () => {
                             <Field
                               className="w-25 py-1"
                               as="select"
+                              name={`customDays[${index}].day`} // Add name attribute
                               placeholder="Day"
                               value={day.day}
                               onChange={(e) =>
@@ -572,6 +578,7 @@ const AddOffer = () => {
                             <Field
                               className="mx-3 py-1"
                               type="time"
+                              name={`customDays[${index}].startTime`} // Add name attribute
                               placeholder="Start Time"
                               value={day.startTime || "00:00"}
                               onChange={(e) =>
@@ -586,6 +593,7 @@ const AddOffer = () => {
                               className="w-25 py-1"
                               type="time"
                               placeholder="End Time"
+                              name={`customDays[${index}].endTime`} // Add name attribute
                               value={day.endTime || "23:59"}
                               onChange={(e) =>
                                 handleCustomDayChange(
@@ -624,16 +632,16 @@ const AddOffer = () => {
                   </div>
                 </div>
               </div>
-               <div className="col-12 col-md-12 col-lg-12">
-                    <div className="vbtns">
-                      <button className="theme-btn btn-border" type="button">
-                        Clear
-                      </button>
-                      <button className="theme-btn btn-main" type="submit">
-                        Save
-                      </button>
-                    </div>
-                  </div>
+              <div className="col-12 col-md-12 col-lg-12">
+                <div className="vbtns">
+                  <button className="theme-btn btn-border" type="button">
+                    Clear
+                  </button>
+                  <button className="theme-btn btn-main" type="submit">
+                    Save
+                  </button>
+                </div>
+              </div>
             </Form>
           )}
         </Formik>

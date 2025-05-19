@@ -6,6 +6,7 @@ function convert24hTo12h(time24h) {
   hours = parseInt(hours, 10);
   const ampm = hours >= 12 ? 'pm' : 'am';
   hours = hours % 12 || 12;
+  console.log('hours',hours)
   return `${hours}.${minutes} ${ampm}`;
 }
 

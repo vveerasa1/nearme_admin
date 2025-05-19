@@ -7,8 +7,7 @@ import { LoadingOutlined } from "@ant-design/icons";
 import { Toaster, toast } from "react-hot-toast";
 import { Card, Button, Spin, message, Popconfirm } from "antd";
 import { BusinessContext } from "./businessContext";
-import fallbackImage from "../../assets/images/noimage.png";
-
+import fallbackImage from "../../assets/images/landingPage.png";
 
 const BusinessListing = () => {
   const { businessList, setBusinessList, searchText, setSearchText } =
@@ -28,7 +27,7 @@ const BusinessListing = () => {
 
   const handleSearch = async () => {
     if (!searchText.trim()) return;
-console.log('hello', baseUrl);
+    console.log("hello", baseUrl);
     try {
       setLoading(true);
       const url = `${baseUrl}business?searchText=${searchText}&page=1&limit=20`;
