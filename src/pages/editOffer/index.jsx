@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Add, Remove, Delete } from "@mui/icons-material";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -12,13 +12,16 @@ import weekday from "dayjs/plugin/weekday";
 import isBetween from "dayjs/plugin/isBetween";
 import { Toaster, toast } from "react-hot-toast";
 import CircularProgress from "@mui/material/CircularProgress";
-
+import { convert12hTo24h, convert24hTo12h, formatWeeklyHours } from "./constant";
 dayjs.extend(weekday);
 dayjs.extend(isBetween);
 const { RangePicker } = DatePicker;
 
 const EditOffer = () => {
+  const navigate = useNavigate();
   const { type, _id } = useParams();
+  const baseUrl = import.meta.env.VITE_BASE_URL;
+
   const [customDays, setCustomDays] = useState([
     { day: "", startTime: "", endTime: "" },
   ]);
@@ -35,6 +38,7 @@ const EditOffer = () => {
   const [initialValues, setInitialValues] = useState({
     title: "",
     description: "",
+    couponDescription:"",
     discountType: "",
     discountValue: "",
     type: false,
@@ -45,39 +49,46 @@ const EditOffer = () => {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get(`http://localhost:4001/coupons/${_id}`);
-        const data = res.data.data;
-        if (data.images && data.images.length > 0) {
-          setExistingImages(data.images);
-        }
-        setInitialValues({
-          title: data.title || "",
-          description: data.description || "",
-          discountType: data.discountType || "",
-          discountValue: data.discountValue || "",
-          images: data.images || "",
-          type: data.type || false,
-          startDate: data.startDate ? dayjs(data.startDate) : dayjs(),
-          endDate: data.endDate ? dayjs(data.endDate) : dayjs(),
-          startTime: data.startTime || "00:00",
-          endTime: data.endTime || "23:59",
-        });
-        if (data.type) {
-          setCustomDays(
-            data.customDays || [{ day: "", startTime: "", endTime: "" }]
-          );
-        }
-        if (data.startDate && data.endDate) {
-          setRange([dayjs(data.startDate), dayjs(data.endDate)]);
-        }
-      } catch (err) {
-        console.error("Error fetching offer data:", err);
+  const fetchData = async () => {
+    try {
+      const res = await axios.get(`${baseUrl}coupons/${_id}`);
+      const data = res.data.data;
+
+      if (data.images && data.images.length > 0) {
+        setExistingImages(data.images);
       }
-    };
-    fetchData();
-  }, [_id]);
+console.log('-- -- -- ',data.startTime);
+      setInitialValues({
+        title: data.title || "",
+        description: data.description || "",
+        couponDescription: data.couponDescription || "",
+        discountType: data.discountType || "",
+        discountValue: data.discountValue || "",
+        images: data.images || "",
+        type: data.type || false,
+        startDate: data.startDate ? dayjs(data.startDate) : dayjs(),
+        endDate: data.endDate ? dayjs(data.endDate) : dayjs(),
+        startTime: data.activeTime.startTime || "00:00",
+        endTime: data.activeTime.endTime || "23:59",
+      });
+
+      if (data.type && data.customDays && data.customDays.length > 0) {
+        // Map the customDays to ensure proper formatting
+        const formattedCustomDays = data.customDays.map((day) => ({
+          day: day.day || "",
+          startTime: convert12hTo24h(day.startTime || "12:00 AM"), // Convert to 24-hour format
+          endTime: convert12hTo24h(day.endTime || "11:59 PM"), 
+        }));
+
+        setCustomDays(formattedCustomDays);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  fetchData();
+}, [_id, baseUrl]);
 
   const resizeImage = (file, width, height) => {
     return new Promise((resolve, reject) => {
@@ -133,12 +144,37 @@ const EditOffer = () => {
     setNewImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  const handleCustomDayChange = (index, field, value) => {
-    const updatedDays = [...customDays];
-    updatedDays[index][field] = value;
-    setCustomDays(updatedDays);
+  const formatDate = (date) => {
+    return new Date(date).toISOString().split("T")[0];
+  };
+  
+  const convertTo24HourFormat = (time12h) => {
+    const [time, modifier] = time12h.split(" ");
+    let [hours, minutes] = time.split(":");
+    hours = parseInt(hours, 10);
+  
+    if (modifier === "PM" && hours !== 12) {
+      hours += 12;
+    } else if (modifier === "AM" && hours === 12) {
+      hours = 0;
+    }
+  
+    return `${hours.toString().padStart(2, "0")}:${minutes}`;
   };
 
+  const handleCustomDayChange = (index, field, value) => {
+    const updatedDays = [...customDays];
+  
+    // Convert time fields to 24-hour format
+    if (field === "startTime" || field === "endTime") {
+      value = convertTo24HourFormat(value);
+    }
+  
+    updatedDays[index][field] = value; // Update the specific field (day, startTime, or endTime)
+    console.log(`Updating ${field} for index ${index}:`, value); // Debugging log
+    console.log("Updated Days:", updatedDays); // Debugging log
+    setCustomDays(updatedDays); // Update the state
+  };
   const handleAddDay = () => {
     const lastDay = customDays[customDays.length - 1];
     if (!lastDay.day) {
@@ -195,20 +231,53 @@ const EditOffer = () => {
     }
   };
 
+  const convertTo24Hour = (time12) => {
+    // expects: "1:15 PM" or "01:15 AM"
+    if (!time12) return "";
+    let [time, modifier] = time12.split(" ");
+    let [hours, minutes] = time.split(":");
+    hours = parseInt(hours, 10);
+  
+    if (modifier === "PM" && hours !== 12) {
+      hours = hours + 12;
+    }
+    if (modifier === "AM" && hours === 12) {
+      hours = 0;
+    }
+    return `${hours.toString().padStart(2, "0")}:${minutes}`;
+  };
+
   const handleSubmit = async (values, { resetForm }) => {
+
+    let daysToSubmit = values.type
+    ? customDays.map((d) => ({
+        ...d,
+        startTime: convert24hTo12h(d.startTime),
+        endTime: convert24hTo12h(d.endTime),
+      }))
+    : [];
     setLoading(true);
     const formData = new window.FormData();
     formData.append("title", values.title);
     formData.append("description", values.description);
+    formData.append("couponDescription", values.couponDescription);
+
+    
     formData.append("discountType", values.discountType);
     formData.append("type", values.type);
-    formData.append("startDate", range[0]);
-    formData.append("endDate", range[1]);
+    formData.append("startDate", formatDate(range[0]) );
+    formData.append("endDate", formatDate(range[1]));
     if (values.type) {
-      formData.append("customDays", JSON.stringify(customDays));
+      formData.append("customDays", JSON.stringify(daysToSubmit));
     } else {
-      formData.append("startTime", values.startTime);
-      formData.append("endTime", values.endTime);
+      formData.append(
+        "startTime",
+        convertTo24Hour(values.startTime)
+      );
+      formData.append(
+        "endTime",
+        convertTo24Hour(values.endTime)
+      );
     }
     if (values.discountType === "Discount") {
       formData.append("discountValue", values.discountValue);
@@ -219,16 +288,35 @@ const EditOffer = () => {
     }
     try {
       const updateResponse = await axios.put(
-        `http://localhost:4001/coupons/${_id}`,
+        `${baseUrl}coupons/${_id}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-      resetForm();
+    
+      if (updateResponse.status === 200) {
+        toast.success(`${values.discountType} updated successfully!`);
+        // resetForm();
+        setTimeout(() => {
+          if(values.discountType == 'Discount'){
+            navigate("/discounts");
+
+          } else if(values.discountType == 'Deal'){
+            navigate("/deals");
+          } else{
+            navigate("/coupons");
+
+          }
+           // replace with your actual route
+        }, 1500); // gives the user a moment to see the toast
+      }
+    
       setLoading(false);
     } catch (err) {
       console.error("Error submitting form:", err);
+      toast.error("Failed to update coupon.");
       setLoading(false);
     }
+    
   };
 
   const handleImageDelete = async (urlOrIdx) => {
@@ -238,7 +326,7 @@ const EditOffer = () => {
       return;
     }
     try {
-      const deleteUrl = `http://localhost:4001/coupons/${_id}/image`;
+      const deleteUrl = `${baseUrl}coupons/${_id}/image`;
       await axios.delete(deleteUrl, { data: { imageUrl: urlOrIdx } });
       setExistingImages((prevImages) =>
         prevImages.filter((image) => image !== urlOrIdx)
@@ -300,7 +388,7 @@ const EditOffer = () => {
                     {/* Description */}
                     <div className="col-12 mb-3">
                       <div className="form-group">
-                        <label className="form-label">Description</label>
+                        <label className="form-label">How to use</label>
                         <Field
                           as="textarea"
                           name="description"
@@ -316,6 +404,20 @@ const EditOffer = () => {
                         />
                       </div>
                     </div>
+                    <div className="form-group mb-3">
+                    <label className="form-label">Coupon Description</label>
+                    <Field
+                      as="textarea"
+                      name="couponDescription"
+                      className="form-input"
+                      rows={3}
+                    />
+                    <ErrorMessage
+                      name="couponDescription"
+                      component="div"
+                      className="error text-danger"
+                    />
+                  </div>
                     {/* Offer Type */}
                     <div className="col-12 mb-3">
                       <div className="form-group">
@@ -405,23 +507,22 @@ const EditOffer = () => {
                       </div>
                     </div>
                     {/* Offer Validity */}
-                    <div className="col-12 mb-3">
-                      <div className="form-group">
-                        <label className="form-label">
-                          Offer Validity Period
-                        </label>
-                        <div>
-                          <RangePicker
-                            value={range}
-                            onChange={handleRangeChange}
-                            format="YYYY-MM-DD"
-                          />
-                        </div>
-                        <p className="form-note">
-                          Note: Specify the duration for which the coupon is valid, including both the start and end dates.
-                        </p>
-                      </div>
+                    <div className="form-group mb-3">
+                    <label className="form-label">Offer Validity Period</label>
+                    <div className="w-100">
+                      <RangePicker
+                        value={range}
+                        onChange={handleRangeChange}
+                        format="YYYY-MM-DD"
+                        className="ant-picker"
+                        style={{ height: "45px" }}
+                      />
                     </div>
+                    <p className="form-note mt-2">
+                      Note: Specify the duration for which the coupon is valid,
+                      including both the start and end dates.
+                    </p>
+                  </div>
                     {/* Custom Days Toggle */}
                     <div className="col-12 mb-4">
                       <div className="form-group d-flex align-items-center">
@@ -437,108 +538,101 @@ const EditOffer = () => {
                     </div>
                     {/* Custom Days OR Start/End Time */}
                     <div className="col-12 mb-3">
-                      {values.type ? (
-                         <div className="custom-days">
-                          {customDays.map((day, index) => (
-                            <div
-                              key={index}
-                              className="custom-day-row mb-3 d-flex align-items-center gap-2"
-                              style={{
-                                display: 'grid',
-                                gridTemplateColumns: '1.5fr 1fr 1fr auto auto',
-                                gap: '8px',
-                                alignItems: 'center',
-                              }}
-                            >
-                              <Field
-                                as="select"
-                                className="form-input"
-                                value={day.day}
-                                style={{ minWidth: 120 }}
-                                onChange={(e) =>
-                                  handleCustomDayChange(
-                                    index,
-                                    "day",
-                                    e.target.value
-                                  )
-                                }
-                              >
-                                <option value="">Select Day</option>
-                                {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
-                                  <option key={d} value={d} disabled={disabledDays.includes(d)}>{d}</option>
-                                ))}
-                              </Field>
-                              <Field
-                                className="form-input"
-                                type="time"
-                                value={day.startTime}
-                                style={{ minWidth: 100 }}
-                                onChange={(e) =>
-                                  handleCustomDayChange(
-                                    index,
-                                    "startTime",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                              <Field
-                                className="form-input"
-                                type="time"
-                                value={day.endTime}
-                                style={{ minWidth: 100 }}
-                                onChange={(e) =>
-                                  handleCustomDayChange(
-                                    index,
-                                    "endTime",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                              {index === 0 && (
-                                <button
-                                  type="button"
-                                  onClick={handleAddDay}
-                                  className="btn btn-sm btn-primary"
-                                >
-                                  <Add />
-                                </button>
-                              )}
-                              {customDays.length > 1 && index !== 0 && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveDay(index)}
-                                  className="btn btn-sm btn-danger"
-                                >
-                                  <Remove />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="row">
-                          <div className="col-6 mb-3">
-                            <div className="form-group">
-                              <label className="form-label">Offer Active Start Time</label>
-                              <Field
-                                name="startTime"
-                                type="time"
-                                className="form-input"
-                              />
-                            </div>
-                          </div>
-                          <div className="col-6 mb-3">
-                            <div className="form-group">
-                              <label className="form-label">Offer Active End Time</label>
-                              <Field
-                                name="endTime"
-                                type="time"
-                                className="form-input"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                    <label className="form-label">Custom time</label>
+
+                    {values.type ? (
+ <div className="custom-days mt-3">
+ {customDays.map((day, index) => (
+   <div key={index} className="custom-day-row d-flex align-items-center mb-2">
+     {/* Day Dropdown */}
+     <select
+       className="form-input w-25"
+       value={day.day}
+       onChange={(e) => handleCustomDayChange(index, "day", e.target.value)}
+     >
+       <option value="">Select Day</option>
+       {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(
+         (d) => (
+           <option
+             key={d}
+             value={d}
+             disabled={
+               customDays.some((cd, i) => cd.day === d && i !== index) ||
+               disabledDays.includes(d)
+             }
+           >
+             {d}
+           </option>
+         )
+       )}
+     </select>
+
+     {/* Start Time Input */}
+     <div className="mx-2 w-25 d-flex align-items-center">
+       <input
+         type="time"
+         className="form-input"
+         value={day.startTime} // Bind to the state
+         onChange={(e) => handleCustomDayChange(index, "startTime", e.target.value)} // Update state on change
+       />
+     </div>
+
+     {/* End Time Input */}
+     <div className="w-25 d-flex align-items-center">
+       <input
+         type="time"
+         className="form-input"
+         value={day.endTime} // Bind to the state
+         onChange={(e) => handleCustomDayChange(index, "endTime", e.target.value)} // Update state on change
+       />
+     </div>
+
+     {/* Add or Remove Button */}
+     {index === 0 ? (
+       <button
+         type="button"
+         onClick={handleAddDay}
+         className="btn btn-sm btn-outline-primary mx-2"
+         disabled={customDays.length >= 7}
+       >
+         <Add />
+       </button>
+     ) : (
+       <button
+         type="button"
+         onClick={() => handleRemoveDay(index)}
+         className="btn btn-sm btn-outline-danger mx-2"
+       >
+         <Remove />
+       </button>
+     )}
+   </div>
+ ))}
+</div>
+) : (
+  <div className="row">
+    <div className="col-6 mb-3">
+      <div className="form-group">
+        <label className="form-label">Offer Active Start Time</label>
+        <Field
+          name="startTime"
+          type="time"
+          className="form-input"
+        />
+      </div>
+    </div>
+    <div className="col-6 mb-3">
+      <div className="form-group">
+        <label className="form-label">Offer Active End Time</label>
+        <Field
+          name="endTime"
+          type="time"
+          className="form-input"
+        />
+      </div>
+    </div>
+  </div>
+)}
                     </div>
                     {/* Submit Button - aligned right */}
                     {/* <div className="col-12">

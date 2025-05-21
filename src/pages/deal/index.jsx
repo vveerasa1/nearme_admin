@@ -23,7 +23,6 @@ const Deal = () => {
     return `${date.toLocaleDateString("en-GB", options)} ${timeStr}`;
   };
 
-  // This will hold the current page's coupons to be displayed
   useEffect(()=>{
     fetchData()
   },[])
@@ -45,6 +44,17 @@ const Deal = () => {
     }
   };
   
+  const formatValidDateRange = (startDateStr, endDateStr) => {
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+  
+    const options = { day: '2-digit', month: 'short' , year: 'numeric' }; // e.g., "19 May"
+    const formattedStart = startDate.toLocaleDateString('en-GB', options);
+    const formattedEnd = endDate.toLocaleDateString('en-GB', options);
+  
+    return `Valid: ${formattedStart} - ${formattedEnd}`;
+  };
+
   const handleSearchChange = (e) => {
     const value = e.target.value;
     debouncedFetchData(value);
@@ -73,7 +83,7 @@ const Deal = () => {
   const handleDelete = async (_id) => {
     try {
       const response = await axios.delete(
-        `http://localhost:4001/coupons/${_id}`
+        `${hostUrl}coupons/${_id}`
       );
       console.log(response);
     } catch (err) {
@@ -248,17 +258,9 @@ const Deal = () => {
                                   </h6>
 
                                   <p className="mb-1 text-muted">
-                                    <strong>Valid:</strong>{" "}
-                                    {formatDateTime(
-                                      item.dateRange?.startDate,
-                                      item.activeTime?.startTime
-                                    )}{" "}
-                                    -{" "}
-                                    {formatDateTime(
-                                      item.dateRange?.endDate,
-                                      item.activeTime?.endTime
-                                    )}
-                                  </p>
+  <strong>{formatValidDateRange(item.dateRange?.startDate, item.dateRange?.endDate)}</strong>
+</p>
+
 
                                   <Link
                                     to={`/view/${item.discountType}/${item._id}`}

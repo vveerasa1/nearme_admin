@@ -17,6 +17,8 @@ import EditOffer from './pages/editOffer'
 import AppLayout from './layout'
 import EditBusiness from './pages/editBusiness'
 import ViewBusinessData from './pages/viewBusinessData'
+import Users from './pages/users'
+import ViewUser from './pages/viewUser'
 import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap/dist/js/bootstrap.bundle.min.js"
 import ViewData from './pages/viewData'
@@ -95,6 +97,8 @@ function App() {
           path="/view-business/:_id" 
           element={<AppLayout><ViewBusinessData /></AppLayout>} 
         />
+        <Route path="/users"  element={<AppLayout><Users /></AppLayout> }/>
+        <Route path="/view-users/:_id"  element={<AppLayout><ViewUser /></AppLayout> }/>
       </Routes>
       </BusinessProvider>
 

@@ -222,6 +222,10 @@ const AddOffer = () => {
     }
   };
 
+  const formatDate = (date) => {
+    return new Date(date).toISOString().split("T")[0];
+  };
+
   const handleSubmit = async (values, formikHelpers = {}) => {
     const { resetForm } = formikHelpers;
     setLoading(true);
@@ -251,7 +255,7 @@ const AddOffer = () => {
       setLoading(false);
       return;
     }
-    // console.log('Hi hello' ,daysToSubmit);
+    // console.log('Hi hello' ,formatDate(range[0]) , formatDate(range[1]) , convertTo24Hour(values.startTime));
 // return;
     const formData = new FormData();
     formData.append("place_Id", _id);
@@ -260,8 +264,8 @@ const AddOffer = () => {
     formData.append("couponDescription", values.couponDescription);
     formData.append("discountType", values.discountType);
     formData.append("type", values.type);
-    formData.append("startDate", range[0]);
-    formData.append("endDate", range[1]);
+    formData.append("startDate", formatDate(range[0]));
+    formData.append("endDate", formatDate(range[1]));
 
     if (values.type) {
       formData.append("customDays", JSON.stringify(daysToSubmit));
@@ -294,7 +298,7 @@ const AddOffer = () => {
       if (values.discountType === "Discount") {
         navigate("/discounts");
       } else if (values.discountType === "Deal") {
-        navigate("/deal");
+        navigate("/deals");
       } else {
         navigate("/coupons");
       }

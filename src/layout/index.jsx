@@ -70,6 +70,8 @@ const AppLayout = ({ children }) => {
       path.startsWith("/view/Coupon")
     )
       return "5";
+      if (path.startsWith("/users") || path.startsWith("/view-users")) 
+        return "6"; // Added condition for "Users" page
     return "1";
   };
 
@@ -99,6 +101,11 @@ const AppLayout = ({ children }) => {
       icon: <FontAwesomeIcon icon={faTicket} />,
       label: <Link to="/coupons">Coupons</Link>,
     },
+    {
+      key: "6",
+      icon: <UserOutlined />,
+      label: <Link to="/users">Users</Link>, // New "Users" tab
+    },
   ];
 
   const profileMenu = (
@@ -115,9 +122,7 @@ const AppLayout = ({ children }) => {
       {/* Sidebar or Drawer */}
       {isMobile ? (
         <Drawer
-          title={
-            <img src={Logo} alt="Logo" style={{ maxWidth: "120px" }} />
-          }
+          title={<img src={Logo} alt="Logo" style={{ maxWidth: "120px" }} />}
           placement="left"
           onClose={() => setMobileDrawerOpen(false)}
           open={mobileDrawerOpen}

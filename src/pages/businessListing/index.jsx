@@ -45,7 +45,7 @@ const BusinessListing = () => {
 
   const deleteBusiness = async (_id) => {
     try {
-      const url = `http://localhost:4001/business/${_id}`;
+      const url = `${baseUrl}business/${_id}`;
       await axios.delete(url);
       setBusinessList((prev) => prev.filter((item) => item._id !== _id));
       toast.success("Business deleted successfully");

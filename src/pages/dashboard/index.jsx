@@ -1,7 +1,7 @@
 import React from "react";
 import "./style.css";
 import { Link } from "react-router-dom";
-import { Business, LocalOffer } from "@mui/icons-material";
+import { Business, LocalOffer, Person } from "@mui/icons-material";
 import CountUp from "react-countup";
 import { useEffect, useState } from "react";
 import { Spin } from "antd";
@@ -24,6 +24,9 @@ const Dashboard = () => {
   const [getNewTotalCount, setGetNewTotalCount] = useState();
   const [getTotalCouponCount, setGetTotalCouponCount] = useState();
   const [getNewTotalCouponCount, setGetNewCouponTotalCount] = useState();
+  const [getNewTotalUserCountount, setGetNewUserTotalCount] = useState();
+
+  
   const [getGraphWeekData, setGetGraphWeekData] = useState();
   const [getGraphMonthData, setGetGraphMonthData] = useState();
   const [getGraphYearData, setGetGraphYearData] = useState();
@@ -36,51 +39,39 @@ const Dashboard = () => {
   const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
   useEffect(() => {
-
     const fetchData = async () => {
       try {
-        const url = `${baseUrl}dashboard`;
-        const url1 = `${baseUrl}dashboard/new?last7Days=true`;
-        const url2 = `${baseUrl}dashboard/coupon?last7Days=true`;
-        const url3 =
-          `${baseUrl}dashboard/coupon/new?last7Days=true`;
-        const url5 = `${baseUrl}dashboard/graph?type=week`;
-        const url6 = `${baseUrl}dashboard/graph?type=month`;
-        const url7 = `${baseUrl}dashboard/graph?type=year`;
+        const urls = [
+          `${baseUrl}dashboard`,
+          `${baseUrl}dashboard/graph?type=week`,
+          `${baseUrl}dashboard/graph?type=month`,
+          `${baseUrl}dashboard/graph?type=year`,
+        ];
+  
+        const [dashboardRes, weekGraphRes, monthGraphRes, yearGraphRes] = await Promise.all(
+          urls.map((url) => axios.get(url))
+        );
+  
+        const countData = dashboardRes.data.data;
 
-        const response = await Promise.all([
-          axios.get(url),
-          axios.get(url1),
-          axios.get(url2),
-          axios.get(url3),
-          axios.get(url5),
-          axios.get(url6),
-          axios.get(url7),
-        ]);
-
-        const totalCountData = response[0].data.message;
-        const totalNewCountData = response[1].data.message.count;
-        const totalCouponData = response[2].data.message;
-        const totalNewCouponData = response[3].data.message.count;
-        const graphWeekData = response[4].data.data;
-        const graphMonthData = response[5].data.data;
-        const graphYearData = response[6].data.data;
-
-        setGetTotalCount(totalCountData);
-        setGetNewTotalCount(totalNewCountData);
-        setGetTotalCouponCount(totalCouponData);
-        setGetNewCouponTotalCount(totalNewCouponData);
-        setGetGraphWeekData(graphWeekData);
-        setGetGraphMonthData(graphMonthData);
-        setGetGraphYearData(graphYearData);
-        setLoading(false);
+        setGetTotalCount(countData.businessCount);
+        setGetTotalCouponCount(countData.couponCount);
+        setGetNewTotalCount(countData.recentBusinesses);
+        setGetNewCouponTotalCount(countData.recentCoupons);
+        setGetNewUserTotalCount(countData.userCount);
+        setGetGraphWeekData(weekGraphRes.data.data);
+        setGetGraphMonthData(monthGraphRes.data.data);
+        setGetGraphYearData(yearGraphRes.data.data);
       } catch (error) {
-        console.error("Something went wrong", error);
+        console.error("Something went wrong while fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
     };
-
+  
     fetchData();
   }, []);
+  ;
 
   
 
@@ -147,70 +138,79 @@ const Dashboard = () => {
         </div>
       </div>
       {/* counts */}
-      <div className="counts-wrapper">
-        <div className="row">
-          <div className="col-12 col-md-6 col-lg-3 mb-4">
-            <div className="count-item">
-              <div className="countitem-icon">
-                <Business className="cicon" />
-              </div>
-              <div className="countitem-info">
-                <h4>Total Shops</h4>
-                <h3>
-                  <CountUp start={0} end={getTotalCount} duration={2} />
-                </h3>
-              </div>
-            </div>
-          </div>
-          <div className="col-12 col-md-6 col-lg-3 mb-4">
-            <div className="count-item">
-              <div className="countitem-icon">
-                <Business className="cicon" />
-              </div>
-              <div className="countitem-info">
-                <h4>
-                  New Shops <span>(This Week)</span>
-                </h4>
-                <h3>
-                  <CountUp start={0} end={getNewTotalCount} duration={2} />
-                </h3>
-              </div>
-            </div>
-          </div>
-          <div className="col-12 col-md-6 col-lg-3 mb-4">
-            <div className="count-item">
-              <div className="countitem-icon">
-                <LocalOffer className="cicon" />
-              </div>
-              <div className="countitem-info">
-                <h4>Total Coupons</h4>
-                <h3>
-                  <CountUp start={0} end={getTotalCouponCount} duration={2} />
-                </h3>
-              </div>
-            </div>
-          </div>
-          <div className="col-12 col-md-6 col-lg-3 mb-4">
-            <div className="count-item">
-              <div className="countitem-icon">
-                <LocalOffer className="cicon" />
-              </div>
-              <div className="countitem-info">
-                <h4>
-                  New Coupons <span>(This Week)</span>
-                </h4>
-                <h3>
-                  <CountUp
-                    start={0}
-                    end={getNewTotalCouponCount}
-                    duration={2}
-                  />
-                </h3>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="counts-wrapper" style={{ overflowX: 'auto' }}>
+  <div
+    className="d-flex gap-3 flex-nowrap"
+    style={{ minWidth: '100%', paddingBottom: '10px' }}
+  >
+    <div className="count-item">
+      <div className="countitem-icon">
+        <Business className="cicon" />
       </div>
+      <div className="countitem-info">
+        <h4>Total Shops</h4>
+        <h3>
+          <CountUp start={0} end={getTotalCount} duration={2} />
+        </h3>
+      </div>
+    </div>
+
+    <div className="count-item">
+      <div className="countitem-icon">
+        <Business className="cicon" />
+      </div>
+      <div className="countitem-info">
+        <h4>
+          New Shops <span>(This Week)</span>
+        </h4>
+        <h3>
+          <CountUp start={0} end={getNewTotalCount} duration={2} />
+        </h3>
+      </div>
+    </div>
+
+    <div className="count-item">
+      <div className="countitem-icon">
+        <LocalOffer className="cicon" />
+      </div>
+      <div className="countitem-info">
+        <h4>Total Coupons</h4>
+        <h3>
+          <CountUp start={0} end={getTotalCouponCount} duration={2} />
+        </h3>
+      </div>
+    </div>
+
+    <div className="count-item">
+      <div className="countitem-icon">
+        <LocalOffer className="cicon" />
+      </div>
+      <div className="countitem-info">
+        <h4>
+          New Coupons <span>(This Week)</span>
+        </h4>
+        <h3>
+          <CountUp start={0} end={getNewTotalCouponCount} duration={2} />
+        </h3>
+      </div>
+    </div>
+
+    <div className="count-item">
+      <div className="countitem-icon">
+        <Person className="cicon" />
+      </div>
+      <div className="countitem-info">
+        <h4>
+          Users
+        </h4>
+        <h3>
+          <CountUp start={0} end={getNewTotalUserCountount} duration={2} />
+        </h3>
+      </div>
+    </div>
+  </div>
+</div>
+
       {/* statistics */}
       <div className="statistics-wrapper">
         <div className="row">

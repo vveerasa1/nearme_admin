@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { data, Link } from "react-router-dom";
+import { data, Link ,useNavigate} from "react-router-dom";
 import { Star, Add, Remove, Delete } from "@mui/icons-material";
 
 import { Formik, Form, Field, ErrorMessage, FieldArray } from "formik";
@@ -8,7 +8,7 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import CreatableSelect from "react-select/creatable";
 import { Spin } from "antd";
-import { convert24hTo12h, formatWeeklyHours } from "./constant";
+import { convert12hTo24h, convert24hTo12h, formatWeeklyHours } from "./constant";
 import toast from "react-hot-toast";
 
 const EditBusiness = () => {
@@ -28,6 +28,7 @@ const EditBusiness = () => {
   const [existingPhoto, setExistingPhoto] = useState([]);
   const [newPhoto, setNewPhoto] = useState([]);
   const [photoError, setPhotoError] = useState("");
+  const navigate = useNavigate();
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
   const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
@@ -51,9 +52,11 @@ const EditBusiness = () => {
     // latitude: "",
     // longitude: "",
     phone: "",
+    code:"",
     place_link: "",
     rating: "",
     reviews: "",
+    business_status:"",
     working_hours: [
       {
         day: "",
@@ -112,6 +115,7 @@ const EditBusiness = () => {
             return {};
           }
         })();
+        console.log("parsedWorkingHours", parsedWorkingHours)
 
         function cleanTimeString(time) {
           return time
@@ -129,28 +133,40 @@ const EditBusiness = () => {
             return { day, startTime: "", endTime: "", is24Hours: true };
           } else if (value === "Closed") {
             return { day, startTime: "", endTime: "", is24Hours: false };
-          } else {
+          } else if (typeof value === "string" && value.includes("-")) {
             const [start, end] = value.split("-");
+            console.log(start, end, "my start and end")
             const cleanedStart = cleanTimeString(start);
             const cleanedEnd = cleanTimeString(end);
-        
+            
             return {
               day,
-              startTime: convert24hTo12h(cleanedStart),
-              endTime: convert24hTo12h(cleanedEnd),
+              startTime: convert12hTo24h(cleanedStart),
+              endTime: convert12hTo24h(cleanedEnd),
               is24Hours: false,
             };
+          } else {
+            console.warn(`Unexpected value for day "${day}":`, value);
+            return { day, startTime: "", endTime: "", is24Hours: false };
           }
         });
+
+        console.log(transformedWorkingHours, "transformed working hours")
         
-        ;
-        console.log('Hii this', transformedWorkingHours);
-  
+        const rawPhone = data.phone; 
+
+        const cleanedPhone = rawPhone.replace(/\D/g, '');
+        
+        const phoneNumber = cleanedPhone.slice(-10);
+        
+        const countryCode = '+' + cleanedPhone.slice(0, cleanedPhone.length - 10);
+        console.log('hello',data.business_status);
         setWorkingHours(transformedWorkingHours);
         setExistingPhoto(Array.isArray(data.photo) ? data.photo : []);
         setInitialValues({
+          
           display_name: data.display_name || "",
-          types: parsedTypes,
+          types: data.types || [],
           address: data.address || "",
           street: data.street || "",
           city: data.city || "",
@@ -160,12 +176,14 @@ const EditBusiness = () => {
           country_code: data.country_code || "",
           // latitude: data.latitude || "",
           // longitude: data.longitude || "",
-          phone: data.phone || "",
+          phone: phoneNumber || "",
+          code: countryCode || "",
           photo: data.photo || "",
-          place_link: data.place_link || "",
+          place_link: data.gmb_link || "",
           rating: data.rating || "",
           reviews: data.reviews || "",
-          working_hours: transformedWorkingHours,
+          working_hours: transformedWorkingHours || [],
+          business_status: data.business_status || "",
         });
 
         setLoading(false);
@@ -278,7 +296,7 @@ const EditBusiness = () => {
   };
 
   const handleSubmit = async (values, { resetForm }) => {
-    console.log("hey", values.working_hours);
+
     const updatedTime = values.working_hours.map((date) => ({
       day: date.day,
       startTime: convert24hTo12h(date.startTime),
@@ -288,7 +306,7 @@ const EditBusiness = () => {
     console.log(updatedTime);
     const formData = new FormData();
     formData.append("display_name", values.display_name);
-    formData.append("types", JSON.stringify(values.types));
+    formData.append("types", values.types);
     formData.append("address", values.address);
     formData.append("street", values.street);
     formData.append("city", values.city);
@@ -296,14 +314,14 @@ const EditBusiness = () => {
     formData.append("postal_code", values.postal_code);
     formData.append("county", values.county);
     formData.append("country_code", values.country_code);
-    // formData.append("latitude", values.latitude);
-    // formData.append("longitude", values.longitude);
-    formData.append("phone", values.phone);
+    formData.append("phone", values.code+values.phone);
     formData.append("place_link", values.place_link || "");
     formData.append("rating", values.rating || "");
     formData.append("reviews", values.reviews || "");
-    formData.append("working_hours", JSON.stringify(updatedTime));
+    formData.append("business_status", values.business_status || "");
 
+    // formData.append("working_hours", JSON.stringify(updatedTime));
+    formData.append("working_hours", JSON.stringify(formatWeeklyHours(updatedTime)));
     formData.append("existingPhoto", JSON.stringify(existingPhoto));
 
     if (newPhoto.length > 0) {
@@ -311,19 +329,19 @@ const EditBusiness = () => {
     }
 
     try {
-      const response = await axios.put(
-        `${baseUrl}business/${_id}`,
-        formData
-      );
-      console.log("Business submitted:", response.data);
-      setNewPhoto([]);
-      setWorkingHours([{ day: "", startTime: "", endTime: "" }]);
-      if (fileInputRef.current) fileInputRef.current.value = null;
-      resetForm();
-      toast('Buisness Updated sucessfully');
+      const response = await axios.put(`${baseUrl}business/${_id}`, formData);
+    
+      if (response.status === 200) {
+        toast.success('Business updated successfully');
+        setTimeout(() => {
+          navigate('/business-listings'); 
+        }, 1500);
+      }
     } catch (error) {
       console.error("Submission failed:", error);
+      toast.error('Something went wrong while updating business');
     }
+    
   };
 
   const handleImageDelete = async (url) => {
@@ -531,9 +549,51 @@ const EditBusiness = () => {
                                 placeholder="CA"
                               />
                             </div>
+                            {/* <div className="col-12 col-md-6 col-lg-6 mb-3">
+                            <Field
+                              as="select"
+                              name="business_status"
+                              className="form-select"
+                            >
+                              
+                              <option value="">Select status</option>
+                              <option value="Operational">Operational</option>
+                              <option value="Closedtemporarily">
+                                Closed Temporarily
+                              </option>
+                              <option value="Closedpermanently">
+                                Closed Permanently
+                              </option>
+                            </Field>
+                            {/* <ErrorMessage
+                              name="buisness_status"
+                              component="div"
+                              className="error text-danger"
+                            /> *
+                          </div> */}
                           </div>
                         </div>
                       </div>
+                      <div className="col-12 mb-4">
+  <div className="form-group">
+    <label className="form-label">Business Status</label>
+    <Field
+      as="select"
+      name="buisness_status"
+      className="form-select"
+    >
+      <option value="">Select Business Status</option>
+      <option value="Operational">Operational</option>
+      <option value="Closedtemporarily">Closed Temporarily</option>
+      <option value="Closedpermanently">Closed Permanently</option>
+    </Field>
+    <ErrorMessage
+      name="buisness_status"
+      component="div"
+      className="error text-danger"
+    />
+  </div>
+</div>
                       {/* Latitude */}
                       {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
                         <div className="form-group">
@@ -651,26 +711,43 @@ const EditBusiness = () => {
                     <div className="row">
                       {/* phone */}
                       <div className="col-12 col-md-12 col-lg-12 mb-3">
-                        <div className="form-group">
-                          <label className="form-label">Phone number</label>
+                      <div className="form-group">
+                        <label className="form-label">Phone number</label>
+                        <div className="d-flex gap-2">
+                          {/* Country Code Select */}
+                          <Field as="select" name="code" className="form-control w-25">
+                            <option value="+1">+1 (USA)</option>
+                            <option value="+91">+91 (India)</option>
+                            <option value="+44">+44 (UK)</option>
+                            <option value="+61">+61 (Australia)</option>
+                            <option value="+81">+81 (Japan)</option>
+                          </Field>
 
+                          {/* Phone Number Input */}
                           <Field
                             name="phone"
-                            type="number"
-                            className="form-input"
+                            type="Number"
+                            className="form-input w-75"
                             placeholder="Phone number"
                           />
+                          
                         </div>
+                        <ErrorMessage
+                          name="phone"
+                          component="div"
+                          className="error text-danger"
+                        />
                       </div>
+                    </div>
                       {/* place link */}
                       <div className="col-12 col-md-12 col-lg-12 mb-3">
                         <div className="form-group">
-                          <label className="form-label">Place Link</label>
+                          <label className="form-label">Place map link</label>
                           <Field
                             name="place_link"
                             type="text"
                             className="form-input"
-                            placeholder="Place Link"
+                            placeholder="Place map link"
                           />
                         </div>
                       </div>
@@ -768,7 +845,7 @@ const EditBusiness = () => {
                       <FieldArray name="working_hours">
                         {({ push, remove }) => (
                           <div className="custom-days">
-                            {console.info("WORKING HOURS", workingHours)}
+                            {/* {console.info("WORKING HOURS", workingHours)} */}
                             {(values.working_hours) &&
                               values.working_hours.map((day, index) => (
                                 <div
@@ -813,7 +890,6 @@ const EditBusiness = () => {
                 type="time"
                 name={`working_hours[${index}].startTime`}
                 className="form-control"
-                value={day.startTime}
                 disabled={day.is24Hours}
               />
               {/* Show 12hr format */}
@@ -828,7 +904,6 @@ const EditBusiness = () => {
                 type="time"
                 name={`working_hours[${index}].endTime`}
                 className="form-control"
-                value={day.endTime}
                 disabled={day.is24Hours}
               />
               {/* Show 12hr format */}
@@ -838,33 +913,27 @@ const EditBusiness = () => {
             </div>
 
                                   {/* 24 Hours Checkbox */}
-                                  <div className="form-check mt-2">
-                                    <Field
-                                      type="checkbox"
-                                      name={`working_hours[${index}].is24Hours`}
-                                      checked={day.is24Hours}
-                                      onChange={(e) => {
-                                        const checked = e.target.checked;
-                                        setFieldValue(
-                                          `working_hours[${index}].is24Hours`,
-                                          checked
-                                        );
-                                        if (checked) {
-                                          setFieldValue(
-                                            `working_hours[${index}].startTime`,
-                                            ""
-                                          );
-                                          setFieldValue(
-                                            `working_hours[${index}].endTime`,
-                                            ""
-                                          );
-                                        }
-                                      }}
-                                    />
-                                    <label className="form-check-label ms-2">
-                                      24 Hours
-                                    </label>
-                                  </div>
+                                  <div className="form-check mt-2 d-flex align-items-center">
+  <Field
+    type="checkbox"
+    name={`working_hours[${index}].is24Hours`}
+    checked={day.is24Hours}
+    className="form-check-input"
+    onChange={(e) => {
+      setFieldValue(
+        `working_hours[${index}].is24Hours`,
+        e.target.checked
+      );
+      if (e.target.checked) {
+        setFieldValue(`working_hours[${index}].startTime`, "");
+        setFieldValue(`working_hours[${index}].endTime`, "");
+      }
+    }}
+  />
+  <label className="form-check-label ms-2 mb-0">
+    24 Hrs
+  </label>
+</div>
 
                                   {/* Add / Remove Buttons */}
                                   <div className="d-flex flex-column mt-1">

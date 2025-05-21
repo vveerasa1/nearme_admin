@@ -1,171 +1,151 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { Switch } from "antd";
+import { Card, Switch } from "antd";
 import axios from "axios";
-import Slider from "react-slick";
 
-const ViewData = () => {
+const ViewCoupon = () => {
   const [active, setActive] = useState(false);
   const { _id } = useParams();
   const { state: data } = useLocation();
-  console.log(data);
+  const baseUrl = import.meta.env.VITE_BASE_URL;
+
   useEffect(() => {
-    const fetchCouponStatus = async () => {
+    const fetchStatus = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:4001/coupons/${_id}`
-        );
-        setActive(response.data.active);
-      } catch (error) {
-        console.error("Error fetching coupon status:", error);
+        const res = await axios.get(`${baseUrl}coupons/${_id}`);
+        setActive(res.data.active);
+      } catch (err) {
+        console.error("Failed to fetch coupon:", err);
       }
     };
 
     if (data && data._id === _id) {
       setActive(data.active);
     } else {
-      fetchCouponStatus();
+      fetchStatus();
     }
   }, [data, _id]);
 
-  const onChange = async (checked) => {
+  const handleStatusChange = async (checked) => {
     try {
-      const response = await axios.patch(
-        `http://localhost:4001/coupons/${_id}/status`,
-        { active: checked }
-      );
-      console.log("Status updated:", response.data);
+      await axios.patch(`${baseUrl}coupons/${_id}/status`, { active: checked });
       setActive(checked);
-    } catch (error) {
-      console.error("Error updating status:", error);
+    } catch (err) {
+      console.error("Failed to update status:", err);
     }
   };
-  const formatDate = (date) => {
-    const d = new Date(date);
-    const day = d.getDate().toString().padStart(2, "0");
-    const month = (d.getMonth() + 1).toString().padStart(2, "0");
-    const year = d.getFullYear().toString().slice(-2);
-    return `${day}/${month}/${year}`;
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return `${d.getDate().toString().padStart(2, "0")} ${d.toLocaleString("default", {
+      month: "long",
+    })} ${d.getFullYear()}`;
   };
 
   return (
-    <div>
-      <div className="container-fluid mt-3">
-        <h2>{data ? data.title : "Loading..."}</h2>
-        <div className="offer-data container">
-          <div className="row border d-flex p-5">
-            <div className="col-lg-4">
-              <div className="slider-container">
-                {data &&
-                Array.isArray(data.images) &&
-                data.images.length > 0 ? (
-                  <div
-                    id="carouselExampleIndicators"
-                    className="carousel slide"
-                    data-bs-ride="carousel"
-                  >
-                    <div className="carousel-indicators ">
-                      {data.images.map((_, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          data-bs-target="#carouselExampleIndicators"
-                          data-bs-slide-to={index}
-                          className={index === 0 ? "active" : ""}
-                          aria-current={index === 0 ? "true" : undefined}
-                          aria-label={`Slide ${index + 1}`}
-                        ></button>
-                      ))}
-                    </div>
-                    <div className="carousel-inner">
-                      {console.log(data.images)}
+    <div className="container-fluid mt-4">
+      <h3 className="fw-semibold mb-2">{data?.title}</h3>
+      <nav className="text-muted mb-3 small">
+        Home / {data?.discountType} / {data?.title}
+      </nav>
 
-                      {data.images.map((img, index) => (
-                        <div
-                          key={index}
-                          className={`carousel-item ${
-                            index === 0 ? "active" : ""
-                          }`}
-                        >
-                          <img
-                            src={img}
-                            className="img-fluid "
-                            alt={`Slide ${index + 1}`}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p>No images available</p>
-                )}
+      <Card className="shadow-sm p-4 position-relative" style={{ borderRadius: "10px" }}>
+        <div className="row">
+          {/* Left - Image + Toggle */}
+          <div className="col-lg-4 d-flex flex-column">
+  <img
+    src={data?.images?.[0]}
+    alt="Coupon"
+    className="img-fluid rounded"
+    style={{ maxHeight: "100%", objectFit: "cover" }}
+  />
+
+  <div className="mt-4 d-flex align-items-center gap-2">
+    <Switch checked={active} onChange={handleStatusChange} />
+    <span className="fw-medium">
+      {active ? "Disable discount" : "Enable discount"}
+    </span>
+  </div>
+</div>
+
+
+          {/* Right - Details */}
+          <div className="col-lg-8 mt-4 mt-lg-0">
+            <h4 className="fw-bold mb-3">{data?.title}</h4>
+
+            <div className="mb-3">
+              {[
+                { label: "Store Name", value: data?.storeInfo.display_name },
+                { label: "Address", value: data?.storeInfo.address },
+                { label: "Phone", value: data?.storeInfo.phone },
+                { label: "How to Use", value: data?.description, muted: true },
+                { label: "Coupon Description", value: data?.couponDescription, muted: true },
+              ].map(({ label, value, muted }, i) => (
+                <div className="row mb-2" key={i}>
+                  <div className="col-4 fw-semibold text-muted">{label}:</div>
+                  <div className={`col-8 ${muted ? "text-muted" : "fw-medium"}`}>{value}</div>
+                </div>
+              ))}
+            </div>
+
+            {(data?.discountType === "Discount" || data?.discountType === "Deal") && (
+              <div className="mb-3 row">
+                <div className="col-4 fw-semibold text-muted">{data.discountType}:</div>
+                <div className="col-8 fw-medium">
+                  {data.discountValue}
+                  {data.discountType === "Discount" ? "%" : ""}
+                </div>
               </div>
+            )}
 
-              <div className="mt-5 d-flex gap-2">
-                <Switch checked={active} onChange={onChange} />
-                <p className="m-0">
-                  {active ? "Disable Coupon" : "Enable Coupon"}
-                </p>
+            <div className="mb-3 row">
+              <div className="col-4 fw-semibold text-muted">Valid:</div>
+              <div className="col-8 fw-medium">
+                {formatDate(data?.dateRange?.startDate)}{" "}
+                {data?.activeTime?.startTime && `at ${data.activeTime.startTime}`} -{" "}
+                {formatDate(data?.dateRange?.endDate)}{" "}
+                {data?.activeTime?.endTime && `at ${data.activeTime.endTime}`}
               </div>
             </div>
-            <div className="col mt-lg-0 mt-4">
-              <div>{/* <h4>{data.title}</h4> */}</div>
-              <div>
-                <p>{data.description}</p>
-              </div>
-              <div className="">
-                <strong>Store Name </strong>
-                <p className="">
-                  {data.storeInfo.display_name}
-                </p>
-              </div>
-              <div className=" gap-2">
-                <strong>Address </strong>
-                <p className="">
-                  {data.storeInfo.address}
-                </p>
-              </div>
-              <div>
-                <p>
-                  <b>Date:</b> {formatDate(data.dateRange.startDate)} -{" "}
-                  {formatDate(data.dateRange.endDate)}
-                </p>
-                <p>
-                  <b>Discount Type:</b> {data.discountType}
-                </p>
-                <div>
-                  <h5>Active Time</h5>
-                  {data.activeTime &&
-                  data.activeTime.startTime &&
-                  data.activeTime.endTime ? (
-                    <p className="d-flex">
-                      <b>Time: </b> &nbsp; {data.activeTime.startTime} -{" "}
-                      {data.activeTime.endTime}
-                    </p>
-                  ) : (
-                    <p>No Active Time Available</p>
-                  )}
 
-                  <h5>Custom Days</h5>
-                  {Array.isArray(data.customDays) &&
-                  data.customDays.length > 0 ? (
-                    data.customDays.map((dayItem) => (
-                      <p key={dayItem._id}>
-                        <b>{dayItem.day}:</b> {dayItem.startTime} -{" "}
-                        {dayItem.endTime}
-                      </p>
-                    ))
-                  ) : (
-                    <p>No Custom Days Available</p>
-                  )}
-                </div>
+            <div className="mb-3 row">
+              <div className="col-4 fw-semibold text-muted">Offer Timing:</div>
+              <div className="col-8">
+                {data?.customDays?.length > 0 ? (
+                  <ul className="list-unstyled mb-0">
+                    {data.customDays.map((d) => (
+                      <li key={d._id}>
+                        {d.day}: {d.startTime} - {d.endTime}
+                      </li>
+                    ))}
+                  </ul>
+                ) : data?.activeTime?.startTime && data?.activeTime?.endTime ? (
+                  <p className="mb-0">
+                    Offer starts at {data.activeTime.startTime}, ends at {data.activeTime.endTime}
+                  </p>
+                ) : (
+                  <p className="mb-0">No custom time added</p>
+                )}
               </div>
             </div>
           </div>
         </div>
-      </div>
+
+        {/* Bottom-right buttons */}
+        <div
+          className="position-absolute d-flex gap-2"
+          style={{ bottom: "20px", right: "20px" }}
+        >
+          {/* <button className="theme-btn btn-border" type="button">
+            Clear
+          </button> */}
+          <button className="theme-btn btn-main" style={{ fontWeight: 500 }}>
+            Edit
+          </button>
+        </div>
+      </Card>
     </div>
   );
 };
 
-export default ViewData;
+export default ViewCoupon;
