@@ -39,59 +39,68 @@ const Dashboard = () => {
   const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       try {
-        const urls = [
-          `${baseUrl}dashboard`,
-          `${baseUrl}dashboard/graph?type=week`,
-          `${baseUrl}dashboard/graph?type=month`,
-          `${baseUrl}dashboard/graph?type=year`,
-        ];
-  
-        const [dashboardRes, weekGraphRes, monthGraphRes, yearGraphRes] = await Promise.all(
-          urls.map((url) => axios.get(url))
-        );
+        const dashboardRes = await axios.get(`${baseUrl}dashboard`);
+        const weekGraphRes = await axios.get(`${baseUrl}dashboard/graph?type=week`);
   
         const countData = dashboardRes.data.data;
-
+  
         setGetTotalCount(countData.businessCount);
         setGetTotalCouponCount(countData.couponCount);
         setGetNewTotalCount(countData.recentBusinesses);
         setGetNewCouponTotalCount(countData.recentCoupons);
         setGetNewUserTotalCount(countData.userCount);
         setGetGraphWeekData(weekGraphRes.data.data);
-        setGetGraphMonthData(monthGraphRes.data.data);
-        setGetGraphYearData(yearGraphRes.data.data);
       } catch (error) {
-        console.error("Something went wrong while fetching dashboard data:", error);
+        console.error("Error fetching initial dashboard data:", error);
       } finally {
         setLoading(false);
       }
     };
   
-    fetchData();
+    fetchInitialData();
   }, []);
-  ;
-
   
 
-  useEffect(() => {
-    if (getGraphWeekData) {
-      console.log("✅ Week Graph Data updated:", getGraphWeekData);
+  const fetchGraphDataIfNeeded = async (type) => {
+    try {
+      if (type === "month" && !getGraphMonthData) {
+        setLoading(true);
+        const res = await axios.get(`${baseUrl}dashboard/graph?type=month`);
+        setGetGraphMonthData(res.data.data);
+        setLoading(false);
+      } else if (type === "year" && !getGraphYearData) {
+        setLoading(true);
+        const res = await axios.get(`${baseUrl}dashboard/graph?type=year`);
+        setGetGraphYearData(res.data.data);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error(`Failed to fetch ${type} graph data:`, error);
+      setLoading(false);
     }
-  }, [getGraphWeekData]);
+  };
+  
+  
 
-  useEffect(() => {
-    if (getGraphMonthData) {
-      console.log("✅ Month Graph Data updated:", getGraphMonthData);
-    }
-  }, [getGraphMonthData]);
+  // useEffect(() => {
+  //   if (getGraphWeekData) {
+  //     console.log("✅ Week Graph Data updated:", getGraphWeekData);
+  //   }
+  // }, [getGraphWeekData]);
 
-  useEffect(() => {
-    if (getGraphYearData) {
-      console.log("✅ Year Graph Data updated:", getGraphYearData);
-    }
-  }, [getGraphYearData]);
+  // useEffect(() => {
+  //   if (getGraphMonthData) {
+  //     console.log("✅ Month Graph Data updated:", getGraphMonthData);
+  //   }
+  // }, [getGraphMonthData]);
+
+  // useEffect(() => {
+  //   if (getGraphYearData) {
+  //     console.log("✅ Year Graph Data updated:", getGraphYearData);
+  //   }
+  // }, [getGraphYearData]);
 
   const getBusinessGraphData = () => {
     switch (graphType) {
@@ -228,13 +237,17 @@ const Dashboard = () => {
                 <div className="gc-sort-btns">
                   {[ "week", "month", "year"].map((type) => (
                     <button
-                      key={type}
-                      type="button"
-                      className={`gcBtn ${graphType === type ? "active" : ""}`}
-                      onClick={() => setGraphType(type)}
-                    >
-                      {type[0].toUpperCase()}
-                    </button>
+                    key={type}
+                    type="button"
+                    className={`gcBtn ${graphType === type ? "active" : ""}`}
+                    onClick={() => {
+                      setGraphType(type);
+                      fetchGraphDataIfNeeded(type);
+                    }}
+                  >
+                    {type[0].toUpperCase()}
+                  </button>
+                  
                   ))}
                 </div>
               </div>
@@ -291,15 +304,17 @@ const Dashboard = () => {
                 <div className="gc-sort-btns">
                   {[ "week", "month", "year"].map((type) => (
                     <button
-                      key={type}
-                      type="button"
-                      className={`gcBtn ${
-                        graphTypeCoupon === type ? "active" : ""
-                      }`}
-                      onClick={() => setGraphTypeCoupon(type)}
-                    >
-                      {type[0].toUpperCase()}
-                    </button>
+                    key={type}
+                    type="button"
+                    className={`gcBtn ${graphTypeCoupon === type ? "active" : ""}`}
+                    onClick={() => {
+                      setGraphTypeCoupon(type);
+                      fetchGraphDataIfNeeded(type);
+                    }}
+                  >
+                    {type[0].toUpperCase()}
+                  </button>
+                  
                   ))}
                 </div>
               </div>
