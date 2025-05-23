@@ -166,6 +166,11 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
                           className="col-lg-4 col-md-6 col-12 d-flex py-3"
                           key={item._id}
                         >
+                           <Link
+                                  className="text-decoration-none"
+                                  to={`/view/${item.discountType}/${item._id}`}
+                                  state={item}
+                                >
                           <Card
                             hoverable
                             className="w-100 h-100 d-flex align-items-center"
@@ -179,11 +184,7 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
                             <div className="row w-100">
                               {/* Image Section */}
                               <div className="col-4">
-                                <Link
-                                  className="text-decoration-none"
-                                  to={`/view/${item.discountType}/${item._id}`}
-                                  state={item}
-                                >
+                               
                                   <img
                                     src={
                                       Array.isArray(item?.images) &&
@@ -204,7 +205,6 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
                                       borderRadius: "6px",
                                     }}
                                   />
-                                </Link>
                               </div>
 
                               {/* Title + Validity + View Link */}
@@ -267,6 +267,7 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
                               </div>
                             </div>
                           </Card>
+                          </Link>
                         </div>
                       );
                     })
