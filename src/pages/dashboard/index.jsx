@@ -26,7 +26,9 @@ const Dashboard = () => {
   const [getNewTotalCouponCount, setGetNewCouponTotalCount] = useState();
   const [getNewTotalUserCountount, setGetNewUserTotalCount] = useState();
 
-  
+  const [loadingBusinessGraph, setLoadingBusinessGraph] = useState(false);
+const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
+
   const [getGraphWeekData, setGetGraphWeekData] = useState();
   const [getGraphMonthData, setGetGraphMonthData] = useState();
   const [getGraphYearData, setGetGraphYearData] = useState();
@@ -63,24 +65,42 @@ const Dashboard = () => {
   }, []);
   
 
-  const fetchGraphDataIfNeeded = async (type) => {
+  const fetchGraphDataIfNeeded = async (type, forGraph = "business") => {
     try {
-      if (type === "month" && !getGraphMonthData) {
-        setLoading(true);
-        const res = await axios.get(`${baseUrl}dashboard/graph?type=month`);
-        setGetGraphMonthData(res.data.data);
-        setLoading(false);
-      } else if (type === "year" && !getGraphYearData) {
-        setLoading(true);
-        const res = await axios.get(`${baseUrl}dashboard/graph?type=year`);
-        setGetGraphYearData(res.data.data);
-        setLoading(false);
+      if (type === "month") {
+        if (forGraph === "business" && !getGraphMonthData) {
+          setLoadingBusinessGraph(true);
+          const res = await axios.get(`${baseUrl}dashboard/graph?type=month`);
+          setGetGraphMonthData(res.data.data);
+          setLoadingBusinessGraph(false);
+        } else if (forGraph === "coupon" && !getGraphMonthData) {
+          setLoadingCouponGraph(true);
+          const res = await axios.get(`${baseUrl}dashboard/graph?type=month`);
+          setGetGraphMonthData(res.data.data);
+          setLoadingCouponGraph(false);
+        }
+      }
+  
+      if (type === "year") {
+        if (forGraph === "business" && !getGraphYearData) {
+          setLoadingBusinessGraph(true);
+          const res = await axios.get(`${baseUrl}dashboard/graph?type=year`);
+          setGetGraphYearData(res.data.data);
+          setLoadingBusinessGraph(false);
+        } else if (forGraph === "coupon" && !getGraphYearData) {
+          setLoadingCouponGraph(true);
+          const res = await axios.get(`${baseUrl}dashboard/graph?type=year`);
+          setGetGraphYearData(res.data.data);
+          setLoadingCouponGraph(false);
+        }
       }
     } catch (error) {
       console.error(`Failed to fetch ${type} graph data:`, error);
-      setLoading(false);
+      if (forGraph === "business") setLoadingBusinessGraph(false);
+      if (forGraph === "coupon") setLoadingCouponGraph(false);
     }
   };
+  
   
   
 
@@ -105,15 +125,16 @@ const Dashboard = () => {
   const getBusinessGraphData = () => {
     switch (graphType) {
       case "week":
-        return getGraphWeekData.businesses || [];
+        return getGraphWeekData?.businesses || [];
       case "month":
-        return getGraphMonthData.businesses || [];
+        return getGraphMonthData?.businesses || [];
       case "year":
-        return getGraphYearData.businesses || [];
+        return getGraphYearData?.businesses || [];
       default:
         return [];
     }
   };
+  
 
   const getCouponGraphData = () => {
     switch (graphTypeCoupon) {
@@ -127,6 +148,7 @@ const Dashboard = () => {
         return [];
     }
   };
+  
 
   return (
     <div className="content-wrapper">
@@ -242,7 +264,8 @@ const Dashboard = () => {
                     className={`gcBtn ${graphType === type ? "active" : ""}`}
                     onClick={() => {
                       setGraphType(type);
-                      fetchGraphDataIfNeeded(type);
+                      // fetchGraphDataIfNeeded(type);
+                      fetchGraphDataIfNeeded(type, "business");
                     }}
                   >
                     {type[0].toUpperCase()}
@@ -253,7 +276,7 @@ const Dashboard = () => {
               </div>
               <div className="gc-body">
                 <ResponsiveContainer>
-                  {loading === true ? (
+                  {loadingBusinessGraph === true ? (
                     <Spin />
                   ) : (
                     <LineChart
@@ -309,7 +332,8 @@ const Dashboard = () => {
                     className={`gcBtn ${graphTypeCoupon === type ? "active" : ""}`}
                     onClick={() => {
                       setGraphTypeCoupon(type);
-                      fetchGraphDataIfNeeded(type);
+                      // fetchGraphDataIfNeeded(type);
+                      fetchGraphDataIfNeeded(type, "coupon");
                     }}
                   >
                     {type[0].toUpperCase()}
@@ -320,7 +344,7 @@ const Dashboard = () => {
               </div>
               <div className="gc-body">
                 <ResponsiveContainer>
-                  {loading === true ? (
+                  {loadingCouponGraph === true ? (
                     <Spin />
                   ) : (
                     <LineChart data={getCouponGraphData()}>
