@@ -196,7 +196,7 @@ const AppLayout = ({ children }) => {
             right: 0,
             zIndex: 100,
             height: 64,
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+            boxShadow: "0 1px 0px rgba(0, 0, 0, 0.1)",
           }}
         >
           <Button

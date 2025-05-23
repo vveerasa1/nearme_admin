@@ -5,6 +5,8 @@ import { Star, Add, Remove, Delete } from "@mui/icons-material";
 import { Formik, Form, Field, ErrorMessage, FieldArray } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+import { Spin } from 'antd';
+
 import CreatableSelect from "react-select/creatable";
 import TimePicker from "react-time-picker";
 import "react-time-picker/dist/TimePicker.css";
@@ -325,7 +327,7 @@ const AddBusiness = () => {
               .required("Types field is required"),
               address: Yup.string().required("Address is required"),
 
-            street: Yup.string(),
+            street: Yup.string().required("Street is required"),
             city: Yup.string().required("City is required"),
             state: Yup.string().required("State is required"),
             postal_code: Yup.string().required("Postal code is required"),
@@ -339,7 +341,15 @@ const AddBusiness = () => {
             business_status: Yup.string().required(
               "Business status is required"
             ),
-
+            place_link: Yup.string()
+            .url("Invalid URL format"),
+          reviews: Yup.number()
+            .min(0, "Reviews count cannot be negative")
+            .optional(),
+          rating: Yup.number()
+            .min(1, "Rating must be between 1 and 5")
+            .max(5, "Rating must be between 1 and 5")
+            .optional(),
             // latitude: Yup.number()
             //   .typeError("Latitude must be a number")
             //   .required("Latitude is required")
@@ -419,9 +429,11 @@ const AddBusiness = () => {
                     <div className="col-12 col-md-12 col-lg-12 mb-3">
                       <div className="form-group">
                         <label className="form-label">Types</label>
-                        {loading === true ? (
-                          "Data Fetching"
-                        ) : (
+                        {loading ? (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50px' }}>
+    <Spin tip="Loading..." size="small" />
+  </div>
+) : (
                           <>
                             <CreatableSelect
                               name="types"
