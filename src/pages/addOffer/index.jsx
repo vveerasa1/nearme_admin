@@ -70,9 +70,9 @@ const { RangePicker } = DatePicker;
 
 const validationSchema = Yup.object({
   title: Yup.string().required("Title is required").min(3),
-  description: Yup.string().required("Description is required").min(10),
+  description: Yup.string().required("Description is required"),
   couponDescription: Yup.string()
-    .required("Coupon description is required")
+    .required("Coupon details is required")
     .min(5),
   discountType: Yup.string()
     .required("Discount type is required")
@@ -84,7 +84,7 @@ const AddOffer = () => {
   const navigate = useNavigate();
   const baseUrl = import.meta.env.VITE_BASE_URL;
   const [customDays, setCustomDays] = useState([
-    { day: "", startTime: "12:00 AM", endTime: "11:59 PM" },
+    { day: "", startTime: "12:01 AM", endTime: "11:59 PM" },
   ]);
   const fileInputRef = useRef(null);
   const [images, setImages] = useState([]);
@@ -233,8 +233,8 @@ const AddOffer = () => {
     let daysToSubmit = values.type
       ? customDays.map((d) => ({
           ...d,
-          startTime: convertTo12Hour(d.startTime),
-          endTime: convertTo12Hour(d.endTime),
+          startTime: d.startTime,
+          endTime: d.endTime,
         }))
       : [];
 
@@ -290,7 +290,7 @@ const AddOffer = () => {
       const response = await axios.post(`${baseUrl}coupons/`, formData);
       toast.success(`${values.discountType} Created Successfully`);
       resetForm();
-      setCustomDays([{ day: "", startTime: "12:00 AM", endTime: "11:59 PM" }]);
+      setCustomDays([{ day: "", startTime: "12:01 AM", endTime: "11:59 PM" }]);
       setImages([]);
       setRange([dayjs(), dayjs()]);
       setDisabledDays([]);
@@ -341,9 +341,9 @@ const AddOffer = () => {
             type: false,
             startDate: new Date(),
             endDate: new Date(),
-            startTime: "12:00 AM",
-            endTime: "11:59 PM",
-            customDays: [{ day: "", startTime: "12:00 AM", endTime: "11:59 PM" }],
+            startTime: "00:01",  // 12:01 AM
+    endTime: "23:59",    // 11:59 PM
+    customDays: [{ day: "", startTime: "00:01", endTime: "23:59" }],
           }}
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
@@ -367,7 +367,7 @@ const AddOffer = () => {
                     />
                   </div>
                   <div className="form-group mb-3">
-                    <label className="form-label">Description</label>
+                    <label className="form-label">How to use</label>
                     <Field
                       as="textarea"
                       name="description"
@@ -381,7 +381,7 @@ const AddOffer = () => {
                     />
                   </div>
                   <div className="form-group mb-3">
-                    <label className="form-label">Coupon Description</label>
+                    <label className="form-label">Coupon Details</label>
                     <Field
                       as="textarea"
                       name="couponDescription"
@@ -504,8 +504,8 @@ const AddOffer = () => {
                           setCustomDays([
                             {
                               day: "",
-                              startTime: "12:00 AM",
-                              endTime: "11:59 PM",
+                              startTime: "00:01",
+                              endTime: "23:59",
                             },
                           ]);
                         }
@@ -524,41 +524,19 @@ const AddOffer = () => {
                     <div className="row">
                       <div className="col-6">
                         <label className="form-label">Start Time</label>
-                        <Field name="startTime">
-                          {({ field }) => (
-                            <select
-                              {...field}
-                              className="form-input"
-                              value={values.startTime}
-                              onChange={(e) => setFieldValue("startTime", e.target.value)}
-                            >
-                              {TIME_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.label}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-                        </Field>
+                        <Field
+          name="startTime"
+          type="time"
+          className="form-input"
+        />
                       </div>
                       <div className="col-6">
                         <label className="form-label">End Time</label>
-                        <Field name="endTime">
-                          {({ field }) => (
-                            <select
-                              {...field}
-                              className="form-input"
-                              value={values.endTime}
-                              onChange={(e) => setFieldValue("endTime", e.target.value)}
-                            >
-                              {TIME_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.label}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-                        </Field>
+                        <Field
+          name="endTime"
+          type="time"
+          className="form-input"
+        />
                       </div>
                     </div>
                   ) : (

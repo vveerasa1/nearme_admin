@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { data, Link ,useNavigate} from "react-router-dom";
+import { data, Link, useNavigate } from "react-router-dom";
 import { Star, Add, Remove, Delete } from "@mui/icons-material";
 
 import { Formik, Form, Field, ErrorMessage, FieldArray } from "formik";
@@ -8,7 +8,11 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import CreatableSelect from "react-select/creatable";
 import { Spin } from "antd";
-import { convert12hTo24h, convert24hTo12h, formatWeeklyHours } from "./constant";
+import {
+  convert12hTo24h,
+  convert24hTo12h,
+  formatWeeklyHours,
+} from "./constant";
 import toast from "react-hot-toast";
 
 const EditBusiness = () => {
@@ -21,6 +25,7 @@ const EditBusiness = () => {
     "Saturday",
     "Sunday",
   ];
+
   const { _id } = useParams();
   const [allTypes, setAllTypes] = useState([]);
   const [filteredTypes, setFilteredTypes] = useState([]);
@@ -52,11 +57,11 @@ const EditBusiness = () => {
     // latitude: "",
     // longitude: "",
     phone: "",
-    code:"",
+    code: "",
     place_link: "",
     rating: "",
     reviews: "",
-    business_status:"",
+    business_status: "",
     working_hours: [
       {
         day: "",
@@ -115,56 +120,58 @@ const EditBusiness = () => {
             return {};
           }
         })();
-        console.log("parsedWorkingHours", parsedWorkingHours)
+        console.log("parsedWorkingHours", parsedWorkingHours);
 
         function cleanTimeString(time) {
           return time
             .toLowerCase()
-            .replace(/[^0-9:.apm]/g, '')
-            .replace(/(\s?am|\s?pm){2,}/g, '') 
-            .replace(/\s+/g, '')               
-            .replace(/(am|pm)/, ' $1')         
+            .replace(/[^0-9:.apm]/g, "")
+            .replace(/(\s?am|\s?pm){2,}/g, "")
+            .replace(/\s+/g, "")
+            .replace(/(am|pm)/, " $1")
             .trim();
         }
-  
+
         // Transform working hours
-        const transformedWorkingHours = Object.entries(parsedWorkingHours).map(([day, value]) => {
-          if (value === "Open 24 Hours") {
-            return { day, startTime: "", endTime: "", is24Hours: true };
-          } else if (value === "Closed") {
-            return { day, startTime: "", endTime: "", is24Hours: false };
-          } else if (typeof value === "string" && value.includes("-")) {
-            const [start, end] = value.split("-");
-            console.log(start, end, "my start and end")
-            const cleanedStart = cleanTimeString(start);
-            const cleanedEnd = cleanTimeString(end);
-            
-            return {
-              day,
-              startTime: convert12hTo24h(cleanedStart),
-              endTime: convert12hTo24h(cleanedEnd),
-              is24Hours: false,
-            };
-          } else {
-            console.warn(`Unexpected value for day "${day}":`, value);
-            return { day, startTime: "", endTime: "", is24Hours: false };
+        const transformedWorkingHours = Object.entries(parsedWorkingHours).map(
+          ([day, value]) => {
+            if (value === "Open 24 Hours") {
+              return { day, startTime: "", endTime: "", is24Hours: true };
+            } else if (value === "Closed") {
+              return { day, startTime: "", endTime: "", is24Hours: false };
+            } else if (typeof value === "string" && value.includes("-")) {
+              const [start, end] = value.split("-");
+              console.log(start, end, "my start and end");
+              const cleanedStart = cleanTimeString(start);
+              const cleanedEnd = cleanTimeString(end);
+
+              return {
+                day,
+                startTime: convert12hTo24h(cleanedStart),
+                endTime: convert12hTo24h(cleanedEnd),
+                is24Hours: false,
+              };
+            } else {
+              console.warn(`Unexpected value for day "${day}":`, value);
+              return { day, startTime: "", endTime: "", is24Hours: false };
+            }
           }
-        });
+        );
 
-        console.log(transformedWorkingHours, "transformed working hours")
-        
-        const rawPhone = data.phone; 
+        console.log(transformedWorkingHours, "transformed working hours");
 
-        const cleanedPhone = rawPhone.replace(/\D/g, '');
-        
+        const rawPhone = data.phone;
+
+        const cleanedPhone = rawPhone.replace(/\D/g, "");
+
         const phoneNumber = cleanedPhone.slice(-10);
-        
-        const countryCode = '+' + cleanedPhone.slice(0, cleanedPhone.length - 10);
-        console.log('hello',data.business_status);
+
+        const countryCode =
+          "+" + cleanedPhone.slice(0, cleanedPhone.length - 10);
+        console.log("hello", data.business_status);
         setWorkingHours(transformedWorkingHours);
         setExistingPhoto(Array.isArray(data.photo) ? data.photo : []);
         setInitialValues({
-          
           display_name: data.display_name || "",
           types: data.types || [],
           address: data.address || "",
@@ -295,8 +302,8 @@ const EditBusiness = () => {
     setWorkingHours(updatedDays);
   };
 
-  const handleSubmit = async (values, { resetForm }) => {
-
+  const handleSubmit = async (values, { resetForm, setSubmitting } = {}) => {
+    setSubmitting && setSubmitting(true);
     const updatedTime = values.working_hours.map((date) => ({
       day: date.day,
       startTime: convert24hTo12h(date.startTime),
@@ -314,14 +321,15 @@ const EditBusiness = () => {
     formData.append("postal_code", values.postal_code);
     formData.append("county", values.county);
     formData.append("country_code", values.country_code);
-    formData.append("phone", values.code+values.phone);
+    formData.append("phone", values.code + values.phone);
     formData.append("place_link", values.place_link || "");
     formData.append("rating", values.rating || "");
     formData.append("reviews", values.reviews || "");
-    formData.append("business_status", values.business_status || "");
-
-    // formData.append("working_hours", JSON.stringify(updatedTime));
-    formData.append("working_hours", JSON.stringify(formatWeeklyHours(updatedTime)));
+    formData.append("buisness_status", values.buisness_status || "");
+    formData.append(
+      "working_hours",
+      JSON.stringify(formatWeeklyHours(updatedTime))
+    );
     formData.append("existingPhoto", JSON.stringify(existingPhoto));
 
     if (newPhoto.length > 0) {
@@ -330,17 +338,21 @@ const EditBusiness = () => {
 
     try {
       const response = await axios.put(`${baseUrl}business/${_id}`, formData);
-    
       if (response.status === 200) {
-        toast.success('Business updated successfully');
-        setTimeout(() => {
-          navigate('/business-listings'); 
-        }, 1500);
+         toast.success("Business updated successfully");
+  
+          navigate("/business-listings", { state: { updated: true } });
+          setSubmitting && setSubmitting(false);
+        // }, 1500);
+      } else {
+        setSubmitting && setSubmitting(false);
       }
     } catch (error) {
       console.error("Submission failed:", error);
-      toast.error('Something went wrong while updating business');
+      toast.error("Something went wrong while updating business");
+      setSubmitting && setSubmitting(false); 
     }
+    
     
   };
 
@@ -396,7 +408,7 @@ const EditBusiness = () => {
             })}
             onSubmit={handleSubmit}
           >
-            {({ values, setFieldValue }) => (
+            {({ values, setFieldValue, isSubmitting }) => (
               <Form className="form-wrapper">
                 <div className="row">
                   <div className="col-12 col-md-12 col-lg-6">
@@ -492,23 +504,40 @@ const EditBusiness = () => {
                       <div className="col-12 col-md-12 col-lg-12">
                         <div className="form-group">
                           <label className="form-label">Address</label>
+                          <div className="col-12 col-md-12 col-lg-12 mb-3">
+                        <div className="form-group">
+                          <Field
+                            name="address"
+                            type="text"
+                            className="form-input"
+                            placeholder="Place map link"
+                          />
+                        </div>
+                        <p
+                        
+                        className="note text-muted"
+                        style={{ fontSize: "0.800rem" , marginTop: "10px"}}
+                      >
+                        Note: Please enter your complete address, including building number, street name, city, state, country, and postal code..
+                      </p>
+                      </div>
                           <div className="row">
                             <div className="col-12 col-md-6 col-lg-6 mb-3">
                               <Field
-                                name="address"
+                                name="street"
                                 type="text"
                                 className="form-input"
-                                placeholder="Address line 1"
+                                placeholder="street"
                               />
                             </div>
-                            <div className="col-12 col-md-6 col-lg-6 mb-3">
+                            {/* <div className="col-12 col-md-6 col-lg-6 mb-3">
                               <Field
                                 name="street"
                                 type="text"
                                 className="form-input"
                                 placeholder="Address line 2"
                               />
-                            </div>
+                            </div> */}
                             <div className="col-12 col-md-6 col-lg-6 mb-3">
                               <Field
                                 name="city"
@@ -575,25 +604,29 @@ const EditBusiness = () => {
                         </div>
                       </div>
                       <div className="col-12 mb-4">
-  <div className="form-group">
-    <label className="form-label">Business Status</label>
-    <Field
-      as="select"
-      name="buisness_status"
-      className="form-select"
-    >
-      <option value="">Select Business Status</option>
-      <option value="Operational">Operational</option>
-      <option value="Closedtemporarily">Closed Temporarily</option>
-      <option value="Closedpermanently">Closed Permanently</option>
-    </Field>
-    <ErrorMessage
-      name="buisness_status"
-      component="div"
-      className="error text-danger"
-    />
-  </div>
-</div>
+                        <div className="form-group">
+                          <label className="form-label">Business Status</label>
+                          <Field
+                            as="select"
+                            name="business_status"
+                            className="form-select"
+                          >
+                            <option value="">Select Business Status</option>
+                            <option value="Operational">Operational</option>
+                            <option value="Closedtemporarily">
+                              Closed Temporarily
+                            </option>
+                            <option value="Closedpermanently">
+                              Closed Permanently
+                            </option>
+                          </Field>
+                          <ErrorMessage
+                            name="business_status"
+                            component="div"
+                            className="error text-danger"
+                          />
+                        </div>
+                      </div>
                       {/* Latitude */}
                       {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
                         <div className="form-group">
@@ -711,34 +744,37 @@ const EditBusiness = () => {
                     <div className="row">
                       {/* phone */}
                       <div className="col-12 col-md-12 col-lg-12 mb-3">
-                      <div className="form-group">
-                        <label className="form-label">Phone number</label>
-                        <div className="d-flex gap-2">
-                          {/* Country Code Select */}
-                          <Field as="select" name="code" className="form-control w-25">
-                            <option value="+1">+1 (USA)</option>
-                            <option value="+91">+91 (India)</option>
-                            <option value="+44">+44 (UK)</option>
-                            <option value="+61">+61 (Australia)</option>
-                            <option value="+81">+81 (Japan)</option>
-                          </Field>
+                        <div className="form-group">
+                          <label className="form-label">Phone number</label>
+                          <div className="d-flex gap-2">
+                            {/* Country Code Select */}
+                            <Field
+                              as="select"
+                              name="code"
+                              className="form-control w-25"
+                            >
+                              <option value="+1">+1 (USA)</option>
+                              <option value="+91">+91 (India)</option>
+                              <option value="+44">+44 (UK)</option>
+                              <option value="+61">+61 (Australia)</option>
+                              <option value="+81">+81 (Japan)</option>
+                            </Field>
 
-                          {/* Phone Number Input */}
-                          <Field
+                            {/* Phone Number Input */}
+                            <Field
+                              name="phone"
+                              type="Number"
+                              className="form-input w-75"
+                              placeholder="Phone number"
+                            />
+                          </div>
+                          <ErrorMessage
                             name="phone"
-                            type="Number"
-                            className="form-input w-75"
-                            placeholder="Phone number"
+                            component="div"
+                            className="error text-danger"
                           />
-                          
                         </div>
-                        <ErrorMessage
-                          name="phone"
-                          component="div"
-                          className="error text-danger"
-                        />
                       </div>
-                    </div>
                       {/* place link */}
                       <div className="col-12 col-md-12 col-lg-12 mb-3">
                         <div className="form-group">
@@ -846,7 +882,7 @@ const EditBusiness = () => {
                         {({ push, remove }) => (
                           <div className="custom-days">
                             {/* {console.info("WORKING HOURS", workingHours)} */}
-                            {(values.working_hours) &&
+                            {values.working_hours &&
                               values.working_hours.map((day, index) => (
                                 <div
                                   key={index}
@@ -884,56 +920,62 @@ const EditBusiness = () => {
                                     />
                                   </div>
 
-            {/* Start Time */}
-            <div className="w-25 d-flex align-items-center">
-              <Field
-                type="time"
-                name={`working_hours[${index}].startTime`}
-                className="form-control"
-                disabled={day.is24Hours}
-              />
-              {/* Show 12hr format */}
-              {/* <span className="ms-2">
+                                  {/* Start Time */}
+                                  <div className="w-25 d-flex align-items-center">
+                                    <Field
+                                      type="time"
+                                      name={`working_hours[${index}].startTime`}
+                                      className="form-control"
+                                      disabled={day.is24Hours}
+                                    />
+                                    {/* Show 12hr format */}
+                                    {/* <span className="ms-2">
                 {day.startTime ? convert24hTo12h(day.startTime) : ""}
               </span> */}
-            </div>
+                                  </div>
 
-            {/* End Time */}
-            <div className="w-25 d-flex align-items-center">
-              <Field
-                type="time"
-                name={`working_hours[${index}].endTime`}
-                className="form-control"
-                disabled={day.is24Hours}
-              />
-              {/* Show 12hr format */}
-              {/* <span className="ms-2">
+                                  {/* End Time */}
+                                  <div className="w-25 d-flex align-items-center">
+                                    <Field
+                                      type="time"
+                                      name={`working_hours[${index}].endTime`}
+                                      className="form-control"
+                                      disabled={day.is24Hours}
+                                    />
+                                    {/* Show 12hr format */}
+                                    {/* <span className="ms-2">
                 {day.endTime ? convert24hTo12h(day.endTime) : ""}
               </span> */}
-            </div>
+                                  </div>
 
                                   {/* 24 Hours Checkbox */}
                                   <div className="form-check mt-2 d-flex align-items-center">
-  <Field
-    type="checkbox"
-    name={`working_hours[${index}].is24Hours`}
-    checked={day.is24Hours}
-    className="form-check-input"
-    onChange={(e) => {
-      setFieldValue(
-        `working_hours[${index}].is24Hours`,
-        e.target.checked
-      );
-      if (e.target.checked) {
-        setFieldValue(`working_hours[${index}].startTime`, "");
-        setFieldValue(`working_hours[${index}].endTime`, "");
-      }
-    }}
-  />
-  <label className="form-check-label ms-2 mb-0">
-    24 Hrs
-  </label>
-</div>
+                                    <Field
+                                      type="checkbox"
+                                      name={`working_hours[${index}].is24Hours`}
+                                      checked={day.is24Hours}
+                                      className="form-check-input"
+                                      onChange={(e) => {
+                                        setFieldValue(
+                                          `working_hours[${index}].is24Hours`,
+                                          e.target.checked
+                                        );
+                                        if (e.target.checked) {
+                                          setFieldValue(
+                                            `working_hours[${index}].startTime`,
+                                            ""
+                                          );
+                                          setFieldValue(
+                                            `working_hours[${index}].endTime`,
+                                            ""
+                                          );
+                                        }
+                                      }}
+                                    />
+                                    <label className="form-check-label ms-2 mb-0">
+                                      24 Hrs
+                                    </label>
+                                  </div>
 
                                   {/* Add / Remove Buttons */}
                                   <div className="d-flex flex-column mt-1">
@@ -1085,9 +1127,23 @@ const EditBusiness = () => {
                       <button className="theme-btn btn-border" type="button">
                         Clear
                       </button>
-                      <button className="theme-btn btn-main" type="submit">
-                        Save
-                      </button>
+                      <button
+                      className="theme-btn btn-main"
+                      type="submit"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <i
+                            className="fa fa-spinner fa-spin"
+                            style={{ marginRight: 8 }}
+                          ></i>{" "}
+                          Saving...
+                        </>
+                      ) : (
+                        "Save"
+                      )}
+                    </button>
                     </div>
                   </div>
                 </div>

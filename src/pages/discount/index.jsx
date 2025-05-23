@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import dayjs from 'dayjs';
 import "./style.css";
 import {Spin} from "antd";
 import { Link } from "react-router-dom";
@@ -65,6 +66,23 @@ const Discount = () => {
     setIsModalOpen(false);
   };
 
+  const formatValidDateRange = (startDateStr, endDateStr) => {
+    const start = dayjs(startDateStr).format('D/M/YY');
+    const end = dayjs(endDateStr).format('D/M/YY');
+    return `Valid: ${start} - ${end}`;
+  };
+
+  // const formatValidDateRange = (startDateStr, endDateStr) => {
+  //   const startDate = new Date(startDateStr);
+  //   const endDate = new Date(endDateStr);
+  
+  //   const options = { day: '2-digit', month: 'short' , year: 'numeric' }; // e.g., "19 May"
+  //   const formattedStart = startDate.toLocaleDateString('en-GB', options);
+  //   const formattedEnd = endDate.toLocaleDateString('en-GB', options);
+  
+  //   return `Valid: ${formattedStart} - ${formattedEnd}`;
+  // };
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -75,6 +93,7 @@ const Discount = () => {
         `${hostUrl}coupons/${_id}`
       );
       console.log(response);
+      fetchData();
     } catch (err) {
       console.log("Error", err);
     }
@@ -106,16 +125,15 @@ const Discount = () => {
             </ul>
           </div>
         </div>
-
-        {/* List section */}
+  
+        {/* List Section */}
         <div className="lists-container py-4">
           <div className="row">
             <div className="col-12">
               <div className="lists-wrapper businesslist">
-                {/* Search bar */}
+                {/* Search Bar */}
                 <div className="list-filter d-flex justify-content-between align-items-center mb-3">
                   <h5 className="mb-0 fw-semibold">Discount Lists</h5>
-
                   <form>
                     <div className="lf-search">
                       <input
@@ -130,15 +148,15 @@ const Discount = () => {
                     </div>
                   </form>
                 </div>
-
+  
                 {/* Discount Cards */}
                 <div className="row">
-                  {
-                  loading === true ? <Spin/> :
-                  getDiscount.length > 0 ? (
+                  {loading ? (
+                    <Spin />
+                  ) : getDiscount.length > 0 ? (
                     getDiscount.map((item) => {
                       const isDisabled = item.active === false;
-
+  
                       return (
                         <div
                           className="col-lg-4 col-md-6 col-12 d-flex py-3"
@@ -146,14 +164,16 @@ const Discount = () => {
                         >
                           <Card
                             hoverable
-                            className="w-100 h-100 position-relative"
+                            className="w-100 h-100 d-flex align-items-center"
                             style={{
                               marginBottom: "20px",
+                              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
+                              borderRadius: "10px",
                               opacity: isDisabled ? 0.6 : 1,
                             }}
                           >
-                            <div className="row w-100">
-                              {/* Image */}
+                            <div className="row w-100" style={{width:"100%"}}>
+                              {/* Image Section */}
                               <div className="col-4">
                                 <Link
                                   to={`/view/${item.discountType}/${item._id}`}
@@ -162,7 +182,9 @@ const Discount = () => {
                                 >
                                   <img
                                     src={
-                                      item.images?.[0]?.trim()
+                                      Array.isArray(item?.images) &&
+                                      item.images.length > 0 &&
+                                      item.images[0]?.trim()
                                         ? item.images[0]
                                         : fallbackImage
                                     }
@@ -180,9 +202,9 @@ const Discount = () => {
                                   />
                                 </Link>
                               </div>
-
+  
                               {/* Content */}
-                              <div className="col-8 d-flex flex-column justify-content-between position-relative">
+                              <div className="col-8 flex-column justify-content-between position-relative">
                                 {/* Edit/Delete Buttons */}
                                 <div
                                   className="position-absolute"
@@ -196,8 +218,7 @@ const Discount = () => {
                                 >
                                   <Link
                                     to={`/edit-offer/${item.discountType}/${item._id}`}
-                                    // state={item}
-                                    state={{item}}
+                                    state={{ item }}
                                     className="btn border rounded-5 btn-sm"
                                     disabled={isDisabled}
                                     onClick={(e) => e.stopPropagation()}
@@ -226,9 +247,9 @@ const Discount = () => {
                                     />
                                   </Popconfirm>
                                 </div>
-
+  
                                 {/* Main Content */}
-                                <div className="mt-2">
+                                <div className="mt-12">
                                   <h6
                                     className="mb-1 fw-semibold"
                                     style={{
@@ -241,26 +262,22 @@ const Discount = () => {
                                   >
                                     {item.title || "No Title"}
                                   </h6>
-
-                                  {/* Validity Line */}
-                                  <p className="mb-1 text-muted">
-                                    <strong>Valid:</strong>{" "}
-                                    {formatDateTime(
-                                      item.dateRange?.startDate,
-                                      item.activeTime?.startTime
-                                    )}{" "}
-                                    -{" "}
-                                    {formatDateTime(
-                                      item.dateRange?.endDate,
-                                      item.activeTime?.endTime
-                                    )}
+                                  <p style={{ marginTop: "10px" }}>
+                                    <strong>Store: </strong>
+                                    {item.storeInfo.display_name}
                                   </p>
-
-                                  {/* View Link */}
+                                  <p className="mb-1 text-muted">
+                                    <strong>
+                                      {formatValidDateRange(
+                                        item.dateRange?.startDate,
+                                        item.dateRange?.endDate
+                                      )}
+                                    </strong>
+                                  </p>
                                   <Link
-                                    className="text-decoration-underline text-primary fw-semibold"
                                     to={`/view/${item.discountType}/${item._id}`}
                                     state={item}
+                                    className="text-primary fw-semibold text-decoration-none"
                                   >
                                     View
                                   </Link>
@@ -281,7 +298,7 @@ const Discount = () => {
             </div>
           </div>
         </div>
-
+  
         {/* Pagination */}
         <div className="d-flex justify-content-center p-2">
           {getDiscount.length > pageSize && (
@@ -295,7 +312,7 @@ const Discount = () => {
           )}
         </div>
       </div>
-
+  
       {/* Delete Modal */}
       <DeleteConfirmationModal
         isOpen={isModalOpen}
@@ -304,6 +321,7 @@ const Discount = () => {
       />
     </>
   );
+  
 };
 
 export default Discount;

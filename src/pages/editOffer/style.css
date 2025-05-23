@@ -1,0 +1,10 @@
+.form-container,
+.form-wrapper {
+  height: 100%;
+}
+
+@media (min-width: 992px) {
+  .col-lg-6 {
+    height: 100%;
+  }
+}

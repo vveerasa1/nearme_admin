@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "./style.css";
+import dayjs from "dayjs";
 import { Link } from "react-router-dom";
 import DeleteConfirmationModal from "../../components/deleteConfirmation";
 import axios from "axios";
@@ -7,14 +8,14 @@ import { Card, Pagination, Button, Popconfirm, message } from "antd";
 import { Edit, Delete } from "@mui/icons-material";
 import { debounce } from "lodash";
 import fallbackImage from "../../assets/images/landingPage.png";
-import {Spin} from "antd";
+import { Spin } from "antd";
 
 const Deal = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [getDeal, setGetDeal] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(12); // Number of items per page
-  const [loading,setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const hostUrl = import.meta.env.VITE_BASE_URL;
 
   const formatDateTime = (dateStr, timeStr) => {
@@ -23,53 +24,55 @@ const Deal = () => {
     return `${date.toLocaleDateString("en-GB", options)} ${timeStr}`;
   };
 
-  useEffect(()=>{
-    fetchData()
-  },[])
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const fetchData = async (searchText) => {
     try {
-      setLoading(true)
+      setLoading(true);
       const baseUrl = `${hostUrl}coupons?discountType=Deal`;
       const url = searchText
         ? `${baseUrl}&keyword=${encodeURIComponent(searchText)}`
         : baseUrl;
-      
+
       const response = await axios.get(url);
-      console.log(response)
+      console.log(response);
       setGetDeal(response.data.data.couponInfo);
-      setLoading(false)
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
-  
+
+  // const formatValidDateRange = (startDateStr, endDateStr) => {
+  //   const startDate = new Date(startDateStr);
+  //   const endDate = new Date(endDateStr);
+
+  //   const options = { day: '2-digit', month: 'short' , year: 'numeric' }; // e.g., "19 May"
+  //   const formattedStart = startDate.toLocaleDateString('en-GB', options);
+  //   const formattedEnd = endDate.toLocaleDateString('en-GB', options);
+
+  //   return `Valid: ${formattedStart} - ${formattedEnd}`;
+  // };
+
   const formatValidDateRange = (startDateStr, endDateStr) => {
-    const startDate = new Date(startDateStr);
-    const endDate = new Date(endDateStr);
-  
-    const options = { day: '2-digit', month: 'short' , year: 'numeric' }; // e.g., "19 May"
-    const formattedStart = startDate.toLocaleDateString('en-GB', options);
-    const formattedEnd = endDate.toLocaleDateString('en-GB', options);
-  
-    return `Valid: ${formattedStart} - ${formattedEnd}`;
+    const start = dayjs(startDateStr).format("D/M/YY");
+    const end = dayjs(endDateStr).format("D/M/YY");
+    return `Valid: ${start} - ${end}`;
   };
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
     debouncedFetchData(value);
   };
-  
+
   const debouncedFetchData = debounce((searchText) => {
     setCurrentPage(1);
     fetchData(searchText);
   }, 500);
-  
-  
 
-  useEffect(() => {
-
-}, [currentPage, getDeal]);
+  useEffect(() => {}, [currentPage, getDeal]);
 
   const handleConfirmDelete = () => {
     console.log("Item deleted");
@@ -82,10 +85,9 @@ const Deal = () => {
 
   const handleDelete = async (_id) => {
     try {
-      const response = await axios.delete(
-        `${hostUrl}coupons/${_id}`
-      );
+      const response = await axios.delete(`${hostUrl}coupons/${_id}`);
       console.log(response);
+      fetchData();
     } catch (err) {
       console.log("Error", err);
     }
@@ -95,7 +97,6 @@ const Deal = () => {
     console.log(e);
     message.error("Click on No");
   };
-
 
   return (
     <>
@@ -143,9 +144,9 @@ const Deal = () => {
 
                 {/* Deals Cards */}
                 <div className="row">
-                  {
-                  loading === true ? <Spin/> :
-                  getDeal.length > 0 ? (
+                  {loading === true ? (
+                    <Spin />
+                  ) : getDeal.length > 0 ? (
                     getDeal.map((item) => {
                       const isDisabled = item.active === false;
 
@@ -154,6 +155,12 @@ const Deal = () => {
                           className="col-lg-4 col-md-6 col-12 d-flex py-3"
                           key={item._id}
                         >
+                         <Link
+  to={`/view/${item.discountType}/${item._id}`}
+  state={item}
+  className="text-primary fw-semibold"
+  style={{ textDecoration: "none" }}
+>
                           <Card
                             hoverable
                             className="w-100 h-100 position-relative"
@@ -167,11 +174,7 @@ const Deal = () => {
                             <div className="row w-100">
                               {/* Left Image */}
                               <div className="col-4">
-                                <Link
-                                  to={`/view/${item.discountType}/${item._id}`}
-                                  state={item}
-                                  className="text-decoration-none"
-                                >
+                             
                                   <img
                                     src={
                                       item.images?.[0]?.trim()
@@ -190,7 +193,6 @@ const Deal = () => {
                                       borderRadius: "6px",
                                     }}
                                   />
-                                </Link>
                               </div>
 
                               {/* Right Content */}
@@ -256,11 +258,19 @@ const Deal = () => {
                                   >
                                     {item.title || "No Title"}
                                   </h6>
+                                  <p style={{ marginTop: "10px" }}>
+                                    <strong>Store: </strong>
+                                    {item.storeInfo.display_name}
+                                  </p>
 
                                   <p className="mb-1 text-muted">
-  <strong>{formatValidDateRange(item.dateRange?.startDate, item.dateRange?.endDate)}</strong>
-</p>
-
+                                    <strong>
+                                      {formatValidDateRange(
+                                        item.dateRange?.startDate,
+                                        item.dateRange?.endDate
+                                      )}
+                                    </strong>
+                                  </p>
 
                                   <Link
                                     to={`/view/${item.discountType}/${item._id}`}
@@ -273,6 +283,7 @@ const Deal = () => {
                               </div>
                             </div>
                           </Card>
+                          </Link>
                         </div>
                       );
                     })

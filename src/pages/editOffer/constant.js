@@ -1,4 +1,5 @@
 function convert24hTo12h(time24h) {
+  console.log(time24h,">>>>>>>>>>")
   if(time24h.length < 1){
       return ""
   }

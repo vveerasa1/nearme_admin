@@ -156,34 +156,33 @@ const ViewBusinessData = () => {
                 <p>No working hours available</p>
               )}
             </div>
-           
+         
+            <div className="col-12 ">
+              <div>
+                <strong>Location</strong>
+              </div>
+              <div className="py-3">
+                <iframe
+                  width="100%"
+                  height="350"
+                  style={{
+                    borderRadius: "12px",
+                    border: 0,
+                    boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+                  }}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                    data.address
+                  )}&output=embed`}
+                  allowFullScreen
+                  loading="lazy"
+                  title="Business Location"
+                ></iframe>
+              </div>
+            </div>
           </div>
-
+         
+          
           {/* Bottom Row: Map */}
-        </div>
-        <div className="row d-lg-flex justify-content-lg-end">
-          <div className="col-lg-8 ">
-          <div>
-              <strong>Location</strong>
-            </div>
-            <div className="py-3">
-              <iframe
-                width="100%"
-                height="350"
-                style={{
-                  borderRadius: "12px",
-                  border: 0,
-                  boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
-                }}
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                  data.address
-                )}&output=embed`}
-                allowFullScreen
-                loading="lazy"
-                title="Business Location"
-              ></iframe>
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import "./style.css";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, Edit, Delete } from "@mui/icons-material";
 import axios from "axios";
 import { LoadingOutlined } from "@ant-design/icons";
@@ -10,38 +10,88 @@ import { BusinessContext } from "./businessContext";
 import fallbackImage from "../../assets/images/landingPage.png";
 
 const BusinessListing = () => {
+  const location = useLocation();
+const navigate = useNavigate();
   const { businessList, setBusinessList, searchText, setSearchText } =
     useContext(BusinessContext);
   const [loading, setLoading] = useState(false);
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
   useEffect(() => {
-    if (businessList.length === 0 && searchText.trim()) {
-      handleSearch();
+    const shouldSearch =
+      location.state?.updated || (businessList.length === 0 && searchText.trim());
+  
+    if (shouldSearch) {
+      handleSearch(); // Fetch updated data
+  
+      if (location.state?.updated) {
+        navigate(location.pathname, { replace: true, state: {} }); // Clear the state after fetching
+      }
     }
+  }, [location.state]);
+
+  useEffect(() => {
+    handleSearch();
   }, []);
+  
 
   const cancel = () => {
     message.error("Cancelled delete");
   };
 
+  // const handleSearch = async () => {
+  //   if (!searchText.trim()) return;
+  //   console.log("hello", baseUrl);
+  //   try {
+  //     setLoading(true);
+  //     const url = `${baseUrl}business?searchText=${searchText}&page=1&limit=20`;
+  //     const response = await axios.get(url);
+  //     setBusinessList(response.data.data.data);
+  //     toast.success("Business data fetched successfully");
+  //     setSearchText("");
+  //   } catch (error) {
+  //     console.error("Error fetching data:", error);
+  //     toast.error("Failed to fetch business data");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSearch = async () => {
-    if (!searchText.trim()) return;
-    console.log("hello", baseUrl);
+    // Prevent multiple calls if already loading
+    if (loading) return;
+  
     try {
       setLoading(true);
-      const url = `${baseUrl}business?searchText=${searchText}&page=1&limit=20`;
+  
+      // Construct the URL based on whether searchText is provided
+      const url = searchText.trim()
+        ? `${baseUrl}business?searchText=${searchText}&page=1&limit=20`
+        : `${baseUrl}business?page=1&limit=20`; // Fetch all if no searchText
+  
+      // Fetch data from the server
       const response = await axios.get(url);
+  
+      // Update the business list with the latest data
       setBusinessList(response.data.data.data);
-      toast.success("Business data fetched successfully");
-      setSearchText("");
+  
+      // Show appropriate toast messages
+      // if (searchText.trim()) {
+      //   toast.success("Filtered businesses fetched");
+      // } else if (location.state?.updated) {
+      //   toast.success("Business updated");
+      // }
     } catch (error) {
       console.error("Error fetching data:", error);
-      toast.error("Failed to fetch business data");
+  
+      // Show error toast message
+      // toast.error(error.response?.data?.message || "Failed to fetch business data");
     } finally {
+      // Ensure loading state is reset
       setLoading(false);
     }
   };
+  
 
   const deleteBusiness = async (_id) => {
     try {
@@ -128,7 +178,11 @@ const BusinessListing = () => {
 
                 {/* Listings */}
                 <div className="row mt-4">
-                  {businessList.length > 0 ? (
+                  {loading ? (
+    <div className="col-12 text-center">
+      <Spin size="large" />
+    </div>
+  ) : businessList.length > 0 ? (
                     businessList.map(
                       (item) => (
                         console.log("", item?.photo),
@@ -142,7 +196,6 @@ const BusinessListing = () => {
                               className="w-100 h-100 position-relative"
                               style={{ marginBottom: "20px" }}
                             >
-                              {/* ✅ Move This Outside the Grid System */}
                               <div
                                 style={{
                                   position: "absolute",
@@ -231,7 +284,7 @@ const BusinessListing = () => {
 
                                 {/* Content Column */}
                                 <div className="col-lg-7 col-5 d-flex flex-column justify-content-between">
-                                  <div className="pe-4 mt-2">
+                                  <div className="">
                                     <h6
                                       className="mb-1"
                                       style={{

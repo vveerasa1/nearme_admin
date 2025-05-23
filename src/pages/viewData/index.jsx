@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom"; 
+
 import { Card, Switch } from "antd";
 import axios from "axios";
 
 const ViewCoupon = () => {
+  const navigate = useNavigate(); 
   const [active, setActive] = useState(false);
   const { _id } = useParams();
   const { state: data } = useLocation();
@@ -79,7 +81,7 @@ const ViewCoupon = () => {
                 { label: "Address", value: data?.storeInfo.address },
                 { label: "Phone", value: data?.storeInfo.phone },
                 { label: "How to Use", value: data?.description, muted: true },
-                { label: "Coupon Description", value: data?.couponDescription, muted: true },
+                { label: "Coupon Details", value: data?.couponDescription, muted: true },
               ].map(({ label, value, muted }, i) => (
                 <div className="row mb-2" key={i}>
                   <div className="col-4 fw-semibold text-muted">{label}:</div>
@@ -101,11 +103,9 @@ const ViewCoupon = () => {
             <div className="mb-3 row">
               <div className="col-4 fw-semibold text-muted">Valid:</div>
               <div className="col-8 fw-medium">
-                {formatDate(data?.dateRange?.startDate)}{" "}
-                {data?.activeTime?.startTime && `at ${data.activeTime.startTime}`} -{" "}
-                {formatDate(data?.dateRange?.endDate)}{" "}
-                {data?.activeTime?.endTime && `at ${data.activeTime.endTime}`}
-              </div>
+  {formatDate(data?.dateRange?.startDate)} - {formatDate(data?.dateRange?.endDate)}
+</div>
+
             </div>
 
             <div className="mb-3 row">
@@ -139,9 +139,17 @@ const ViewCoupon = () => {
           {/* <button className="theme-btn btn-border" type="button">
             Clear
           </button> */}
-          <button className="theme-btn btn-main" style={{ fontWeight: 500 }}>
-            Edit
-          </button>
+          <button
+      className="theme-btn btn-main"
+      style={{ fontWeight: 500 }}
+      onClick={() =>
+        navigate(`/edit-offer/${data.discountType}/${data._id}`, {
+          state: data,
+        })
+      }
+    >
+      Edit
+    </button>
         </div>
       </Card>
     </div>

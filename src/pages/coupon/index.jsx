@@ -8,6 +8,7 @@ import { Card, Pagination, Button, Popconfirm, message } from "antd";
 import { Edit, Delete } from "@mui/icons-material";
 import { debounce } from "lodash";
 import fallbackImage from "../../assets/images/landingPage.png";
+import dayjs from 'dayjs';
 
 const Coupon = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,6 +66,24 @@ const Coupon = () => {
     setIsModalOpen(false);
   };
 
+  // const formatValidDateRange = (startDateStr, endDateStr) => {
+  //   const startDate = new Date(startDateStr);
+  //   const endDate = new Date(endDateStr);
+  
+  //   const options = { day: '2-digit', month: 'short' , year: 'numeric' }; // e.g., "19 May"
+  //   const formattedStart = startDate.toLocaleDateString('en-GB', options);
+  //   const formattedEnd = endDate.toLocaleDateString('en-GB', options);
+  
+  //   return `Valid: ${formattedStart} - ${formattedEnd}`;
+  // };
+
+const formatValidDateRange = (startDateStr, endDateStr) => {
+  const start = dayjs(startDateStr).format('D/M/YY');
+  const end = dayjs(endDateStr).format('D/M/YY');
+  return `Valid: ${start} - ${end}`;
+};
+
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -75,6 +94,7 @@ const Coupon = () => {
         `${hostUrl}coupons/${_id}`
       );
       console.log(response);
+      fetchData();
     } catch (err) {
       console.log("Error", err);
     }
@@ -188,7 +208,7 @@ const Coupon = () => {
                               </div>
 
                               {/* Title + Validity + View Link */}
-                              <div className="col-6 d-flex flex-column justify-content-between">
+                              <div className="col-8 d-flex flex-column justify-content-between">
                                 <div>
                                   <h5 className="card-title mb-2">
                                     {item.title}
@@ -198,10 +218,7 @@ const Coupon = () => {
                                     {item.storeInfo.display_name}
                                   </p>
                                   <p className="mb-1">
-                                    <strong>Valid:</strong>{" "}
-                                    {formatDateTime(item.dateRange.startDate)}
-                                    -
-                                    {formatDateTime(item.dateRange.endDate)}
+                                  <strong>{formatValidDateRange(item.dateRange?.startDate, item.dateRange?.endDate)}</strong>
                                     
                                   </p>
                                   <Link
@@ -215,7 +232,7 @@ const Coupon = () => {
                               </div>
 
                               {/* Actions: Edit/Delete */}
-                              <div className="col-2 d-flex flex-column align-items-end justify-content-between">
+                              <div className="caption-buttons d-flex flex-column align-items-end justify-content-between">
                                 <div>
                                   <Link
                                     to={`/edit-offer/${item.discountType}/${item._id}`}

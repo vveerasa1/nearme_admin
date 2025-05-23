@@ -181,8 +181,8 @@ const AddBusiness = () => {
   };
 
   const handleSubmit = async (values, { resetForm }) => {
-    // console.log("hey", values.buisness_status);
-// return;
+    // console.log("hey", values.business_status);
+    // return;
     // Convert working hours to 12-hour format
     const updatedTime = values.working_hours.map((date) => ({
       day: date.day,
@@ -190,7 +190,7 @@ const AddBusiness = () => {
       endTime: convert24hTo12h(date.endTime),
       is24Hours: date.is24Hours,
     }));
-    console.log("hellow ", values.types);
+   // console.log("hellow ", values.types);
 
     // Set loading state to true
     setLoading(true);
@@ -211,8 +211,8 @@ const AddBusiness = () => {
     const formData = new FormData();
     formData.append("display_name", values.display_name);
     formData.append("types", values.types); // Send types as a list
-    formData.append("address", values.address1);
-    formData.append("street", values.address2);
+    formData.append("address", values.address);
+    formData.append("street", values.street);
     formData.append("city", values.city);
     formData.append("state", values.state);
     formData.append("postal_code", values.postal_code);
@@ -221,7 +221,7 @@ const AddBusiness = () => {
     formData.append("phone", values.code + values.phone_number);
     formData.append("place_link", values.place_link || "");
     formData.append("rating", values.rating || "");
-    formData.append("buisness_status", values.buisness_status || "");
+    formData.append("business_status", values.business_status || "");
     formData.append("reviews", values.reviews || "");
     formData.append(
       "working_hours",
@@ -298,13 +298,13 @@ const AddBusiness = () => {
             place_link: "",
             reviews: "",
             rating: "",
-            buisness_status : "",
+            business_status: "",
             // working_hours:"",
             working_hours: [
               {
                 day: "",
-                startTime: "",
-                endTime: "",
+                startTime: "00:01",
+                endTime: "23:59",
                 is24Hours: false,
               },
             ],
@@ -323,8 +323,7 @@ const AddBusiness = () => {
               .min(1, "At least one type is required")
               .of(Yup.string().required("Each type must be a valid string"))
               .required("Types field is required"),
-            address1: Yup.string().required("Address Line 1 is required"),
-            // // address2: Yup.string().required("Address is required"),
+              address: Yup.string().required("Address is required"),
 
             street: Yup.string(),
             city: Yup.string().required("City is required"),
@@ -335,10 +334,11 @@ const AddBusiness = () => {
               .required("Country ISO code is required")
               .matches(
                 /^[A-Z]{2,3}$/,
-                "Must be a valid ISO code like IN, US, or AUS"
+                "Must be a valid ISO code like IN, US, or CA"
               ),
-              buisness_status: Yup.string().required("Business status is required"),
-
+            business_status: Yup.string().required(
+              "Business status is required"
+            ),
 
             // latitude: Yup.number()
             //   .typeError("Latitude must be a number")
@@ -354,18 +354,6 @@ const AddBusiness = () => {
               .matches(/^\+?[1-9]\d{1,14}$/, "Invalid phone number")
               .max(10, "Phone number must be between 10 digits")
               .required("Phone number is required"),
-            place_link: Yup.string()
-              .url("Invalid URL format")
-              .required("Place link is required"),
-            reviews: Yup.number()
-              .min(0, "Reviews count cannot be negative")
-              .optional()
-              .required("Reviews count is required"),
-            rating: Yup.number()
-              .min(1, "Rating must be between 1 and 5")
-              .max(5, "Rating must be between 1 and 5")
-              .optional()
-              .required("Rating is required"),
             working_hours: Yup.array()
               .of(
                 Yup.object().shape({
@@ -457,13 +445,27 @@ const AddBusiness = () => {
                                 )
                               }
                               onInputChange={(inputValue) => {
-                                const filtered = allTypes.filter((option) =>
-                                  option.label
-                                    .toLowerCase()
-                                    .includes(inputValue.toLowerCase())
-                                );
-                                setFilteredTypes(filtered.slice(0, 20));
+                                const query = inputValue.toLowerCase();
+                              
+                                const filtered = allTypes
+                                  .filter((option) =>
+                                    option.label.toLowerCase().includes(query)
+                                  )
+                                  .sort((a, b) => {
+                                    const aLabel = a.label.toLowerCase();
+                                    const bLabel = b.label.toLowerCase();
+                              
+                                    // Exact matches come first
+                                    if (aLabel === query && bLabel !== query) return -1;
+                                    if (aLabel !== query && bLabel === query) return 1;
+                              
+                                    // Otherwise, keep alphabetical
+                                    return aLabel.localeCompare(bLabel);
+                                  });
+                              
+                                setFilteredTypes(filtered);
                               }}
+                              
                               onKeyDown={(e) => {
                                 if (e.key === "Enter" && e.target.value) {
                                   const newType = e.target.value.trim();
@@ -509,8 +511,30 @@ const AddBusiness = () => {
                     <div className="col-12 col-md-12 col-lg-12">
                       <div className="form-group">
                         <label className="form-label">Address</label>
+                        <div className="col-12 col-md-12 col-lg-12 mb-3">
+                      <div className="form-group">
+                        <Field
+                          name="address"
+                          type="text"
+                          className="form-input"
+                          placeholder="Address"
+                        />
+                        <ErrorMessage
+                          name="address"
+                          component="div"
+                          className="error text-danger"
+                        />
+                          <p
+                        
+                        className="note text-muted"
+                        style={{ fontSize: "0.800rem" , marginTop: "10px"}}
+                      >
+                        Note: Please enter your complete address, including building number, street name, city, state, country, and postal code.
+                      </p>
+                      </div>
+                    </div>
                         <div className="row">
-                          <div className="col-12 col-md-6 col-lg-6 mb-3">
+                          {/* <div className="col-12 col-md-6 col-lg-6 mb-3">
                             <Field
                               name="address1"
                               type="text"
@@ -522,16 +546,16 @@ const AddBusiness = () => {
                               component="div"
                               className="error text-danger"
                             />
-                          </div>
+                          </div> */}
                           <div className="col-12 col-md-6 col-lg-6 mb-3">
                             <Field
-                              name="address2"
+                              name="street"
                               type="text"
                               className="form-input"
-                              placeholder="Address line 2"
+                              placeholder="street"
                             />{" "}
                             <ErrorMessage
-                              name="address2"
+                              name="street"
                               component="div"
                               className="error text-danger"
                             />
@@ -595,7 +619,7 @@ const AddBusiness = () => {
                                   {...field}
                                   type="text"
                                   className="form-input"
-                                  placeholder="IN"
+                                  placeholder="Country ISO code"
                                   maxLength={3}
                                   onChange={(e) => {
                                     // Uppercase only and remove non-letters
@@ -614,35 +638,38 @@ const AddBusiness = () => {
                               className="error text-danger"
                             />
                           </div>
-                          
                         </div>
                       </div>
                     </div>
                     <div className="col-12 mb-4">
-  <div className="form-group">
-    <label className="form-label">Business Status</label>
-    <Field
-      as="select"
-      name="buisness_status"
-      className="form-select"
-    >
-      <option value="">Select Business Status</option>
-      <option value="Operational">Operational</option>
-      <option value="Closedtemporarily">Closed Temporarily</option>
-      <option value="Closedpermanently">Closed Permanently</option>
-    </Field>
-    <ErrorMessage
-      name="buisness_status"
-      component="div"
-      className="error text-danger"
-    />
-  </div>
-</div>
-                    
+                      <div className="form-group">
+                        <label className="form-label">Business Status</label>
+                        <Field
+                          as="select"
+                          name="business_status"
+                          className="form-select"
+                        >
+                          <option value="">Select Business Status</option>
+                          <option value="Operational">Operational</option>
+                          <option value="Closedtemporarily">
+                            Closed Temporarily
+                          </option>
+                          <option value="Closedpermanently">
+                            Closed Permanently
+                          </option>
+                        </Field>
+                        <ErrorMessage
+                          name="business_status"
+                          component="div"
+                          className="error text-danger"
+                        />
+                      </div>
+                    </div>
+
                     {/* <div className="col-12 col-md-6 col-lg-6 mb-3">
                             <Field
                               as="select"
-                              name="buisness_status"
+                              name="business_status"
                               className="form-select"
                             >
                               <option value="">Select status</option>
@@ -655,7 +682,7 @@ const AddBusiness = () => {
                               </option>
                             </Field>
                             <ErrorMessage
-                              name="buisness_status"
+                              name="business_status"
                               component="div"
                               className="error text-danger"
                             />
@@ -972,27 +999,36 @@ const AddBusiness = () => {
 
                               {/* 24 Hours Checkbox */}
                               <div className="form-check mt-2 d-flex align-items-center">
-  <Field
-    type="checkbox"
-    name={`working_hours[${index}].is24Hours`}
-    checked={day.is24Hours}
-    className="form-check-input"
-    onChange={(e) => {
-      setFieldValue(
-        `working_hours[${index}].is24Hours`,
-        e.target.checked
-      );
-      if (e.target.checked) {
-        setFieldValue(`working_hours[${index}].startTime`, "");
-        setFieldValue(`working_hours[${index}].endTime`, "");
-      }
-    }}
-  />
-  <label className="form-check-label ms-2 mb-0">
-    24 Hrs
-  </label>
-</div>
-
+                                <Field
+                                  type="checkbox"
+                                  name={`working_hours[${index}].is24Hours`}
+                                  checked={day.is24Hours}
+                                  className="form-check-input"
+                                  onChange={(e) => {
+                                    setFieldValue(
+                                      `working_hours[${index}].is24Hours`,
+                                      e.target.checked
+                                    );
+                                    if (e.target.checked) {
+                                      setFieldValue(
+                                        `working_hours[${index}].startTime`,
+                                        ""
+                                      );
+                                      setFieldValue(
+                                        `working_hours[${index}].endTime`,
+                                        ""
+                                      );
+                                    } else {
+                                      // Set default times when 24Hrs is unselected
+                                      setFieldValue(`working_hours[${index}].startTime`, "00:01");
+                                      setFieldValue(`working_hours[${index}].endTime`, "23:59");
+                                    }
+                                  }}
+                                />
+                                <label className="form-check-label ms-2 mb-0">
+                                  24 Hrs
+                                </label>
+                              </div>
 
                               {/* Add / Remove Buttons */}
                               <div className="d-flex flex-column mt-1">

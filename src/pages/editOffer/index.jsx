@@ -12,7 +12,11 @@ import weekday from "dayjs/plugin/weekday";
 import isBetween from "dayjs/plugin/isBetween";
 import { Toaster, toast } from "react-hot-toast";
 import CircularProgress from "@mui/material/CircularProgress";
-import { convert12hTo24h, convert24hTo12h, formatWeeklyHours } from "./constant";
+import {
+  convert12hTo24h,
+  convert24hTo12h,
+  formatWeeklyHours,
+} from "./constant";
 dayjs.extend(weekday);
 dayjs.extend(isBetween);
 const { RangePicker } = DatePicker;
@@ -38,63 +42,84 @@ const EditOffer = () => {
   const [initialValues, setInitialValues] = useState({
     title: "",
     description: "",
-    couponDescription:"",
+    couponDescription: "",
     discountType: "",
     discountValue: "",
     type: false,
     startDate: new Date(),
     endDate: new Date(),
-    startTime: "00:00",
+    startTime: "00:01",
     endTime: "23:59",
   });
 
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const res = await axios.get(`${baseUrl}coupons/${_id}`);
-      const data = res.data.data;
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`${baseUrl}coupons/${_id}`);
+        const data = res.data.data;
 
-      if (data.images && data.images.length > 0) {
-        setExistingImages(data.images);
+        if (data.images && data.images.length > 0) {
+          setExistingImages(data.images);
+        }
+        setInitialValues({
+          title: data.title || "",
+          description: data.description || "",
+          couponDescription: data.couponDescription || "",
+          discountType: data.discountType || "",
+          discountValue: data.discountValue || "",
+          images: data.images || "",
+          type: data.type || false,
+          startDate: data.dateRange.startDate
+            ? dayjs(data.dateRange.startDate)
+            : dayjs(),
+          endDate: data.dateRange.endDate
+            ? dayjs(data.dateRange.endDate)
+            : dayjs(),
+          startTime:
+            !data.type && data.activeTime?.startTime
+              ? data.activeTime.startTime
+              : "00:01",
+          endTime:
+            !data.type && data.activeTime?.endTime
+              ? data.activeTime.endTime
+              : "23:59",
+        });
+
+        setRange([
+          data.dateRange.startDate ? dayjs(data.dateRange.startDate) : dayjs(),
+          data.dateRange.endDate ? dayjs(data.dateRange.endDate) : dayjs(),
+        ]);
+
+        if (
+          data.type &&
+          Array.isArray(data.customDays) &&
+          data.customDays.length > 0
+        ) {
+          const formattedCustomDays = data.customDays.map((day) => ({
+            day: day.day,
+            startTime: day.startTime,
+            endTime: day.endTime,
+          }));
+
+          setCustomDays(formattedCustomDays);
+        } else {
+          setCustomDays([{ day: "", startTime: "00:01", endTime: "23:59" }]);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
       }
-console.log('-- -- -- ',data.startTime);
-      setInitialValues({
-        title: data.title || "",
-        description: data.description || "",
-        couponDescription: data.couponDescription || "",
-        discountType: data.discountType || "",
-        discountValue: data.discountValue || "",
-        images: data.images || "",
-        type: data.type || false,
-        startDate: data.startDate ? dayjs(data.startDate) : dayjs(),
-        endDate: data.endDate ? dayjs(data.endDate) : dayjs(),
-        startTime: data.activeTime.startTime || "00:00",
-        endTime: data.activeTime.endTime || "23:59",
-      });
+    };
 
-      if (data.type && data.customDays && data.customDays.length > 0) {
-        // Map the customDays to ensure proper formatting
-        const formattedCustomDays = data.customDays.map((day) => ({
-          day: day.day || "",
-          startTime: convert12hTo24h(day.startTime || "12:00 AM"), // Convert to 24-hour format
-          endTime: convert12hTo24h(day.endTime || "11:59 PM"), 
-        }));
-
-        setCustomDays(formattedCustomDays);
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
-
-  fetchData();
-}, [_id, baseUrl]);
+    fetchData();
+  }, [_id, baseUrl]);
 
   const resizeImage = (file, width, height) => {
     return new Promise((resolve, reject) => {
       const img = new window.Image();
       const reader = new window.FileReader();
-      reader.onload = (e) => { img.src = e.target.result; };
+      reader.onload = (e) => {
+        img.src = e.target.result;
+      };
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
@@ -147,29 +172,29 @@ console.log('-- -- -- ',data.startTime);
   const formatDate = (date) => {
     return new Date(date).toISOString().split("T")[0];
   };
-  
+
   const convertTo24HourFormat = (time12h) => {
     const [time, modifier] = time12h.split(" ");
     let [hours, minutes] = time.split(":");
     hours = parseInt(hours, 10);
-  
+
     if (modifier === "PM" && hours !== 12) {
       hours += 12;
     } else if (modifier === "AM" && hours === 12) {
       hours = 0;
     }
-  
+
     return `${hours.toString().padStart(2, "0")}:${minutes}`;
   };
 
   const handleCustomDayChange = (index, field, value) => {
     const updatedDays = [...customDays];
-  
+
     // Convert time fields to 24-hour format
     if (field === "startTime" || field === "endTime") {
       value = convertTo24HourFormat(value);
     }
-  
+
     updatedDays[index][field] = value; // Update the specific field (day, startTime, or endTime)
     console.log(`Updating ${field} for index ${index}:`, value); // Debugging log
     console.log("Updated Days:", updatedDays); // Debugging log
@@ -183,7 +208,7 @@ console.log('-- -- -- ',data.startTime);
     }
     setCustomDays([
       ...customDays,
-      { day: "", startTime: "00:00", endTime: "23:59" },
+      { day: "", startTime: "00:01", endTime: "23:59" },
     ]);
   };
 
@@ -217,8 +242,13 @@ console.log('-- -- -- ',data.startTime);
           }
         }
         const allWeekdays = [
-          "Monday", "Tuesday", "Wednesday", "Thursday",
-          "Friday", "Saturday", "Sunday"
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday",
         ];
         const disabled = allWeekdays.filter(
           (day) => !daysInRange.includes(day)
@@ -237,7 +267,7 @@ console.log('-- -- -- ',data.startTime);
     let [time, modifier] = time12.split(" ");
     let [hours, minutes] = time.split(":");
     hours = parseInt(hours, 10);
-  
+
     if (modifier === "PM" && hours !== 12) {
       hours = hours + 12;
     }
@@ -248,36 +278,41 @@ console.log('-- -- -- ',data.startTime);
   };
 
   const handleSubmit = async (values, { resetForm }) => {
-
     let daysToSubmit = values.type
-    ? customDays.map((d) => ({
-        ...d,
-        startTime: convert24hTo12h(d.startTime),
-        endTime: convert24hTo12h(d.endTime),
-      }))
-    : [];
+      ? customDays.map((d) => ({
+          ...d,
+          startTime: d.startTime,
+          endTime: d.endTime,
+        }))
+      : [];
+console.log(daysToSubmit);
+
+
+  // Reject if any day is not selected
+  const hasInvalidDay = customDays.some(day => !day.day || day.day.trim() === "");
+  // console.log(hasInvalidDay);
+  if (hasInvalidDay === true) {
+    toast.error("Please select a valid day for all custom schedule entries");
+    return;
+  }
+           
+
+      return;
     setLoading(true);
     const formData = new window.FormData();
     formData.append("title", values.title);
     formData.append("description", values.description);
     formData.append("couponDescription", values.couponDescription);
 
-    
     formData.append("discountType", values.discountType);
     formData.append("type", values.type);
-    formData.append("startDate", formatDate(range[0]) );
+    formData.append("startDate", formatDate(range[0]));
     formData.append("endDate", formatDate(range[1]));
     if (values.type) {
       formData.append("customDays", JSON.stringify(daysToSubmit));
     } else {
-      formData.append(
-        "startTime",
-        convertTo24Hour(values.startTime)
-      );
-      formData.append(
-        "endTime",
-        convertTo24Hour(values.endTime)
-      );
+      formData.append("startTime", convertTo24Hour(values.startTime));
+      formData.append("endTime", convertTo24Hour(values.endTime));
     }
     if (values.discountType === "Discount") {
       formData.append("discountValue", values.discountValue);
@@ -292,31 +327,28 @@ console.log('-- -- -- ',data.startTime);
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-    
+
       if (updateResponse.status === 200) {
         toast.success(`${values.discountType} updated successfully!`);
         // resetForm();
         setTimeout(() => {
-          if(values.discountType == 'Discount'){
+          if (values.discountType == "Discount") {
             navigate("/discounts");
-
-          } else if(values.discountType == 'Deal'){
+          } else if (values.discountType == "Deal") {
             navigate("/deals");
-          } else{
+          } else {
             navigate("/coupons");
-
           }
-           // replace with your actual route
+          // replace with your actual route
         }, 1500); // gives the user a moment to see the toast
       }
-    
+
       setLoading(false);
     } catch (err) {
       console.error("Error submitting form:", err);
       toast.error("Failed to update coupon.");
       setLoading(false);
     }
-    
   };
 
   const handleImageDelete = async (urlOrIdx) => {
@@ -337,6 +369,8 @@ console.log('-- -- -- ',data.startTime);
   };
 
   return (
+    <>
+    <Toaster position="bottom-center" />
     <div className="content-wrapper">
       {/* Breadcrumb */}
       <div className="breadcrumb-wrapper">
@@ -344,7 +378,9 @@ console.log('-- -- -- ',data.startTime);
           <h2 className="page-heading">Edit {type}</h2>
           <ul className="breadcrumb-list">
             <li className="breadcrumb-item">
-              <Link to={"/dashboard"} className="breadcrumb-link">Home</Link>
+              <Link to={"/dashboard"} className="breadcrumb-link">
+                Home
+              </Link>
             </li>
             <li className="breadcrumb-item">
               <span className="breadcrumb-link">{type}</span>
@@ -405,19 +441,19 @@ console.log('-- -- -- ',data.startTime);
                       </div>
                     </div>
                     <div className="form-group mb-3">
-                    <label className="form-label">Coupon Description</label>
-                    <Field
-                      as="textarea"
-                      name="couponDescription"
-                      className="form-input"
-                      rows={3}
-                    />
-                    <ErrorMessage
-                      name="couponDescription"
-                      component="div"
-                      className="error text-danger"
-                    />
-                  </div>
+                      <label className="form-label">Coupon Details</label>
+                      <Field
+                        as="textarea"
+                        name="couponDescription"
+                        className="form-input"
+                        rows={3}
+                      />
+                      <ErrorMessage
+                        name="couponDescription"
+                        component="div"
+                        className="error text-danger"
+                      />
+                    </div>
                     {/* Offer Type */}
                     <div className="col-12 mb-3">
                       <div className="form-group">
@@ -466,7 +502,10 @@ console.log('-- -- -- ',data.startTime);
                           <div className="file-info">
                             {existingImages.length > 0 &&
                               existingImages.map((url, index) => (
-                                <div key={`existing-${index}`} className="uploaded-file row py-2">
+                                <div
+                                  key={`existing-${index}`}
+                                  className="uploaded-file row py-2"
+                                >
                                   <div className="col-5 mb-2">
                                     <img src={url} alt="uploaded" height="60" />
                                   </div>
@@ -483,7 +522,10 @@ console.log('-- -- -- ',data.startTime);
                               ))}
                             {newImages.length > 0 &&
                               newImages.map((file, index) => (
-                                <div key={`new-${index}`} className="uploaded-file row py-2">
+                                <div
+                                  key={`new-${index}`}
+                                  className="uploaded-file row py-2"
+                                >
                                   <div className="col">
                                     <span>{file.name}</span>
                                   </div>
@@ -498,32 +540,61 @@ console.log('-- -- -- ',data.startTime);
                                   </div>
                                 </div>
                               ))}
-                            {existingImages.length === 0 && newImages.length === 0 && (
-                              <p>Choose files or drag and drop here</p>
+                            {existingImages.length === 0 &&
+                              newImages.length === 0 && (
+                                <p>Choose files or drag and drop here</p>
+                              )}
+                            {imageError && (
+                              <div className="error">{imageError}</div>
                             )}
-                            {imageError && <div className="error">{imageError}</div>}
                           </div>
                         </div>
                       </div>
                     </div>
                     {/* Offer Validity */}
-                    <div className="form-group mb-3">
-                    <label className="form-label">Offer Validity Period</label>
-                    <div className="w-100">
-                      <RangePicker
-                        value={range}
-                        onChange={handleRangeChange}
-                        format="YYYY-MM-DD"
-                        className="ant-picker"
-                        style={{ height: "45px" }}
-                      />
-                    </div>
-                    <p className="form-note mt-2">
-                      Note: Specify the duration for which the coupon is valid,
-                      including both the start and end dates.
-                    </p>
-                  </div>
+
                     {/* Custom Days Toggle */}
+
+                    {/* Submit Button - aligned right */}
+                    {/* <div className="col-12">
+                      <div className="d-flex justify-content-end">
+                        <button
+                          type="submit"
+                          className="btn btn-primary d-flex align-items-center"
+                          disabled={loading}
+                        >
+                          {loading && <CircularProgress size={16} color="inherit" className="me-2" />}
+                          {loading ? "Submitting..." : "Update Offer"}
+                        </button>
+                      </div>
+                    </div> */}
+                    {/* <div className="col-12 col-md-12 col-lg-12"> */}
+
+                    {/* </div> */}
+                  </div>
+                </div>
+
+                <div className="col-12 col-md-12 col-lg-6 d-flex flex-column justify-content-between" style={{ minHeight: '100%' }}>
+                <div className="flex-grow-1">
+                    {/* Offer Validity Period */}
+                    <div className="form-group mb-4">
+                      <label className="form-label">
+                        Offer Validity Period
+                      </label>
+                      <div className="w-100">
+                        <RangePicker
+                          value={range}
+                          onChange={handleRangeChange}
+                          format="YYYY-MM-DD"
+                          className="ant-picker"
+                          style={{ height: "45px" }}
+                        />
+                      </div>
+                      <p className="form-note mt-2">
+                        Note: Specify the duration for which the coupon is
+                        valid, including both the start and end dates.
+                      </p>
+                    </div>
                     <div className="col-12 mb-4">
                       <div className="form-group d-flex align-items-center">
                         <Field
@@ -538,140 +609,157 @@ console.log('-- -- -- ',data.startTime);
                     </div>
                     {/* Custom Days OR Start/End Time */}
                     <div className="col-12 mb-3">
-                    <label className="form-label">Custom time</label>
+                      {/* <label className="form-label">Custom time</label> */}
 
-                    {values.type ? (
- <div className="custom-days mt-3">
- {customDays.map((day, index) => (
-   <div key={index} className="custom-day-row d-flex align-items-center mb-2">
-     {/* Day Dropdown */}
-     <select
-       className="form-input w-25"
-       value={day.day}
-       onChange={(e) => handleCustomDayChange(index, "day", e.target.value)}
-     >
-       <option value="">Select Day</option>
-       {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(
-         (d) => (
-           <option
-             key={d}
-             value={d}
-             disabled={
-               customDays.some((cd, i) => cd.day === d && i !== index) ||
-               disabledDays.includes(d)
-             }
-           >
-             {d}
-           </option>
-         )
-       )}
-     </select>
+                      {values.type ? (
+                        <div className="custom-days mt-3">
+                          {customDays.map((day, index) => (
+                            <div
+                              key={index}
+                              className="custom-day-row d-flex align-items-center mb-2"
+                            >
+                              {/* Day Dropdown */}
+                              <select
+                                className="form-input w-25"
+                                value={day.day}
+                                onChange={(e) =>
+                                  handleCustomDayChange(
+                                    index,
+                                    "day",
+                                    e.target.value
+                                  )
+                                }
+                              >
+                                <option value="">Select Day</option>
+                                {[
+                                  "Monday",
+                                  "Tuesday",
+                                  "Wednesday",
+                                  "Thursday",
+                                  "Friday",
+                                  "Saturday",
+                                  "Sunday",
+                                ].map((d) => (
+                                  <option
+                                    key={d}
+                                    value={d}
+                                    disabled={
+                                      customDays.some(
+                                        (cd, i) => cd.day === d && i !== index
+                                      ) || disabledDays.includes(d)
+                                    }
+                                  >
+                                    {d}
+                                  </option>
+                                ))}
+                              </select>
 
-     {/* Start Time Input */}
-     <div className="mx-2 w-25 d-flex align-items-center">
-       <input
-         type="time"
-         className="form-input"
-         value={day.startTime} // Bind to the state
-         onChange={(e) => handleCustomDayChange(index, "startTime", e.target.value)} // Update state on change
-       />
-     </div>
+                              {/* Start Time Input */}
+                              <div className="mx-2 w-25 d-flex align-items-center">
+                                <input
+                                  type="time"
+                                  className="form-input"
+                                  value={day.startTime} // Bind to the state
+                                  onChange={(e) =>
+                                    handleCustomDayChange(
+                                      index,
+                                      "startTime",
+                                      e.target.value
+                                    )
+                                  } // Update state on change
+                                />
+                              </div>
 
-     {/* End Time Input */}
-     <div className="w-25 d-flex align-items-center">
-       <input
-         type="time"
-         className="form-input"
-         value={day.endTime} // Bind to the state
-         onChange={(e) => handleCustomDayChange(index, "endTime", e.target.value)} // Update state on change
-       />
-     </div>
+                              {/* End Time Input */}
+                              <div className="w-25 d-flex align-items-center">
+                                <input
+                                  type="time"
+                                  className="form-input"
+                                  value={day.endTime} // Bind to the state
+                                  onChange={(e) =>
+                                    handleCustomDayChange(
+                                      index,
+                                      "endTime",
+                                      e.target.value
+                                    )
+                                  } // Update state on change
+                                />
+                              </div>
 
-     {/* Add or Remove Button */}
-     {index === 0 ? (
-       <button
-         type="button"
-         onClick={handleAddDay}
-         className="btn btn-sm btn-outline-primary mx-2"
-         disabled={customDays.length >= 7}
-       >
-         <Add />
-       </button>
-     ) : (
-       <button
-         type="button"
-         onClick={() => handleRemoveDay(index)}
-         className="btn btn-sm btn-outline-danger mx-2"
-       >
-         <Remove />
-       </button>
-     )}
-   </div>
- ))}
-</div>
-) : (
-  <div className="row">
-    <div className="col-6 mb-3">
-      <div className="form-group">
-        <label className="form-label">Offer Active Start Time</label>
-        <Field
-          name="startTime"
-          type="time"
-          className="form-input"
-        />
-      </div>
-    </div>
-    <div className="col-6 mb-3">
-      <div className="form-group">
-        <label className="form-label">Offer Active End Time</label>
-        <Field
-          name="endTime"
-          type="time"
-          className="form-input"
-        />
-      </div>
-    </div>
-  </div>
-)}
+                              {/* Add or Remove Button */}
+                              {index === 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={handleAddDay}
+                                  className="btn btn-sm btn-outline-primary mx-2"
+                                  disabled={customDays.length >= 7}
+                                >
+                                  <Add />
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveDay(index)}
+                                  className="btn btn-sm btn-outline-danger mx-2"
+                                >
+                                  <Remove />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="row">
+                          <div className="col-6 mb-3">
+                            <div className="form-group">
+                              <label className="form-label">
+                                Offer Active Start Time
+                              </label>
+                              <Field
+                                name="startTime"
+                                type="time"
+                                className="form-input"
+                              />
+                            </div>
+                          </div>
+                          <div className="col-6 mb-3">
+                            <div className="form-group">
+                              <label className="form-label">
+                                Offer Active End Time
+                              </label>
+                              <Field
+                                name="endTime"
+                                type="time"
+                                className="form-input"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {/* Submit Button - aligned right */}
-                    {/* <div className="col-12">
-                      <div className="d-flex justify-content-end">
-                        <button
-                          type="submit"
-                          className="btn btn-primary d-flex align-items-center"
-                          disabled={loading}
-                        >
-                          {loading && <CircularProgress size={16} color="inherit" className="me-2" />}
-                          {loading ? "Submitting..." : "Update Offer"}
-                        </button>
-                      </div>
-                    </div> */}
-                      {/* <div className="col-12 col-md-12 col-lg-12"> */}
-                      <div className="mt-4 text-end">
-                <button className="theme-btn btn-border me-2" type="button">
-                  Clear
-                </button>
-                <button
-                  className="theme-btn btn-main"
-                  type="submit"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span
-                        className="spinner-border spinner-border-sm me-2"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>
-                      Saving...
-                    </>
-                  ) : (
-                    "Update offer"
-                  )}
-                </button>
-              </div>
-                  {/* </div> */}
+                  </div>
+
+                  {/* Buttons aligned to bottom */}
+                  <div className="mt-3 text-end">
+                  
+                    <button
+                      className="theme-btn btn-main"
+                      type="submit"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <span
+                            className="spinner-border spinner-border-sm me-2"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>
+                          Saving...
+                        </>
+                      ) : (
+                        "Update offer"
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -680,6 +768,7 @@ console.log('-- -- -- ',data.startTime);
         </Formik>
       </div>
     </div>
+    </>
   );
 };
 

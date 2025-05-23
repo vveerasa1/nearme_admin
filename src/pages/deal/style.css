@@ -1,3 +1,12 @@
 .lw-info-address{
     margin-bottom: 7px;
 }
+.caption-buttons{
+    position: absolute;
+    top: 25px;
+    right: 0px;
+    z-index: 10;
+}
+:where(.css-dev-only-do-not-override-1v5z42l).ant-card .ant-card-body {
+    padding-right: 40px;
+}
