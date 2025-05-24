@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { Card, Switch } from "antd";
-import fallbackImage from "../../assets/images/landingPage.png";
+import fallbackImage from "../../../assets/images/landingPage.png";
 import { CheckCircleTwoTone } from "@ant-design/icons";
 import axios from "axios";
 

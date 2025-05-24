@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import "./style.css";
 import dayjs from "dayjs";
 import { Link } from "react-router-dom";
-import DeleteConfirmationModal from "../../components/deleteConfirmation";
+import DeleteConfirmationModal from "../../../components/deleteConfirmation";
 import axios from "axios";
 import { Card, Pagination, Button, Popconfirm, message } from "antd";
 import { Edit, Delete } from "@mui/icons-material";
 import { debounce } from "lodash";
-import fallbackImage from "../../assets/images/landingPage.png";
+import fallbackImage from "../../../assets/images/landingPage.png";
 import { Spin } from "antd";
 
 const Deal = () => {

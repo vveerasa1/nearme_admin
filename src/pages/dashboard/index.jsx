@@ -19,7 +19,6 @@ import {
 import axios from "axios";
 
 const Dashboard = () => {
-
   const [getTotalCount, setGetTotalCount] = useState();
   const [getNewTotalCount, setGetNewTotalCount] = useState();
   const [getTotalCouponCount, setGetTotalCouponCount] = useState();
@@ -27,43 +26,44 @@ const Dashboard = () => {
   const [getNewTotalUserCountount, setGetNewUserTotalCount] = useState();
 
   const [loadingBusinessGraph, setLoadingBusinessGraph] = useState(false);
-const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
+  const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
 
   const [getGraphWeekData, setGetGraphWeekData] = useState();
   const [getGraphMonthData, setGetGraphMonthData] = useState();
   const [getGraphYearData, setGetGraphYearData] = useState();
   const [graphType, setGraphType] = useState("week");
   const [graphTypeCoupon, setGraphTypeCoupon] = useState("week");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const baseUrl = import.meta.env.VITE_BASE_URL;
-
 
   const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const dashboardRes = await axios.get(`${baseUrl}dashboard`);
-        const weekGraphRes = await axios.get(`${baseUrl}dashboard/graph?type=week`);
-  
-        const countData = dashboardRes.data.data;
-  
-        setGetTotalCount(countData.businessCount);
-        setGetTotalCouponCount(countData.couponCount);
-        setGetNewTotalCount(countData.recentBusinesses);
-        setGetNewCouponTotalCount(countData.recentCoupons);
-        setGetNewUserTotalCount(countData.userCount);
-        setGetGraphWeekData(weekGraphRes.data.data);
-      } catch (error) {
-        console.error("Error fetching initial dashboard data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
     fetchInitialData();
   }, []);
-  
+
+  const fetchInitialData = async () => {
+    setLoading(true);
+    try {
+      const dashboardRes = await axios.get(`${baseUrl}dashboard`);
+      const weekGraphRes = await axios.get(
+        `${baseUrl}dashboard/graph?type=week`
+      );
+
+      const countData = dashboardRes.data.data;
+
+      setGetTotalCount(countData.businessCount);
+      setGetTotalCouponCount(countData.couponCount);
+      setGetNewTotalCount(countData.recentBusinesses);
+      setGetNewCouponTotalCount(countData.recentCoupons);
+      setGetNewUserTotalCount(countData.userCount);
+      setGetGraphWeekData(weekGraphRes.data.data);
+    } catch (error) {
+      console.error("Error fetching initial dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchGraphDataIfNeeded = async (type, forGraph = "business") => {
     try {
@@ -80,7 +80,7 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
           setLoadingCouponGraph(false);
         }
       }
-  
+
       if (type === "year") {
         if (forGraph === "business" && !getGraphYearData) {
           setLoadingBusinessGraph(true);
@@ -100,9 +100,6 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
       if (forGraph === "coupon") setLoadingCouponGraph(false);
     }
   };
-  
-  
-  
 
   // useEffect(() => {
   //   if (getGraphWeekData) {
@@ -134,7 +131,6 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
         return [];
     }
   };
-  
 
   const getCouponGraphData = () => {
     switch (graphTypeCoupon) {
@@ -148,7 +144,6 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
         return [];
     }
   };
-  
 
   return (
     <div className="content-wrapper">
@@ -169,78 +164,98 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
         </div>
       </div>
       {/* counts */}
-      <div className="counts-wrapper" style={{ overflowX: 'auto' }}>
-  <div
-    className="d-flex gap-3 flex-nowrap"
-    style={{ minWidth: '100%', paddingBottom: '10px' }}
-  >
-    <div className="count-item">
-      <div className="countitem-icon">
-        <Business className="cicon" />
-      </div>
-      <div className="countitem-info">
-        <h4>Total Shops</h4>
-        <h3>
-          <CountUp start={0} end={getTotalCount} duration={2} />
-        </h3>
-      </div>
-    </div>
+      {loading === true ? (
+        <>
+          <div
+            style={{
+              position: "fixed",
+              left: "50%",
+              zIndex: 9999,
+            }}
+          >
+            <Spin size="large" />
+          </div>
+        </>
+      ) : (
+        <div className="counts-wrapper" style={{ overflowX: "auto" }}>
+          <div
+            className="d-flex gap-3 flex-nowrap"
+            style={{ minWidth: "100%", paddingBottom: "10px" }}
+          >
+            <div className="count-item">
+              <div className="countitem-icon">
+                <Business className="cicon" />
+              </div>
+              <div className="countitem-info">
+                <h4>Total Shops</h4>
+                <h3>
+                  <CountUp start={0} end={getTotalCount} duration={2} />
+                </h3>
+              </div>
+            </div>
 
-    <div className="count-item">
-      <div className="countitem-icon">
-        <Business className="cicon" />
-      </div>
-      <div className="countitem-info">
-        <h4>
-          New Shops <span>(This Week)</span>
-        </h4>
-        <h3>
-          <CountUp start={0} end={getNewTotalCount} duration={2} />
-        </h3>
-      </div>
-    </div>
+            <div className="count-item">
+              <div className="countitem-icon">
+                <Business className="cicon" />
+              </div>
+              <div className="countitem-info">
+                <h4>
+                  New Shops <span>(This Week)</span>
+                </h4>
+                <h3>
+                  <CountUp start={0} end={getNewTotalCount} duration={2} />
+                </h3>
+              </div>
+            </div>
 
-    <div className="count-item">
-      <div className="countitem-icon">
-        <LocalOffer className="cicon" />
-      </div>
-      <div className="countitem-info">
-        <h4>Total Coupons</h4>
-        <h3>
-          <CountUp start={0} end={getTotalCouponCount} duration={2} />
-        </h3>
-      </div>
-    </div>
+            <div className="count-item">
+              <div className="countitem-icon">
+                <LocalOffer className="cicon" />
+              </div>
+              <div className="countitem-info">
+                <h4>Total Coupons</h4>
+                <h3>
+                  <CountUp start={0} end={getTotalCouponCount} duration={2} />
+                </h3>
+              </div>
+            </div>
 
-    <div className="count-item">
-      <div className="countitem-icon">
-        <LocalOffer className="cicon" />
-      </div>
-      <div className="countitem-info">
-        <h4>
-          New Coupons <span>(This Week)</span>
-        </h4>
-        <h3>
-          <CountUp start={0} end={getNewTotalCouponCount} duration={2} />
-        </h3>
-      </div>
-    </div>
+            <div className="count-item">
+              <div className="countitem-icon">
+                <LocalOffer className="cicon" />
+              </div>
+              <div className="countitem-info">
+                <h4>
+                  New Coupons <span>(This Week)</span>
+                </h4>
+                <h3>
+                  <CountUp
+                    start={0}
+                    end={getNewTotalCouponCount}
+                    duration={2}
+                  />
+                </h3>
+              </div>
+            </div>
 
-    <div className="count-item">
-      <div className="countitem-icon">
-        <Person className="cicon" />
-      </div>
-      <div className="countitem-info">
-        <h4>
-          Users
-        </h4>
-        <h3>
-          <CountUp start={0} end={getNewTotalUserCountount} duration={2} />
-        </h3>
-      </div>
-    </div>
-  </div>
-</div>
+            <div className="count-item">
+              <div className="countitem-icon">
+                <Person className="cicon" />
+              </div>
+              <div className="countitem-info">
+                <h4>Users</h4>
+                <h3>
+                  <CountUp
+                    start={0}
+                    end={getNewTotalUserCountount}
+                    duration={2}
+                  />
+                </h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* statistics */}
       <div className="statistics-wrapper">
@@ -257,20 +272,19 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
               <div className="gc-head">
                 <h3>Shops</h3>
                 <div className="gc-sort-btns">
-                  {[ "week", "month", "year"].map((type) => (
+                  {["week", "month", "year"].map((type) => (
                     <button
-                    key={type}
-                    type="button"
-                    className={`gcBtn ${graphType === type ? "active" : ""}`}
-                    onClick={() => {
-                      setGraphType(type);
-                      // fetchGraphDataIfNeeded(type);
-                      fetchGraphDataIfNeeded(type, "business");
-                    }}
-                  >
-                    {type[0].toUpperCase()}
-                  </button>
-                  
+                      key={type}
+                      type="button"
+                      className={`gcBtn ${graphType === type ? "active" : ""}`}
+                      onClick={() => {
+                        setGraphType(type);
+                        // fetchGraphDataIfNeeded(type);
+                        fetchGraphDataIfNeeded(type, "business");
+                      }}
+                    >
+                      {type[0].toUpperCase()}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -325,20 +339,21 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
               <div className="gc-head">
                 <h3>Coupons</h3>
                 <div className="gc-sort-btns">
-                  {[ "week", "month", "year"].map((type) => (
+                  {["week", "month", "year"].map((type) => (
                     <button
-                    key={type}
-                    type="button"
-                    className={`gcBtn ${graphTypeCoupon === type ? "active" : ""}`}
-                    onClick={() => {
-                      setGraphTypeCoupon(type);
-                      // fetchGraphDataIfNeeded(type);
-                      fetchGraphDataIfNeeded(type, "coupon");
-                    }}
-                  >
-                    {type[0].toUpperCase()}
-                  </button>
-                  
+                      key={type}
+                      type="button"
+                      className={`gcBtn ${
+                        graphTypeCoupon === type ? "active" : ""
+                      }`}
+                      onClick={() => {
+                        setGraphTypeCoupon(type);
+                        // fetchGraphDataIfNeeded(type);
+                        fetchGraphDataIfNeeded(type, "coupon");
+                      }}
+                    >
+                      {type[0].toUpperCase()}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -354,16 +369,8 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="count"
-                        stroke="#EB8137"
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="count"
-                        stroke="#4C74B5"
-                      />
+                      <Line type="monotone" dataKey="count" stroke="#EB8137" />
+                      <Line type="monotone" dataKey="count" stroke="#4C74B5" />
                     </LineChart>
                   )}
                 </ResponsiveContainer>

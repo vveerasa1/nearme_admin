@@ -4,7 +4,7 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { Card, Switch } from "antd";
 import axios from "axios";
 
-const ViewCoupon = () => {
+const ViewOfferData = () => {
   const navigate = useNavigate(); 
   const [active, setActive] = useState(false);
   const { _id } = useParams();
@@ -156,4 +156,4 @@ const ViewCoupon = () => {
   );
 };
 
-export default ViewCoupon;
+export default ViewOfferData;

@@ -1,29 +1,29 @@
 import { useState, useEffect } from "react";
+import dayjs from 'dayjs';
 import "./style.css";
 import {Spin} from "antd";
 import { Link } from "react-router-dom";
-import DeleteConfirmationModal from "../../components/deleteConfirmation";
+import DeleteConfirmationModal from "../../../components/deleteConfirmation";
 import axios from "axios";
 import { Card, Pagination, Button, Popconfirm, message } from "antd";
 import { Edit, Delete } from "@mui/icons-material";
 import { debounce } from "lodash";
-import fallbackImage from "../../assets/images/landingPage.png";
-import dayjs from 'dayjs';
-
-const Coupon = () => {
+import fallbackImage from "../../../assets/images/landingPage.png";
+const Discount = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [getCoupon, setGetCoupon] = useState([]);
+  const [getDiscount, setGetDiscount] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(12);
-  const [loading,setLoading] = useState(false)
-  const formatDateTime = (dateStr) => {
+  const [pageSize] = useState(12); // Number of items per page
+    const [loading,setLoading] = useState(false)
+  
+  const formatDateTime = (dateStr, timeStr) => {
     const date = new Date(dateStr);
-    const options = { day: "2-digit", month: "long" };
-    return `${date.toLocaleDateString("en-GB", options)} `;
+    const options = { day: "2-digit", month: "long" }; // e.g., 30 April
+    return `${date.toLocaleDateString("en-GB", options)} ${timeStr}`;
   };
-
   const hostUrl = import.meta.env.VITE_BASE_URL;
 
+  // This will hold the current page's coupons to be displayed
 
   useEffect(()=>{
     fetchData()
@@ -32,20 +32,20 @@ const Coupon = () => {
   const fetchData = async (searchText) => {
     try {
       setLoading(true)
-      const baseUrl = `${hostUrl}coupons?discountType=Coupon`;
+      const baseUrl = `${hostUrl}coupons?discountType=Discount`;
       const url = searchText
         ? `${baseUrl}&keyword=${encodeURIComponent(searchText)}`
         : baseUrl;      
       const response = await axios.get(url);
       console.log(response)
-      setGetCoupon(response.data.data.couponInfo);
+      setGetDiscount(response.data.data.couponInfo);
       setLoading(false)
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
   
-  const handleSearchChange = (e) => {
+ const handleSearchChange = (e) => {
     const value = e.target.value;
     debouncedFetchData(value);
   };
@@ -59,11 +59,17 @@ const Coupon = () => {
 
   useEffect(() => {
 
-}, [currentPage, getCoupon]);
+}, [currentPage, getDiscount]);
 
   const handleConfirmDelete = () => {
     console.log("Item deleted");
     setIsModalOpen(false);
+  };
+
+  const formatValidDateRange = (startDateStr, endDateStr) => {
+    const start = dayjs(startDateStr).format('D/M/YY');
+    const end = dayjs(endDateStr).format('D/M/YY');
+    return `Valid: ${start} - ${end}`;
   };
 
   // const formatValidDateRange = (startDateStr, endDateStr) => {
@@ -76,13 +82,6 @@ const Coupon = () => {
   
   //   return `Valid: ${formattedStart} - ${formattedEnd}`;
   // };
-
-const formatValidDateRange = (startDateStr, endDateStr) => {
-  const start = dayjs(startDateStr).format('D/M/YY');
-  const end = dayjs(endDateStr).format('D/M/YY');
-  return `Valid: ${start} - ${end}`;
-};
-
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -105,6 +104,7 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
     message.error("Click on No");
   };
 
+  
 
   return (
     <>
@@ -112,7 +112,7 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
         {/* Breadcrumb */}
         <div className="breadcrumb-wrapper d-flex flex-column flex-md-row">
           <div className="breadcrumb-block">
-            <h2 className="page-heading">Coupons</h2>
+            <h2 className="page-heading">Discounts</h2>
             <ul className="breadcrumb-list">
               <li className="breadcrumb-item">
                 <Link to={"/dashboard"} className="breadcrumb-link">
@@ -120,30 +120,27 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
                 </Link>
               </li>
               <li className="breadcrumb-item">
-                <span className="breadcrumb-link">Coupons</span>
+                <span className="breadcrumb-link">Discounts</span>
               </li>
             </ul>
           </div>
         </div>
-
-        {/* Search + List */}
+  
+        {/* List Section */}
         <div className="lists-container py-4">
           <div className="row">
             <div className="col-12">
               <div className="lists-wrapper businesslist">
-                {/* Search bar */}
+                {/* Search Bar */}
                 <div className="list-filter d-flex justify-content-between align-items-center mb-3">
-                  {/* Left side - Heading */}
-                  <h5 className="mb-0 fw-semibold">Coupon Lists</h5>
-
-                  {/* Right side - Search form */}
+                  <h5 className="mb-0 fw-semibold">Discount Lists</h5>
                   <form>
                     <div className="lf-search">
                       <input
                         className="lfs-input"
                         type="text"
                         placeholder="Search here..."
-                        onChange={handleSearchChange}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                       />
                       <div className="search-icon-container">
                         <div type="button"></div>
@@ -151,26 +148,21 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
                     </div>
                   </form>
                 </div>
-
-                {/* Coupons list */}
+  
+                {/* Discount Cards */}
                 <div className="row">
-                {console.log(getCoupon,"GETCOUPIN")}
-
-                  {loading === true ? <Spin /> :
-                  getCoupon.length > 0 ? (
-                    getCoupon.map((item) => {
+                  {loading ? (
+                    <Spin />
+                  ) : getDiscount.length > 0 ? (
+                    getDiscount.map((item) => {
                       const isDisabled = item.active === false;
-
+  
                       return (
                         <div
                           className="col-lg-4 col-md-6 col-12 d-flex py-3"
                           key={item._id}
                         >
-                           <Link
-                                  className="text-decoration-none"
-                                  to={`/view/${item.discountType}/${item._id}`}
-                                  state={item}
-                                >
+                          
                           <Card
                             hoverable
                             className="w-100 h-100 d-flex align-items-center"
@@ -181,10 +173,14 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
                               opacity: isDisabled ? 0.6 : 1,
                             }}
                           >
-                            <div className="row w-100">
+                            <div className="row w-100" style={{width:"100%"}}>
                               {/* Image Section */}
                               <div className="col-4">
-                               
+                                <Link
+                                  to={`/view/${item.discountType}/${item._id}`}
+                                  state={item}
+                                  className="text-decoration-none"
+                                >
                                   <img
                                     src={
                                       Array.isArray(item?.images) &&
@@ -197,7 +193,7 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
                                       e.target.src = fallbackImage;
                                     }}
                                     className="img-fluid"
-                                    alt="Coupon"
+                                    alt="Discount"
                                     style={{
                                       height: "100px",
                                       width: "100%",
@@ -205,47 +201,34 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
                                       borderRadius: "6px",
                                     }}
                                   />
+                                </Link>
                               </div>
-
-                              {/* Title + Validity + View Link */}
-                              <div className="col-8 d-flex flex-column justify-content-between">
-                                <div>
-                                  <h5 className="card-title mb-2">
-                                    {item.title}
-                                  </h5>
-                                  <p>
-                                    <strong>Store: </strong>
-                                    {item.storeInfo.display_name}
-                                  </p>
-                                  <p className="mb-1">
-                                  <strong>{formatValidDateRange(item.dateRange?.startDate, item.dateRange?.endDate)}</strong>
-                                    
-                                  </p>
-                                  <Link
-                                    className="text-decoration-underline text-primary fw-semibold"
-                                    to={`/view/${item.discountType}/${item._id}`}
-                                    state={item}
-                                  >
-                                    View
-                                  </Link>
-                                </div>
-                              </div>
-
-                              {/* Actions: Edit/Delete */}
-                              <div className="caption-buttons d-flex flex-column align-items-end justify-content-between">
-                                <div>
+  
+                              {/* Content */}
+                              <div className="col-8 flex-column justify-content-between position-relative">
+                                {/* Edit/Delete Buttons */}
+                                <div
+                                  className="position-absolute"
+                                  style={{
+                                    top: 0,
+                                    right: 0,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "6px",
+                                  }}
+                                >
                                   <Link
                                     to={`/edit-offer/${item.discountType}/${item._id}`}
+                                    state={{ item }}
+                                    className="btn border rounded-5 btn-sm"
                                     disabled={isDisabled}
                                     onClick={(e) => e.stopPropagation()}
-                                    className="btn border rounded-5 btn-sm mb-1"
                                   >
-                                    <Edit className="fs-6 text-primary mb-1" />
+                                    <Edit className="fs-6 text-primary" />
                                   </Link>
-
                                   <Popconfirm
-                                    title="Delete the task"
-                                    description="Are you sure to delete this task?"
+                                    title="Delete the discount"
+                                    description="Are you sure to delete this discount?"
                                     onConfirm={() => handleDelete(item._id)}
                                     onCancel={cancel}
                                     okText="Yes"
@@ -260,20 +243,55 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
                                         outline: "none",
                                         boxShadow: "none",
                                       }}
+                                      disabled={isDisabled}
                                       onClick={(e) => e.stopPropagation()}
                                     />
                                   </Popconfirm>
                                 </div>
+  
+                                {/* Main Content */}
+                                <div className="mt-12">
+                                  <h6
+                                    className="mb-1 fw-semibold"
+                                    style={{
+                                      display: "-webkit-box",
+                                      WebkitLineClamp: 2,
+                                      WebkitBoxOrient: "vertical",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                    }}
+                                  >
+                                    {item.title || "No Title"}
+                                  </h6>
+                                  <p style={{ marginTop: "10px" }}>
+                                    <strong>Store: </strong>
+                                    {item.storeInfo.display_name}
+                                  </p>
+                                  <p className="mb-1 text-muted">
+                                    <strong>
+                                      {formatValidDateRange(
+                                        item.dateRange?.startDate,
+                                        item.dateRange?.endDate
+                                      )}
+                                    </strong>
+                                  </p>
+                                  <Link
+                                    to={`/view/${item.discountType}/${item._id}`}
+                                    state={item}
+                                    className="text-primary fw-semibold text-decoration-none"
+                                  >
+                                    View
+                                  </Link>
+                                </div>
                               </div>
                             </div>
                           </Card>
-                          </Link>
                         </div>
                       );
                     })
                   ) : (
                     <div className="col-12 text-center mt-3">
-                      <p>No Coupons Found</p>
+                      <p>No Discounts Found</p>
                     </div>
                   )}
                 </div>
@@ -281,13 +299,13 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
             </div>
           </div>
         </div>
-
+  
         {/* Pagination */}
         <div className="d-flex justify-content-center p-2">
-          {getCoupon.length > pageSize && (
+          {getDiscount.length > pageSize && (
             <Pagination
               current={currentPage}
-              total={getCoupon.length}
+              total={getDiscount.length}
               pageSize={pageSize}
               onChange={handlePageChange}
               showSizeChanger={false}
@@ -295,7 +313,8 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
           )}
         </div>
       </div>
-
+  
+      {/* Delete Modal */}
       <DeleteConfirmationModal
         isOpen={isModalOpen}
         onConfirm={handleConfirmDelete}
@@ -303,6 +322,7 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
       />
     </>
   );
+  
 };
 
-export default Coupon;
+export default Discount;

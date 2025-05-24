@@ -3,26 +3,23 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import './App.css'
 import SignIn from './auth/signin'
 import Dashboard from './pages/dashboard'
-import BusinessListing from './pages/businessListing'
-import BusinessView from './pages/businessView'
-import AddBusiness from './pages/addBusiness'
-import Coupon from './pages/coupon'
-import Deal from './pages/deal'
-import Discount from './pages/discount'
-import CouponView from './pages/couponView'
-import DealView from './pages/dealView'
-import DiscountView from './pages/discountView'
-import AddOffer from './pages/addOffer'
-import EditOffer from './pages/editOffer'
+import BusinessListing from './pages/Business/index'
+import AddBusiness from './OldBusinessForm/addBusiness/index'
+import Coupon from './pages/Offer/coupon/index'
+import Deal from './pages/Offer/deal/index'
+import Discount from './pages/Offer/discount/index'
+import ViewOfferData from './pages/Offer/viewOfferData/index'
+import AddOffer from './pages/Offer/addOffer'
+import EditOffer from './pages/Offer/editOffer'
 import AppLayout from './layout'
-import EditBusiness from './pages/editBusiness'
-import ViewBusinessData from './pages/viewBusinessData'
+import EditBusiness from './OldBusinessForm/editBusiness'
+import ViewBusinessData from './pages/Business/viewBusinessData'
 import Users from './pages/users'
-import ViewUser from './pages/viewUser'
+import ViewUser from './pages/users/viewUser'
 import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap/dist/js/bootstrap.bundle.min.js"
-import ViewData from './pages/viewData'
-import { BusinessProvider } from './pages/businessListing/businessContext'
+import { BusinessProvider } from './components/BusinessContext/businessContext'
+import BusinessForm from './pages/Business/businessForm'
 function App() {
 
   return (
@@ -46,16 +43,20 @@ function App() {
           element={<AppLayout><BusinessListing /></AppLayout>} 
         />
         <Route 
-          path="/business-view" 
-          element={<AppLayout><BusinessView /></AppLayout>} 
-        />
-        <Route 
           path="/add-new-business" 
           element={<AppLayout><AddBusiness /></AppLayout>} 
         />
         <Route 
           path="/coupons" 
           element={<AppLayout><Coupon /></AppLayout>} 
+        />
+          <Route 
+          path="/add-business" 
+          element={<AppLayout><BusinessForm /></AppLayout>} 
+        />
+          <Route 
+          path="/edit-business/:_id" 
+          element={<AppLayout><BusinessForm /></AppLayout>} 
         />
         <Route 
           path="/deals" 
@@ -67,20 +68,9 @@ function App() {
         />
         <Route 
           path="/view/:discountType/:_id" 
-          element={<AppLayout><ViewData /></AppLayout>} 
+          element={<AppLayout><ViewOfferData /></AppLayout>} 
         />
-        <Route 
-          path="/coupon-view" 
-          element={<AppLayout><CouponView /></AppLayout>} 
-        />
-        <Route 
-          path="/deal-view" 
-          element={<AppLayout><DealView /></AppLayout>} 
-        />
-        <Route 
-          path="/discount-view" 
-          element={<AppLayout><DiscountView /></AppLayout>} 
-        />
+        
         <Route 
           path="/add-offer/:_id" 
           element={<AppLayout><AddOffer /></AppLayout>} 
@@ -88,10 +78,6 @@ function App() {
          <Route 
           path="/edit-offer/:type/:_id" 
           element={<AppLayout><EditOffer /></AppLayout>} 
-        />
-         <Route 
-          path="/edit-business/:_id" 
-          element={<AppLayout><EditBusiness /></AppLayout>} 
         />
          <Route 
           path="/view-business/:_id" 

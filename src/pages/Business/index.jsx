@@ -3,15 +3,14 @@ import "./style.css";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, Edit, Delete } from "@mui/icons-material";
 import axios from "axios";
-import { LoadingOutlined } from "@ant-design/icons";
 import { Toaster, toast } from "react-hot-toast";
 import { Card, Button, Spin, message, Popconfirm } from "antd";
-import { BusinessContext } from "./businessContext";
+import { BusinessContext } from "../../components/BusinessContext/businessContext";
 import fallbackImage from "../../assets/images/landingPage.png";
 
 const BusinessListing = () => {
   const location = useLocation();
-const navigate = useNavigate();
+  const navigate = useNavigate();
   const { businessList, setBusinessList, searchText, setSearchText } =
     useContext(BusinessContext);
   const [loading, setLoading] = useState(false);
@@ -19,67 +18,42 @@ const navigate = useNavigate();
 
   useEffect(() => {
     const shouldSearch =
-      location.state?.updated || (businessList.length === 0 && searchText.trim());
-  
+      location.state?.updated ||
+      (businessList.length === 0 && searchText.trim());
+
     if (shouldSearch) {
       handleSearch(); // Fetch updated data
-  
+
       if (location.state?.updated) {
         navigate(location.pathname, { replace: true, state: {} }); // Clear the state after fetching
       }
     }
   }, [location.state]);
-  
 
   const cancel = () => {
     message.error("Cancelled delete");
   };
 
-  // const handleSearch = async () => {
-  //   if (!searchText.trim()) return;
-  //   console.log("hello", baseUrl);
-  //   try {
-  //     setLoading(true);
-  //     const url = `${baseUrl}business?searchText=${searchText}&page=1&limit=20`;
-  //     const response = await axios.get(url);
-  //     setBusinessList(response.data.data.data);
-  //     toast.success("Business data fetched successfully");
-  //     setSearchText("");
-  //   } catch (error) {
-  //     console.error("Error fetching data:", error);
-  //     toast.error("Failed to fetch business data");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const handleSearch = async () => {
     // Prevent multiple calls if already loading
     if (loading) return;
-  
+
     try {
       setLoading(true);
-  
+
       // Construct the URL based on whether searchText is provided
       const url = searchText.trim()
         ? `${baseUrl}business?searchText=${searchText}&page=1&limit=20`
         : `${baseUrl}business?page=1&limit=20`; // Fetch all if no searchText
-  
+
       // Fetch data from the server
       const response = await axios.get(url);
-  
+
       // Update the business list with the latest data
       setBusinessList(response.data.data.data);
-  
-      // Show appropriate toast messages
-      // if (searchText.trim()) {
-      //   toast.success("Filtered businesses fetched");
-      // } else if (location.state?.updated) {
-      //   toast.success("Business updated");
-      // }
     } catch (error) {
       console.error("Error fetching data:", error);
-  
+
       // Show error toast message
       // toast.error(error.response?.data?.message || "Failed to fetch business data");
     } finally {
@@ -87,7 +61,6 @@ const navigate = useNavigate();
       setLoading(false);
     }
   };
-  
 
   const deleteBusiness = async (_id) => {
     try {
@@ -119,11 +92,14 @@ const navigate = useNavigate();
               </li>
             </ul>
           </div>
-          <div className="buttons-block d-flex">
+          <div
+            className="buttons-block d-flex"
+            // onClick={()=>navigate("/add-businessform")}
+          >
             <Link
-              to="/add-new-business"
+              to="/addbusiness"
               className="theme-btn btn-main"
-              onClick={() => setSidebarTab("business-listings")}
+              // onClick={() => setSidebarTab("business-listings")}
             >
               Add New Business
             </Link>
@@ -141,38 +117,37 @@ const navigate = useNavigate();
                     <h3>Shops</h3>
                   </div>
                   <div className="list-filter">
-  <form
-    onSubmit={(e) => {
-      e.preventDefault();
-      handleSearch();
-    }}
-  >
-    <div className="lf-search">
-      <input
-        className="lfs-input"
-        type="text"
-        placeholder="Search here..."
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-      />
-      <div className="search-icon-container">
-        <div onClick={handleSearch}>
-          <Search className="lf-searchicon" />
-        </div>
-      </div>
-    </div>
-  </form>
-</div>
-
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSearch();
+                      }}
+                    >
+                      <div className="lf-search">
+                        <input
+                          className="lfs-input"
+                          type="text"
+                          placeholder="Search here..."
+                          value={searchText}
+                          onChange={(e) => setSearchText(e.target.value)}
+                        />
+                        <div className="search-icon-container">
+                          <div onClick={handleSearch}>
+                            <Search className="lf-searchicon" />
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
                 </div>
 
                 {/* Listings */}
                 <div className="row mt-4">
                   {loading ? (
-    <div className="col-12 text-center">
-      <Spin size="large" />
-    </div>
-  ) : businessList.length > 0 ? (
+                    <div className="col-12 text-center">
+                      <Spin size="large" />
+                    </div>
+                  ) : businessList.length > 0 ? (
                     businessList.map(
                       (item) => (
                         console.log("", item?.photo),
@@ -200,7 +175,7 @@ const navigate = useNavigate();
                                 <Link
                                   to={`/edit-business/${item._id}`}
                                   state={{ item }}
-                                  className="btn btn-sm p-1"
+                                  className="btn btn-sm p-1 mt-3"
                                   style={{
                                     border: "1px solid #d9d9d9",
                                     borderRadius: "50%",

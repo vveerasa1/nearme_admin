@@ -12,7 +12,7 @@ import {
   convert12hTo24h,
   convert24hTo12h,
   formatWeeklyHours,
-} from "./constant";
+} from "../../pages/Business/businessForm/constant";
 import toast from "react-hot-toast";
 
 const EditBusiness = () => {
@@ -99,18 +99,6 @@ const EditBusiness = () => {
         setLoading(true);
         const res = await axios.get(`${baseUrl}business/${_id}`);
         const data = res.data.data;
-        const parsedTypes = Array.isArray(data.types)
-          ? data.types
-          : (() => {
-              try {
-                return JSON.parse(data.types || "[]");
-              } catch {
-                console.error("Invalid types format:", data.types);
-                return [];
-              }
-            })();
-
-        // Parse working hours safely
         const parsedWorkingHours = (() => {
           try {
             const fixedStr = (data.working_hours || "{}").replace(/'/g, '"');
@@ -276,32 +264,6 @@ const EditBusiness = () => {
     setNewPhoto((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  const handleWorkingHoursChange = (index, field, value) => {
-    setWorkingHours((prevHours) =>
-      prevHours.map((day, i) =>
-        i === index
-          ? {
-              ...day,
-              [field]: value,
-              ...(field === "is24Hours" && value
-                ? { startTime: "", endTime: "" } // Clear start and end times if 24 Hours is checked
-                : {}),
-            }
-          : day
-      )
-    );
-  };
-
-  const handleAddDay = () => {
-    setWorkingHours([...workingHours, { day: "", startTime: "", endTime: "" }]);
-  };
-
-  const handleRemoveDay = (index) => {
-    const updatedDays = [...workingHours];
-    updatedDays.splice(index, 1);
-    setWorkingHours(updatedDays);
-  };
-
   const handleSubmit = async (values, { resetForm, setSubmitting } = {}) => {
     setSubmitting && setSubmitting(true);
     const updatedTime = values.working_hours.map((date) => ({
@@ -339,10 +301,10 @@ const EditBusiness = () => {
     try {
       const response = await axios.put(`${baseUrl}business/${_id}`, formData);
       if (response.status === 200) {
-         toast.success("Business updated successfully");
-  
-          navigate("/business-listings", { state: { updated: true } });
-          setSubmitting && setSubmitting(false);
+        toast.success("Business updated successfully");
+
+        navigate("/business-listings", { state: { updated: true } });
+        setSubmitting && setSubmitting(false);
         // }, 1500);
       } else {
         setSubmitting && setSubmitting(false);
@@ -350,10 +312,8 @@ const EditBusiness = () => {
     } catch (error) {
       console.error("Submission failed:", error);
       toast.error("Something went wrong while updating business");
-      setSubmitting && setSubmitting(false); 
+      setSubmitting && setSubmitting(false);
     }
-    
-    
   };
 
   const handleImageDelete = async (url) => {
@@ -505,22 +465,26 @@ const EditBusiness = () => {
                         <div className="form-group">
                           <label className="form-label">Address</label>
                           <div className="col-12 col-md-12 col-lg-12 mb-3">
-                        <div className="form-group">
-                          <Field
-                            name="address"
-                            type="text"
-                            className="form-input"
-                            placeholder="Place map link"
-                          />
-                        </div>
-                        <p
-                        
-                        className="note text-muted"
-                        style={{ fontSize: "0.800rem" , marginTop: "10px"}}
-                      >
-                        Note: Please enter your complete address, including building number, street name, city, state, country, and postal code..
-                      </p>
-                      </div>
+                            <div className="form-group">
+                              <Field
+                                name="address"
+                                type="text"
+                                className="form-input"
+                                placeholder="Place map link"
+                              />
+                            </div>
+                            <p
+                              className="note text-muted"
+                              style={{
+                                fontSize: "0.800rem",
+                                marginTop: "10px",
+                              }}
+                            >
+                              Note: Please enter your complete address,
+                              including building number, street name, city,
+                              state, country, and postal code..
+                            </p>
+                          </div>
                           <div className="row">
                             <div className="col-12 col-md-6 col-lg-6 mb-3">
                               <Field
@@ -578,28 +542,6 @@ const EditBusiness = () => {
                                 placeholder="CA"
                               />
                             </div>
-                            {/* <div className="col-12 col-md-6 col-lg-6 mb-3">
-                            <Field
-                              as="select"
-                              name="business_status"
-                              className="form-select"
-                            >
-                              
-                              <option value="">Select status</option>
-                              <option value="Operational">Operational</option>
-                              <option value="Closedtemporarily">
-                                Closed Temporarily
-                              </option>
-                              <option value="Closedpermanently">
-                                Closed Permanently
-                              </option>
-                            </Field>
-                            {/* <ErrorMessage
-                              name="buisness_status"
-                              component="div"
-                              className="error text-danger"
-                            /> *
-                          </div> */}
                           </div>
                         </div>
                       </div>
@@ -628,29 +570,7 @@ const EditBusiness = () => {
                         </div>
                       </div>
                       {/* Latitude */}
-                      {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
-                        <div className="form-group">
-                          <label className="form-label">Latitude</label>
-                          <Field
-                            name="latitude"
-                            type="text"
-                            className="form-input"
-                            placeholder="Latitude"
-                          />
-                        </div>
-                      </div> */}
-                      {/* Longitude */}
-                      {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
-                        <div className="form-group">
-                          <label className="form-label">Longitude</label>
-                          <Field
-                            name="longitude"
-                            type="text"
-                            className="form-input"
-                            placeholder="Longitude"
-                          />
-                        </div>
-                      </div> */}
+
                       {/* image */}
                       <div className="col-12 col-md-12 col-lg-12 mb-3">
                         <div className="form-group">
@@ -819,40 +739,6 @@ const EditBusiness = () => {
                         </div>
                       </div>
 
-                      {/* <div className="col-12 col-md-12 col-lg-6 mb-3">
-                      <div className="form-group">
-                        <label className="form-label">Rating</label>
-                        <div className="ratinginput">
-                          <div className="position-relative">
-                            <Field
-                              name="rating"
-                              type="text"
-                              className="form-input"
-                              placeholder="0"
-                            />
-                            <Star className="ratingInputStar" />
-                            <ErrorMessage
-                              name="rating"
-                              component="div"
-                              className="error text-danger"
-                            />
-                          </div>
-                           <div className="position-relative">
-                            <Field
-                              name="rating"
-                              type="text"
-                              className="form-input "
-                              placeholder="000"
-                            />
-                            <ErrorMessage
-                              name="rating"
-                              component="div"
-                              className="error text-danger"
-                            />
-                          </div> 
-                        </div>
-                      </div>
-                    </div> */}
                       <div className="col-12 col-md-6 col-lg-6 mb-4">
                         <div className="form-group">
                           <label className="form-label">Review</label>
@@ -1012,111 +898,6 @@ const EditBusiness = () => {
                           </div>
                         )}
                       </FieldArray>
-
-                      {/* <div className="custom-days">
-                        <label className="form-label">Working hours</label>
-
-                        {workingHours.map((day, index) => (
-                          <div
-                            key={index}
-                            className="custom-day-row mb-2 d-flex gap-2"
-                          >
-                            <Field
-                              as="select"
-                              name="working_hours"
-                              value={day.day}
-                              onChange={(e) =>
-                                handleWorkingHoursChange(
-                                  index,
-                                  "day",
-                                  e.target.value
-                                )
-                              }
-                              className="form-control w-25"
-                            >
-                              <option value="" disabled>
-                                Select a day
-                              </option>
-                              <option value="Monday">Monday</option>
-                              <option value="Tuesday">Tuesday</option>
-                              <option value="Wednesday">Wednesday</option>
-                              <option value="Thursday">Thursday</option>
-                              <option value="Friday">Friday</option>
-                              <option value="Saturday">Saturday</option>
-                              <option value="Sunday">Sunday</option>
-                            </Field>
-
-                            <Field
-                              className="form-control w-25"
-                              type="time"
-                              placeholder="Start Time"
-                              value={day.startTime}
-                              disabled={day.is24Hours} // Disable if 24 Hours is checked
-                              onChange={(e) =>
-                                handleWorkingHoursChange(
-                                  index,
-                                  "startTime",
-                                  e.target.value
-                                )
-                              }
-                            />
-                            <Field
-                              className="form-control w-25"
-                              type="time"
-                              placeholder="End Time"
-                              value={day.endTime}
-                              disabled={day.is24Hours} // Disable if 24 Hours is checked
-                              onChange={(e) =>
-                                handleWorkingHoursChange(
-                                  index,
-                                  "endTime",
-                                  e.target.value
-                                )
-                              }
-                            />
-                            <div className="form-check">
-                              <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={day.is24Hours} // Bind to is24Hours property
-                                onChange={(e) =>
-                                  handleWorkingHoursChange(
-                                    index,
-                                    "is24Hours",
-                                    e.target.checked
-                                  )
-                                }
-                                id={`24hours-${index}`}
-                              />
-                              <label
-                                className="form-check-label ms-2"
-                                htmlFor={`24hours-${index}`}
-                              >
-                                24 Hours
-                              </label>
-                            </div>
-
-                            {index === 0 && (
-                              <button
-                                type="button"
-                                onClick={handleAddDay}
-                                className="btn btn-sm btn-primary p-1 mb-1 px-2"
-                              >
-                                <Add />
-                              </button>
-                            )}
-                            {workingHours.length > 1 && index !== 0 && (
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveDay(index)}
-                                className="btn btn-sm btn-danger p-1 mb-1 px-2"
-                              >
-                                <Remove />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div> */}
                     </div>
                   </div>
                   {/* Submit Button */}
@@ -1128,22 +909,22 @@ const EditBusiness = () => {
                         Clear
                       </button>
                       <button
-                      className="theme-btn btn-main"
-                      type="submit"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <i
-                            className="fa fa-spinner fa-spin"
-                            style={{ marginRight: 8 }}
-                          ></i>{" "}
-                          Saving...
-                        </>
-                      ) : (
-                        "Save"
-                      )}
-                    </button>
+                        className="theme-btn btn-main"
+                        type="submit"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <i
+                              className="fa fa-spinner fa-spin"
+                              style={{ marginRight: 8 }}
+                            ></i>{" "}
+                            Saving...
+                          </>
+                        ) : (
+                          "Save"
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>

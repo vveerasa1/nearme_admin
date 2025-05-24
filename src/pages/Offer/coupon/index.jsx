@@ -1,29 +1,29 @@
 import { useState, useEffect } from "react";
-import dayjs from 'dayjs';
 import "./style.css";
 import {Spin} from "antd";
 import { Link } from "react-router-dom";
-import DeleteConfirmationModal from "../../components/deleteConfirmation";
+import DeleteConfirmationModal from "../../../components/deleteConfirmation";
 import axios from "axios";
 import { Card, Pagination, Button, Popconfirm, message } from "antd";
 import { Edit, Delete } from "@mui/icons-material";
 import { debounce } from "lodash";
-import fallbackImage from "../../assets/images/landingPage.png";
-const Discount = () => {
+import fallbackImage from "../../../assets/images/landingPage.png";
+import dayjs from 'dayjs';
+
+const Coupon = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [getDiscount, setGetDiscount] = useState([]);
+  const [getCoupon, setGetCoupon] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(12); // Number of items per page
-    const [loading,setLoading] = useState(false)
-  
-  const formatDateTime = (dateStr, timeStr) => {
+  const [pageSize] = useState(12);
+  const [loading,setLoading] = useState(false)
+  const formatDateTime = (dateStr) => {
     const date = new Date(dateStr);
-    const options = { day: "2-digit", month: "long" }; // e.g., 30 April
-    return `${date.toLocaleDateString("en-GB", options)} ${timeStr}`;
+    const options = { day: "2-digit", month: "long" };
+    return `${date.toLocaleDateString("en-GB", options)} `;
   };
+
   const hostUrl = import.meta.env.VITE_BASE_URL;
 
-  // This will hold the current page's coupons to be displayed
 
   useEffect(()=>{
     fetchData()
@@ -32,20 +32,20 @@ const Discount = () => {
   const fetchData = async (searchText) => {
     try {
       setLoading(true)
-      const baseUrl = `${hostUrl}coupons?discountType=Discount`;
+      const baseUrl = `${hostUrl}coupons?discountType=Coupon`;
       const url = searchText
         ? `${baseUrl}&keyword=${encodeURIComponent(searchText)}`
         : baseUrl;      
       const response = await axios.get(url);
       console.log(response)
-      setGetDiscount(response.data.data.couponInfo);
+      setGetCoupon(response.data.data.couponInfo);
       setLoading(false)
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
   
- const handleSearchChange = (e) => {
+  const handleSearchChange = (e) => {
     const value = e.target.value;
     debouncedFetchData(value);
   };
@@ -59,17 +59,11 @@ const Discount = () => {
 
   useEffect(() => {
 
-}, [currentPage, getDiscount]);
+}, [currentPage, getCoupon]);
 
   const handleConfirmDelete = () => {
     console.log("Item deleted");
     setIsModalOpen(false);
-  };
-
-  const formatValidDateRange = (startDateStr, endDateStr) => {
-    const start = dayjs(startDateStr).format('D/M/YY');
-    const end = dayjs(endDateStr).format('D/M/YY');
-    return `Valid: ${start} - ${end}`;
   };
 
   // const formatValidDateRange = (startDateStr, endDateStr) => {
@@ -82,6 +76,13 @@ const Discount = () => {
   
   //   return `Valid: ${formattedStart} - ${formattedEnd}`;
   // };
+
+const formatValidDateRange = (startDateStr, endDateStr) => {
+  const start = dayjs(startDateStr).format('D/M/YY');
+  const end = dayjs(endDateStr).format('D/M/YY');
+  return `Valid: ${start} - ${end}`;
+};
+
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -104,7 +105,6 @@ const Discount = () => {
     message.error("Click on No");
   };
 
-  
 
   return (
     <>
@@ -112,7 +112,7 @@ const Discount = () => {
         {/* Breadcrumb */}
         <div className="breadcrumb-wrapper d-flex flex-column flex-md-row">
           <div className="breadcrumb-block">
-            <h2 className="page-heading">Discounts</h2>
+            <h2 className="page-heading">Coupons</h2>
             <ul className="breadcrumb-list">
               <li className="breadcrumb-item">
                 <Link to={"/dashboard"} className="breadcrumb-link">
@@ -120,27 +120,30 @@ const Discount = () => {
                 </Link>
               </li>
               <li className="breadcrumb-item">
-                <span className="breadcrumb-link">Discounts</span>
+                <span className="breadcrumb-link">Coupons</span>
               </li>
             </ul>
           </div>
         </div>
-  
-        {/* List Section */}
+
+        {/* Search + List */}
         <div className="lists-container py-4">
           <div className="row">
             <div className="col-12">
               <div className="lists-wrapper businesslist">
-                {/* Search Bar */}
+                {/* Search bar */}
                 <div className="list-filter d-flex justify-content-between align-items-center mb-3">
-                  <h5 className="mb-0 fw-semibold">Discount Lists</h5>
+                  {/* Left side - Heading */}
+                  <h5 className="mb-0 fw-semibold">Coupon Lists</h5>
+
+                  {/* Right side - Search form */}
                   <form>
                     <div className="lf-search">
                       <input
                         className="lfs-input"
                         type="text"
                         placeholder="Search here..."
-                        onChange={(e) => handleSearchChange(e.target.value)}
+                        onChange={handleSearchChange}
                       />
                       <div className="search-icon-container">
                         <div type="button"></div>
@@ -148,21 +151,26 @@ const Discount = () => {
                     </div>
                   </form>
                 </div>
-  
-                {/* Discount Cards */}
+
+                {/* Coupons list */}
                 <div className="row">
-                  {loading ? (
-                    <Spin />
-                  ) : getDiscount.length > 0 ? (
-                    getDiscount.map((item) => {
+                {console.log(getCoupon,"GETCOUPIN")}
+
+                  {loading === true ? <Spin /> :
+                  getCoupon.length > 0 ? (
+                    getCoupon.map((item) => {
                       const isDisabled = item.active === false;
-  
+
                       return (
                         <div
                           className="col-lg-4 col-md-6 col-12 d-flex py-3"
                           key={item._id}
                         >
-                          
+                           <Link
+                                  className="text-decoration-none"
+                                  to={`/view/${item.discountType}/${item._id}`}
+                                  state={item}
+                                >
                           <Card
                             hoverable
                             className="w-100 h-100 d-flex align-items-center"
@@ -173,14 +181,10 @@ const Discount = () => {
                               opacity: isDisabled ? 0.6 : 1,
                             }}
                           >
-                            <div className="row w-100" style={{width:"100%"}}>
+                            <div className="row w-100">
                               {/* Image Section */}
                               <div className="col-4">
-                                <Link
-                                  to={`/view/${item.discountType}/${item._id}`}
-                                  state={item}
-                                  className="text-decoration-none"
-                                >
+                               
                                   <img
                                     src={
                                       Array.isArray(item?.images) &&
@@ -193,7 +197,7 @@ const Discount = () => {
                                       e.target.src = fallbackImage;
                                     }}
                                     className="img-fluid"
-                                    alt="Discount"
+                                    alt="Coupon"
                                     style={{
                                       height: "100px",
                                       width: "100%",
@@ -201,34 +205,47 @@ const Discount = () => {
                                       borderRadius: "6px",
                                     }}
                                   />
-                                </Link>
                               </div>
-  
-                              {/* Content */}
-                              <div className="col-8 flex-column justify-content-between position-relative">
-                                {/* Edit/Delete Buttons */}
-                                <div
-                                  className="position-absolute"
-                                  style={{
-                                    top: 0,
-                                    right: 0,
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: "6px",
-                                  }}
-                                >
+
+                              {/* Title + Validity + View Link */}
+                              <div className="col-8 d-flex flex-column justify-content-between">
+                                <div>
+                                  <h5 className="card-title mb-2">
+                                    {item.title}
+                                  </h5>
+                                  <p>
+                                    <strong>Store: </strong>
+                                    {item.storeInfo.display_name}
+                                  </p>
+                                  <p className="mb-1">
+                                  <strong>{formatValidDateRange(item.dateRange?.startDate, item.dateRange?.endDate)}</strong>
+                                    
+                                  </p>
+                                  <Link
+                                    className="text-decoration-underline text-primary fw-semibold"
+                                    to={`/view/${item.discountType}/${item._id}`}
+                                    state={item}
+                                  >
+                                    View
+                                  </Link>
+                                </div>
+                              </div>
+
+                              {/* Actions: Edit/Delete */}
+                              <div className="caption-buttons d-flex flex-column align-items-end justify-content-between">
+                                <div>
                                   <Link
                                     to={`/edit-offer/${item.discountType}/${item._id}`}
-                                    state={{ item }}
-                                    className="btn border rounded-5 btn-sm"
                                     disabled={isDisabled}
                                     onClick={(e) => e.stopPropagation()}
+                                    className="btn border rounded-5 btn-sm mb-1"
                                   >
-                                    <Edit className="fs-6 text-primary" />
+                                    <Edit className="fs-6 text-primary mb-1" />
                                   </Link>
+
                                   <Popconfirm
-                                    title="Delete the discount"
-                                    description="Are you sure to delete this discount?"
+                                    title="Delete the task"
+                                    description="Are you sure to delete this task?"
                                     onConfirm={() => handleDelete(item._id)}
                                     onCancel={cancel}
                                     okText="Yes"
@@ -243,55 +260,20 @@ const Discount = () => {
                                         outline: "none",
                                         boxShadow: "none",
                                       }}
-                                      disabled={isDisabled}
                                       onClick={(e) => e.stopPropagation()}
                                     />
                                   </Popconfirm>
                                 </div>
-  
-                                {/* Main Content */}
-                                <div className="mt-12">
-                                  <h6
-                                    className="mb-1 fw-semibold"
-                                    style={{
-                                      display: "-webkit-box",
-                                      WebkitLineClamp: 2,
-                                      WebkitBoxOrient: "vertical",
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                    }}
-                                  >
-                                    {item.title || "No Title"}
-                                  </h6>
-                                  <p style={{ marginTop: "10px" }}>
-                                    <strong>Store: </strong>
-                                    {item.storeInfo.display_name}
-                                  </p>
-                                  <p className="mb-1 text-muted">
-                                    <strong>
-                                      {formatValidDateRange(
-                                        item.dateRange?.startDate,
-                                        item.dateRange?.endDate
-                                      )}
-                                    </strong>
-                                  </p>
-                                  <Link
-                                    to={`/view/${item.discountType}/${item._id}`}
-                                    state={item}
-                                    className="text-primary fw-semibold text-decoration-none"
-                                  >
-                                    View
-                                  </Link>
-                                </div>
                               </div>
                             </div>
                           </Card>
+                          </Link>
                         </div>
                       );
                     })
                   ) : (
                     <div className="col-12 text-center mt-3">
-                      <p>No Discounts Found</p>
+                      <p>No Coupons Found</p>
                     </div>
                   )}
                 </div>
@@ -299,13 +281,13 @@ const Discount = () => {
             </div>
           </div>
         </div>
-  
+
         {/* Pagination */}
         <div className="d-flex justify-content-center p-2">
-          {getDiscount.length > pageSize && (
+          {getCoupon.length > pageSize && (
             <Pagination
               current={currentPage}
-              total={getDiscount.length}
+              total={getCoupon.length}
               pageSize={pageSize}
               onChange={handlePageChange}
               showSizeChanger={false}
@@ -313,8 +295,7 @@ const Discount = () => {
           )}
         </div>
       </div>
-  
-      {/* Delete Modal */}
+
       <DeleteConfirmationModal
         isOpen={isModalOpen}
         onConfirm={handleConfirmDelete}
@@ -322,7 +303,6 @@ const Discount = () => {
       />
     </>
   );
-  
 };
 
-export default Discount;
+export default Coupon;
