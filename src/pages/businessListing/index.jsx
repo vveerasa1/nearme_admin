@@ -29,10 +29,6 @@ const navigate = useNavigate();
       }
     }
   }, [location.state]);
-
-  useEffect(() => {
-    handleSearch();
-  }, []);
   
 
   const cancel = () => {
@@ -145,35 +141,29 @@ const navigate = useNavigate();
                     <h3>Shops</h3>
                   </div>
                   <div className="list-filter">
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSearch();
-                      }}
-                    >
-                      <div className="lf-search">
-                        <input
-                          className="lfs-input"
-                          type="text"
-                          placeholder="Search here..."
-                          value={searchText}
-                          onChange={(e) => setSearchText(e.target.value)}
-                        />
-                        <div className="search-icon-container">
-                          {loading ? (
-                            <Spin
-                              indicator={<LoadingOutlined spin />}
-                              className="search-spinner"
-                            />
-                          ) : (
-                            <div onClick={handleSearch}>
-                              <Search className="lf-searchicon" />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </form>
-                  </div>
+  <form
+    onSubmit={(e) => {
+      e.preventDefault();
+      handleSearch();
+    }}
+  >
+    <div className="lf-search">
+      <input
+        className="lfs-input"
+        type="text"
+        placeholder="Search here..."
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+      />
+      <div className="search-icon-container">
+        <div onClick={handleSearch}>
+          <Search className="lf-searchicon" />
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
                 </div>
 
                 {/* Listings */}

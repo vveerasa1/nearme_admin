@@ -162,13 +162,7 @@ const Discount = () => {
                           className="col-lg-4 col-md-6 col-12 d-flex py-3"
                           key={item._id}
                         >
-                          <Link
-                                    to={`/edit-offer/${item.discountType}/${item._id}`}
-                                    state={{ item }}
-                                    className="btn border rounded-5 btn-sm"
-                                    disabled={isDisabled}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
+                          
                           <Card
                             hoverable
                             className="w-100 h-100 d-flex align-items-center"
@@ -223,9 +217,15 @@ const Discount = () => {
                                     gap: "6px",
                                   }}
                                 >
-                                  
+                                  <Link
+                                    to={`/edit-offer/${item.discountType}/${item._id}`}
+                                    state={{ item }}
+                                    className="btn border rounded-5 btn-sm"
+                                    disabled={isDisabled}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <Edit className="fs-6 text-primary" />
-                                  
+                                  </Link>
                                   <Popconfirm
                                     title="Delete the discount"
                                     description="Are you sure to delete this discount?"
@@ -286,7 +286,6 @@ const Discount = () => {
                               </div>
                             </div>
                           </Card>
-                          </Link>
                         </div>
                       );
                     })

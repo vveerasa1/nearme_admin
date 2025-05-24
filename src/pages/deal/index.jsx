@@ -13,11 +13,12 @@ import { Spin } from "antd";
 const Deal = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [getDeal, setGetDeal] = useState([]);
+  const [dataFetched, setDataFetched] = useState(!!location.state?.deals);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(12); // Number of items per page
   const [loading, setLoading] = useState(false);
   const hostUrl = import.meta.env.VITE_BASE_URL;
-
   const formatDateTime = (dateStr, timeStr) => {
     const date = new Date(dateStr);
     const options = { day: "2-digit", month: "long" }; // e.g., 30 April
@@ -25,7 +26,9 @@ const Deal = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    if (!dataFetched) {
+      fetchData();
+    }
   }, []);
 
   const fetchData = async (searchText) => {
@@ -155,26 +158,25 @@ const Deal = () => {
                           className="col-lg-4 col-md-6 col-12 d-flex py-3"
                           key={item._id}
                         >
-                         <Link
-  to={`/view/${item.discountType}/${item._id}`}
-  state={item}
-  className="text-primary fw-semibold"
-  style={{ textDecoration: "none" }}
->
-                          <Card
-                            hoverable
-                            className="w-100 h-100 position-relative"
-                            style={{
-                              marginBottom: "20px",
-                              opacity: isDisabled ? 0.6 : 1,
-                              borderRadius: "10px",
-                              boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-                            }}
+                          <Link
+                            to={`/view/${item.discountType}/${item._id}`}
+                            state={item}
+                            className="text-primary fw-semibold"
+                            style={{ textDecoration: "none" }}
                           >
-                            <div className="row w-100">
-                              {/* Left Image */}
-                              <div className="col-4">
-                             
+                            <Card
+                              hoverable
+                              className="w-100 h-100 position-relative"
+                              style={{
+                                marginBottom: "20px",
+                                opacity: isDisabled ? 0.6 : 1,
+                                borderRadius: "10px",
+                                boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                              }}
+                            >
+                              <div className="row w-100">
+                                {/* Left Image */}
+                                <div className="col-4">
                                   <img
                                     src={
                                       item.images?.[0]?.trim()
@@ -193,96 +195,96 @@ const Deal = () => {
                                       borderRadius: "6px",
                                     }}
                                   />
-                              </div>
-
-                              {/* Right Content */}
-                              <div className="col-8 position-relative">
-                                {/* Action buttons - top right */}
-                                <div
-                                  className="position-absolute"
-                                  style={{
-                                    top: "0",
-                                    right: "0",
-                                    zIndex: 2,
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: "6px",
-                                  }}
-                                >
-                                  <Link
-                                    to={`/edit-offer/${item.discountType}/${item._id}`}
-                                    state={item}
-                                    className="btn border rounded-5 btn-sm"
-                                    disabled={isDisabled}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <Edit className="fs-6 text-primary" />
-                                  </Link>
-                                  <Popconfirm
-                                    title="Delete the deal"
-                                    description="Are you sure to delete this deal?"
-                                    onConfirm={() => handleDelete(item._id)}
-                                    onCancel={cancel}
-                                    okText="Yes"
-                                    cancelText="No"
-                                  >
-                                    <Button
-                                      type="text"
-                                      className="btn border rounded-5 d-flex"
-                                      icon={<Delete className="fs-6" />}
-                                      danger
-                                      style={{
-                                        outline: "none",
-                                        boxShadow: "none",
-                                      }}
-                                      disabled={isDisabled}
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
-                                  </Popconfirm>
                                 </div>
 
-                                {/* Deal Text */}
-                                <div
-                                  className="pe-4" // padding end to avoid overlapping with buttons
-                                  style={{ paddingRight: "60px" }}
-                                >
-                                  <h6
-                                    className="fw-semibold mb-1"
+                                {/* Right Content */}
+                                <div className="col-8 position-relative">
+                                  {/* Action buttons - top right */}
+                                  <div
+                                    className="position-absolute"
                                     style={{
-                                      display: "-webkit-box",
-                                      WebkitLineClamp: 2,
-                                      WebkitBoxOrient: "vertical",
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
+                                      top: "0",
+                                      right: "0",
+                                      zIndex: 2,
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: "6px",
                                     }}
                                   >
-                                    {item.title || "No Title"}
-                                  </h6>
-                                  <p style={{ marginTop: "10px" }}>
-                                    <strong>Store: </strong>
-                                    {item.storeInfo.display_name}
-                                  </p>
+                                    <Link
+                                      to={`/edit-offer/${item.discountType}/${item._id}`}
+                                      state={{ deal: item, deals: getDeal }}
+                                      className="btn border rounded-5 btn-sm"
+                                      disabled={isDisabled}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Edit className="fs-6 text-primary" />
+                                    </Link>
+                                    <Popconfirm
+                                      title="Delete the deal"
+                                      description="Are you sure to delete this deal?"
+                                      onConfirm={() => handleDelete(item._id)}
+                                      onCancel={cancel}
+                                      okText="Yes"
+                                      cancelText="No"
+                                    >
+                                      <Button
+                                        type="text"
+                                        className="btn border rounded-5 d-flex"
+                                        icon={<Delete className="fs-6" />}
+                                        danger
+                                        style={{
+                                          outline: "none",
+                                          boxShadow: "none",
+                                        }}
+                                        disabled={isDisabled}
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                    </Popconfirm>
+                                  </div>
 
-                                  <p className="mb-1 text-muted">
-                                    <strong>
-                                      {formatValidDateRange(
-                                        item.dateRange?.startDate,
-                                        item.dateRange?.endDate
-                                      )}
-                                    </strong>
-                                  </p>
-
-                                  <Link
-                                    to={`/view/${item.discountType}/${item._id}`}
-                                    state={item}
-                                    className="text-decoration-underline text-primary fw-semibold"
+                                  {/* Deal Text */}
+                                  <div
+                                    className="pe-4" // padding end to avoid overlapping with buttons
+                                    style={{ paddingRight: "60px" }}
                                   >
-                                    View
-                                  </Link>
+                                    <h6
+                                      className="fw-semibold mb-1"
+                                      style={{
+                                        display: "-webkit-box",
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: "vertical",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                      }}
+                                    >
+                                      {item.title || "No Title"}
+                                    </h6>
+                                    <p style={{ marginTop: "10px" }}>
+                                      <strong>Store: </strong>
+                                      {item.storeInfo.display_name}
+                                    </p>
+
+                                    <p className="mb-1 text-muted">
+                                      <strong>
+                                        {formatValidDateRange(
+                                          item.dateRange?.startDate,
+                                          item.dateRange?.endDate
+                                        )}
+                                      </strong>
+                                    </p>
+
+                                    <Link
+                                      to={`/view/${item.discountType}/${item._id}`}
+                                      state={item}
+                                      className="text-decoration-underline text-primary fw-semibold"
+                                    >
+                                      View
+                                    </Link>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </Card>
+                            </Card>
                           </Link>
                         </div>
                       );
