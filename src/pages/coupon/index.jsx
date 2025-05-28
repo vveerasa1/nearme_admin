@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./style.css";
 import {Spin} from "antd";
-import { Link } from "react-router-dom";
+import { Link ,useNavigate} from "react-router-dom";
 import DeleteConfirmationModal from "../../components/deleteConfirmation";
 import axios from "axios";
 import { Card, Pagination, Button, Popconfirm, message } from "antd";
@@ -16,6 +16,7 @@ const Coupon = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(12);
   const [loading,setLoading] = useState(false)
+  const navigate = useNavigate();
   const formatDateTime = (dateStr) => {
     const date = new Date(dateStr);
     const options = { day: "2-digit", month: "long" };
@@ -163,112 +164,108 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
 
                       return (
                         <div
-                          className="col-lg-4 col-md-6 col-12 d-flex py-3"
-                          key={item._id}
+                        className="col-lg-4 col-md-6 col-12 d-flex py-3"
+                        key={item._id}
+                      >
+                        <Card
+                          hoverable
+                          onClick={() =>
+                            navigate(`/edit-offer/${item.discountType}/${item._id}`, {
+                              state: item,
+                            })
+                          }
+                          className="w-100"
+                          style={{
+                            marginBottom: "20px",
+                            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
+                            borderRadius: "10px",
+                            opacity: item.active === false ? 0.6 : 1,
+                            cursor: "pointer",
+                          }}
                         >
-                           <Link
-                                  className="text-decoration-none"
-                                  to={`/view/${item.discountType}/${item._id}`}
-                                  state={item}
-                                >
-                          <Card
-                            hoverable
-                            className="w-100 h-100 d-flex align-items-center"
-                            style={{
-                              marginBottom: "20px",
-                              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
-                              borderRadius: "10px",
-                              opacity: isDisabled ? 0.6 : 1,
-                            }}
-                          >
-                            <div className="row w-100">
-                              {/* Image Section */}
-                              <div className="col-4">
-                               
-                                  <img
-                                    src={
-                                      Array.isArray(item?.images) &&
-                                      item.images.length > 0 &&
-                                      item.images[0]?.trim()
-                                        ? item.images[0]
-                                        : fallbackImage
-                                    }
-                                    onError={(e) => {
-                                      e.target.src = fallbackImage;
-                                    }}
-                                    className="img-fluid"
-                                    alt="Coupon"
-                                    style={{
-                                      height: "100px",
-                                      width: "100%",
-                                      objectFit: "cover",
-                                      borderRadius: "6px",
-                                    }}
-                                  />
-                              </div>
-
-                              {/* Title + Validity + View Link */}
-                              <div className="col-8 d-flex flex-column justify-content-between">
-                                <div>
-                                  <h5 className="card-title mb-2">
-                                    {item.title}
-                                  </h5>
-                                  <p>
-                                    <strong>Store: </strong>
-                                    {item.storeInfo.display_name}
-                                  </p>
-                                  <p className="mb-1">
-                                  <strong>{formatValidDateRange(item.dateRange?.startDate, item.dateRange?.endDate)}</strong>
-                                    
-                                  </p>
-                                  <Link
-                                    className="text-decoration-underline text-primary fw-semibold"
-                                    to={`/view/${item.discountType}/${item._id}`}
-                                    state={item}
-                                  >
-                                    View
-                                  </Link>
-                                </div>
-                              </div>
-
-                              {/* Actions: Edit/Delete */}
-                              <div className="caption-buttons d-flex flex-column align-items-end justify-content-between">
-                                <div>
-                                  <Link
-                                    to={`/edit-offer/${item.discountType}/${item._id}`}
-                                    disabled={isDisabled}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="btn border rounded-5 btn-sm mb-1"
-                                  >
-                                    <Edit className="fs-6 text-primary mb-1" />
-                                  </Link>
-
-                                  <Popconfirm
-                                    title="Delete the task"
-                                    description="Are you sure to delete this task?"
-                                    onConfirm={() => handleDelete(item._id)}
-                                    onCancel={cancel}
-                                    okText="Yes"
-                                    cancelText="No"
-                                  >
-                                    <Button
-                                      type="text"
-                                      className="btn border rounded-5 d-flex"
-                                      icon={<Delete className="fs-6" />}
-                                      danger
-                                      style={{
-                                        outline: "none",
-                                        boxShadow: "none",
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
-                                  </Popconfirm>
-                                </div>
-                              </div>
+                          <div className="d-flex w-100">
+                            {/* Image Section */}
+                            <div style={{ width: "100px", flexShrink: 0 }}>
+                              <img
+                                src={
+                                  Array.isArray(item?.images) &&
+                                  item.images.length > 0 &&
+                                  item.images[0]?.trim()
+                                    ? item.images[0]
+                                    : fallbackImage
+                                }
+                                onError={(e) => {
+                                  e.target.src = fallbackImage;
+                                }}
+                                className="img-fluid"
+                                alt="Coupon"
+                                style={{
+                                  height: "100px",
+                                  width: "100px",
+                                  objectFit: "cover",
+                                  borderRadius: "6px",
+                                }}
+                              />
                             </div>
-                          </Card>
-                          </Link>
-                        </div>
+                      
+                            {/* Details + Actions */}
+                            <div className="ms-3 d-flex justify-content-between flex-grow-1">
+                              {/* Left: Details */}
+                              <div>
+                                <h5 className="card-title mb-1">{item.title}</h5>
+                                <p className="mb-1">
+                                  <strong>Store:</strong> {item.storeInfo.display_name}
+                                </p>
+                                <p className="mb-1">
+                                  <strong>{formatValidDateRange(item.dateRange?.startDate, item.dateRange?.endDate)}</strong>
+                                </p>
+                              </div>
+                      
+                              {/* Right: Action Buttons */}
+                              <div className="d-flex flex-column align-items-end">
+  <Button
+    type="text"
+    className="btn border rounded-5 d-flex mb-1"
+    icon={<Edit className="fs-6 text-primary" />}
+    onClick={(e) => {
+      e.stopPropagation();
+      navigate(`/edit-offer/${item.discountType}/${item._id}`, {
+        state: item,
+      });
+    }}
+  />
+
+<Popconfirm
+    title="Delete the task"
+    description="Are you sure to delete this task?"
+    onConfirm={(e) => {
+      e.stopPropagation();
+      handleDelete(item._id);
+    }}
+    onCancel={(e) => {
+      e.stopPropagation();
+      cancel(e);
+    }}
+    okText="Yes"
+    cancelText="No"
+  >
+    <Button
+      type="text"
+      className="btn border rounded-5 d-flex"
+      icon={<Delete className="fs-6" />}
+      danger
+      onClick={(e) => e.stopPropagation()}
+      style={{ outline: "none", boxShadow: "none" }}
+    />
+  </Popconfirm>
+</div>
+
+                            </div>
+                          </div>
+                        </Card>
+                      </div>
+                      
+
                       );
                     })
                   ) : (

@@ -37,11 +37,22 @@ function formatWeeklyHours(scheduleArray) {
     } else if (!startTime && !endTime) {
       result[day] = 'Closed';
     } else {
-      result[day] = `${startTime}-${endTime}`;
+      result[day] = `${formatTime(startTime)}-${formatTime(endTime)}`;
     }
-  } 
-  console.log("Result from weekly hours", result)
+  }
+
   return result;
+}
+
+function formatTime(timeStr) {
+  // Expects input like "2.20 am"
+  const [time, period] = timeStr.toLowerCase().split(' ');
+  const [hour, minute] = time.split('.');
+
+  const formattedHour = parseInt(hour, 10);
+  const formattedMinute = minute.padEnd(2, '0');
+
+  return `${formattedHour}:${formattedMinute}${period === 'am' ? 'a.m' : 'p.m'}`;
 }
 
 

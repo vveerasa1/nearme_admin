@@ -5,7 +5,7 @@ import { Star, Add, Remove, Delete } from "@mui/icons-material";
 import { Formik, Form, Field, ErrorMessage, FieldArray } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
-import { Spin } from 'antd';
+import { Spin } from "antd";
 
 import CreatableSelect from "react-select/creatable";
 import TimePicker from "react-time-picker";
@@ -31,70 +31,82 @@ const AddBusiness = () => {
   const [photoError, setPhotoError] = useState(""); // State for image validation errors
   const navigate = useNavigate();
 
-  const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-  const MAX_IMAGES = 5;
+  // const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
+  // const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+  // const MAX_IMAGES = 5;
   const [workingHours, setWorkingHours] = useState([
     { day: "", startTime: "", endTime: "", is24Hours: false },
   ]);
   const baseUrl = import.meta.env.VITE_BASE_URL;
+  const SUPPORTED_FORMATS = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/svg+xml",
+  ];
 
-  const resizeImage = (file, width, height) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_IMAGES = 5;
 
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
+  // const resizeImage = (file, width, height) => {
+  //   return new Promise((resolve, reject) => {
+  //     const img = new Image();
+  //     const reader = new FileReader();
 
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+  //     reader.onload = (e) => {
+  //       img.src = e.target.result;
+  //     };
 
-        canvas.width = width;
-        canvas.height = height;
+  //     img.onload = () => {
+  //       const canvas = document.createElement("canvas");
+  //       const ctx = canvas.getContext("2d");
 
-        ctx.drawImage(img, 0, 0, width, height);
+  //       canvas.width = width;
+  //       canvas.height = height;
 
-        canvas.toBlob(
-          (blob) => {
-            resolve(new File([blob], file.name, { type: file.type }));
-          },
-          file.type,
-          1
-        );
-      };
+  //       ctx.drawImage(img, 0, 0, width, height);
 
-      img.onerror = (err) => reject(err);
+  //       canvas.toBlob(
+  //         (blob) => {
+  //           resolve(new File([blob], file.name, { type: file.type }));
+  //         },
+  //         file.type,
+  //         1
+  //       );
+  //     };
 
-      reader.readAsDataURL(file);
-    });
-  };
+  //     img.onerror = (err) => reject(err);
+
+  //     reader.readAsDataURL(file);
+  //   });
+  // };
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     let error = "";
 
-    // Validate file count
     if (files.length + (photos?.length || 0) > MAX_IMAGES) {
       error = `You can upload a maximum of ${MAX_IMAGES} images.`;
     }
 
     const resizedImages = [];
+
     for (const file of files) {
-      // Validate file type and size
       if (!SUPPORTED_FORMATS.includes(file.type)) {
-        error = "Only JPEG, JPG, and PNG formats are allowed.";
+        error = "Only JPEG, PNG, GIF, and SVG formats are allowed.";
+        break;
       } else if (file.size > MAX_FILE_SIZE) {
         error = "Each file must not exceed 5 MB.";
+        break;
       } else {
         try {
-          // Resize the image to a standard size (e.g., 500x500 pixels)
-          const resizedImage = await resizeImage(file, 400, 400);
+          // await checkImageDimensions(file); // validate original dimensions
+          const resizedImage = await resizeImage(file, 800, 600); // resize to 800x600
           resizedImages.push(resizedImage);
         } catch (err) {
-          console.error("Error resizing image:", err);
+          error = err;
+          break;
         }
       }
     }
@@ -106,6 +118,85 @@ const AddBusiness = () => {
       setPhotos((prevPhotos) => [...(prevPhotos || []), ...resizedImages]);
     }
   };
+
+  // Checks original image dimensions before processing
+  // const checkImageDimensions = (file) => {
+  //   return new Promise((resolve, reject) => {
+  //     const img = new Image();
+  //     img.src = URL.createObjectURL(file);
+  //     img.onload = () => {
+  //       if (img.width < 800 || img.height < 600) {
+  //         reject("Image must be at least 800x600 pixels.");
+  //       } else {
+  //         resolve();
+  //       }
+  //     };
+  //     img.onerror = () => reject("Could not read image dimensions.");
+  //   });
+  // };
+
+  // Resizes image to the required dimensions (800x600)
+  const resizeImage = (file, width, height) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            const newFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now(),
+            });
+            resolve(newFile);
+          }, file.type);
+        };
+        img.onerror = reject;
+        img.src = event.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // const handleFileChange = async (e) => {
+  //   const files = Array.from(e.target.files);
+  //   let error = "";
+
+  //   // Validate file count
+  //   if (files.length + (photos?.length || 0) > MAX_IMAGES) {
+  //     error = `You can upload a maximum of ${MAX_IMAGES} images.`;
+  //   }
+
+  //   const resizedImages = [];
+  //   for (const file of files) {
+  //     // Validate file type and size
+  //     if (!SUPPORTED_FORMATS.includes(file.type)) {
+  //       error = "Only JPEG, JPG, and PNG formats are allowed.";
+  //     } else if (file.size > MAX_FILE_SIZE) {
+  //       error = "Each file must not exceed 5 MB.";
+  //     } else {
+  //       try {
+  //         // Resize the image to a standard size (e.g., 500x500 pixels)
+  //         const resizedImage = await resizeImage(file, 400, 400);
+  //         resizedImages.push(resizedImage);
+  //       } catch (err) {
+  //         console.error("Error resizing image:", err);
+  //       }
+  //     }
+  //   }
+
+  //   if (error) {
+  //     setPhotoError(error);
+  //   } else {
+  //     setPhotoError("");
+  //     setPhotos((prevPhotos) => [...(prevPhotos || []), ...resizedImages]);
+  //   }
+  // };
 
   useEffect(() => {
     const fetchTypes = async () => {
@@ -192,7 +283,7 @@ const AddBusiness = () => {
       endTime: convert24hTo12h(date.endTime),
       is24Hours: date.is24Hours,
     }));
-   // console.log("hellow ", values.types);
+    // console.log("hellow ", values.types);
 
     // Set loading state to true
     setLoading(true);
@@ -240,6 +331,7 @@ const AddBusiness = () => {
       console.log(photos);
       Array.from(photos).map((file) => formData.append("photo", file));
     }
+    // console.log('hiiiiii iiiii ',formatWeeklyHours(updatedTime));
     // return;
     try {
       // Make the API request
@@ -295,7 +387,7 @@ const AddBusiness = () => {
             // NOTE removed by akash as lat long will be add from backend
             // latitude: "",
             // longitude: "",
-            phone: "",
+            phone_number: "",
             // code: "",
             place_link: "",
             reviews: "",
@@ -325,7 +417,7 @@ const AddBusiness = () => {
               .min(1, "At least one type is required")
               .of(Yup.string().required("Each type must be a valid string"))
               .required("Types field is required"),
-              address: Yup.string().required("Address is required"),
+            address: Yup.string().required("Address is required"),
 
             street: Yup.string().required("Street is required"),
             city: Yup.string().required("City is required"),
@@ -341,15 +433,14 @@ const AddBusiness = () => {
             business_status: Yup.string().required(
               "Business status is required"
             ),
-            place_link: Yup.string()
-            .url("Invalid URL format"),
-          reviews: Yup.number()
-            .min(0, "Reviews count cannot be negative")
-            .optional(),
-          rating: Yup.number()
-            .min(1, "Rating must be between 1 and 5")
-            .max(5, "Rating must be between 1 and 5")
-            .optional(),
+            place_link: Yup.string().url("Invalid URL format"),
+            reviews: Yup.number()
+              .min(0, "Reviews count cannot be negative")
+              .required("Enter the reviews count"),
+            rating: Yup.number()
+              .min(1, "Rating must be between 1 and 5")
+              .max(5, "Rating must be between 1 and 5")
+              .required("Enter the rating count"),
             // latitude: Yup.number()
             //   .typeError("Latitude must be a number")
             //   .required("Latitude is required")
@@ -363,6 +454,7 @@ const AddBusiness = () => {
             phone_number: Yup.string()
               .matches(/^\+?[1-9]\d{1,14}$/, "Invalid phone number")
               .max(10, "Phone number must be between 10 digits")
+              .min(10, "Phone number must be between 10 digits")
               .required("Phone number is required"),
             working_hours: Yup.array()
               .of(
@@ -430,35 +522,39 @@ const AddBusiness = () => {
                       <div className="form-group">
                         <label className="form-label">Types</label>
                         {loading ? (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50px' }}>
-    <Spin tip="Loading..." size="small" />
-  </div>
-) : (
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              minHeight: "50px",
+                            }}
+                          >
+                            <Spin tip="Loading..." size="small" />
+                          </div>
+                        ) : (
                           <>
                             <CreatableSelect
+                              classNamePrefix="select"
                               name="types"
                               options={filteredTypes}
-                              value={
-                                values.types.length > 0 &&
-                                values.types.map(
-                                  (type) =>
-                                    allTypes.find(
-                                      (option) => option.value === type
-                                    ) || {
-                                      label: type,
-                                      value: type,
-                                    }
-                                )
-                              }
-                              onChange={(selected) =>
+                              value={values.types.map(
+                                (type) =>
+                                  allTypes.find(
+                                    (option) => option.value === type
+                                  ) || {
+                                    label: type,
+                                    value: type,
+                                  }
+                              )}
+                              onChange={(selected) => {
                                 setFieldValue(
                                   "types",
                                   selected.map((option) => option.value)
-                                )
-                              }
+                                );
+                              }}
                               onInputChange={(inputValue) => {
                                 const query = inputValue.toLowerCase();
-                              
                                 const filtered = allTypes
                                   .filter((option) =>
                                     option.label.toLowerCase().includes(query)
@@ -466,43 +562,32 @@ const AddBusiness = () => {
                                   .sort((a, b) => {
                                     const aLabel = a.label.toLowerCase();
                                     const bLabel = b.label.toLowerCase();
-                              
-                                    // Exact matches come first
-                                    if (aLabel === query && bLabel !== query) return -1;
-                                    if (aLabel !== query && bLabel === query) return 1;
-                              
-                                    // Otherwise, keep alphabetical
+
+                                    if (aLabel === query && bLabel !== query)
+                                      return -1;
+                                    if (aLabel !== query && bLabel === query)
+                                      return 1;
+
                                     return aLabel.localeCompare(bLabel);
                                   });
-                              
+
                                 setFilteredTypes(filtered);
                               }}
-                              
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" && e.target.value) {
-                                  const newType = e.target.value.trim();
-                                  if (
-                                    newType &&
-                                    !allTypes.some(
-                                      (option) => option.value === newType
-                                    )
-                                  ) {
-                                    const newOption = {
-                                      label: newType,
-                                      value: newType,
-                                    };
-                                    setAllTypes((prev) => [...prev, newOption]);
-                                    setFilteredTypes((prev) => [
-                                      ...prev,
-                                      newOption,
-                                    ]);
-                                    setFieldValue("types", [
-                                      ...values.types,
-                                      newType,
-                                    ]);
-                                  }
-                                  e.preventDefault(); // Prevent the default behavior of the Enter key
-                                }
+                              onCreateOption={(inputValue) => {
+                                const newOption = {
+                                  label: inputValue,
+                                  value: inputValue,
+                                };
+
+                                setAllTypes((prev) => [...prev, newOption]);
+                                setFilteredTypes((prev) => [
+                                  ...prev,
+                                  newOption,
+                                ]);
+                                setFieldValue("types", [
+                                  ...values.types,
+                                  inputValue,
+                                ]);
                               }}
                               placeholder="Select or create a type..."
                               isMulti
@@ -524,27 +609,31 @@ const AddBusiness = () => {
                       <div className="form-group">
                         <label className="form-label">Address</label>
                         <div className="col-12 col-md-12 col-lg-12 mb-3">
-                      <div className="form-group">
-                        <Field
-                          name="address"
-                          type="text"
-                          className="form-input"
-                          placeholder="Address"
-                        />
-                        <ErrorMessage
-                          name="address"
-                          component="div"
-                          className="error text-danger"
-                        />
-                          <p
-                        
-                        className="note text-muted"
-                        style={{ fontSize: "0.800rem" , marginTop: "10px"}}
-                      >
-                        Note: Please enter your complete address, including building number, street name, city, state, country, and postal code.
-                      </p>
-                      </div>
-                    </div>
+                          <div className="form-group">
+                            <Field
+                              name="address"
+                              type="text"
+                              className="form-input"
+                              placeholder="Address"
+                            />
+                            <ErrorMessage
+                              name="address"
+                              component="div"
+                              className="error text-danger"
+                            />
+                            <p
+                              className="note text-muted"
+                              style={{
+                                fontSize: "0.800rem",
+                                marginTop: "10px",
+                              }}
+                            >
+                              Note: Please enter your complete address,
+                              including building number, street name, city,
+                              state, country, and postal code.
+                            </p>
+                          </div>
+                        </div>
                         <div className="row">
                           {/* <div className="col-12 col-md-6 col-lg-6 mb-3">
                             <Field
@@ -818,11 +907,14 @@ const AddBusiness = () => {
 
                           {/* Phone Number Input */}
                           <Field
-                            name="phone_number"
-                            type="Number"
-                            className="form-input w-75"
-                            placeholder="Phone number"
-                          />
+  name="phone_number"
+  type="tel"
+  maxLength="10"
+  pattern="\d{10}"
+  className="form-input w-75"
+  placeholder="Phone number"
+/>
+
                         </div>
                         <ErrorMessage
                           name="phone_number"
@@ -1032,8 +1124,14 @@ const AddBusiness = () => {
                                       );
                                     } else {
                                       // Set default times when 24Hrs is unselected
-                                      setFieldValue(`working_hours[${index}].startTime`, "00:01");
-                                      setFieldValue(`working_hours[${index}].endTime`, "23:59");
+                                      setFieldValue(
+                                        `working_hours[${index}].startTime`,
+                                        "00:01"
+                                      );
+                                      setFieldValue(
+                                        `working_hours[${index}].endTime`,
+                                        "23:59"
+                                      );
                                     }
                                   }}
                                 />
@@ -1185,9 +1283,9 @@ const AddBusiness = () => {
                 {/* form button */}
                 <div className="col-12 col-md-12 col-lg-12">
                   <div className="vbtns">
-                    <button className="theme-btn btn-border" type="button">
+                    {/* <button className="theme-btn btn-border" type="button">
                       Clear
-                    </button>
+                    </button> */}
                     <button
                       className="theme-btn btn-main"
                       type="submit"

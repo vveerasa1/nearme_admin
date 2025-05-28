@@ -25,12 +25,14 @@ const EditOffer = () => {
   const navigate = useNavigate();
   const { type, _id } = useParams();
   const baseUrl = import.meta.env.VITE_BASE_URL;
+  const [photoError, setPhotoError] = useState("");
 
   const [customDays, setCustomDays] = useState([
     { day: "", startTime: "", endTime: "" },
   ]);
   const fileInputRef = useRef(null);
   const [existingImages, setExistingImages] = useState([]);
+  const [images, setPhotos] = useState(null);
   const [newImages, setNewImages] = useState([]);
   const [imageError, setImageError] = useState("");
   const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
@@ -69,9 +71,8 @@ const EditOffer = () => {
           discountValue: data.discountValue || "",
           images: data.images || "",
           type: data.type || false,
-          startDate: data.dateRange.startDate
-            ? dayjs(data.dateRange.startDate)
-            : dayjs(),
+          startDate: data.dateRange.startDate,
+           
           endDate: data.dateRange.endDate
             ? dayjs(data.dateRange.endDate)
             : dayjs(),
@@ -113,56 +114,111 @@ const EditOffer = () => {
     fetchData();
   }, [_id, baseUrl]);
 
-  const resizeImage = (file, width, height) => {
-    return new Promise((resolve, reject) => {
-      const img = new window.Image();
-      const reader = new window.FileReader();
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => resolve(new File([blob], file.name, { type: file.type })),
-          file.type,
-          1
-        );
-      };
-      img.onerror = (err) => reject(err);
-      reader.readAsDataURL(file);
-    });
-  };
+  
+
+  // const resizeImage = (file, width, height) => {
+  //   return new Promise((resolve, reject) => {
+  //     const img = new window.Image();
+  //     const reader = new window.FileReader();
+  //     reader.onload = (e) => {
+  //       img.src = e.target.result;
+  //     };
+  //     img.onload = () => {
+  //       const canvas = document.createElement("canvas");
+  //       const ctx = canvas.getContext("2d");
+  //       canvas.width = width;
+  //       canvas.height = height;
+  //       ctx.drawImage(img, 0, 0, width, height);
+  //       canvas.toBlob(
+  //         (blob) => resolve(new File([blob], file.name, { type: file.type })),
+  //         file.type,
+  //         1
+  //       );
+  //     };
+  //     img.onerror = (err) => reject(err);
+  //     reader.readAsDataURL(file);
+  //   });
+  // };
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     let error = "";
-    if (files.length + newImages.length > MAX_IMAGES) {
+  
+    if (files.length + (images?.length || 0) > MAX_IMAGES) {
       error = `You can upload a maximum of ${MAX_IMAGES} images.`;
     }
+  
     const resizedImages = [];
+  
     for (const file of files) {
       if (!SUPPORTED_FORMATS.includes(file.type)) {
-        error = "Only JPEG, JPG, and PNG formats are allowed.";
+        error = "Only JPEG, PNG, GIF, and SVG formats are allowed.";
+        break;
       } else if (file.size > MAX_FILE_SIZE) {
         error = "Each file must not exceed 5 MB.";
+        break;
       } else {
         try {
-          const resizedImage = await resizeImage(file, 400, 400);
+          await checkImageDimensions(file); // validate original dimensions
+          const resizedImage = await resizeImage(file, 800, 600); // resize to 800x600
           resizedImages.push(resizedImage);
         } catch (err) {
-          console.error("Error resizing image:", err);
+          error = err;
+          break;
         }
       }
     }
-    if (error) setImageError(error);
-    else {
-      setImageError("");
-      setNewImages((prevImages) => [...prevImages, ...resizedImages]);
+  
+    if (error) {
+      setPhotoError(error);
+    } else {
+      setPhotoError("");
+      setPhotos((prevPhotos) => [...(prevPhotos || []), ...resizedImages]);
     }
+  };
+  
+  // Checks original image dimensions before processing
+  const checkImageDimensions = (file) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        if (img.width < 800 || img.height < 600) {
+          reject("Image must be at least 800x600 pixels.");
+        } else {
+          resolve();
+        }
+      };
+      img.onerror = () => reject("Could not read image dimensions.");
+    });
+  };
+  
+  // Resizes image to the required dimensions (800x600)
+  const resizeImage = (file, width, height) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            const newFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now()
+            });
+            resolve(newFile);
+          }, file.type);
+        };
+        img.onerror = reject;
+        img.src = event.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleRemoveNewImage = (indexToRemove) => {
@@ -261,6 +317,10 @@ const EditOffer = () => {
     }
   };
 
+  const disablePastDates = (current) => {
+    return current && current < dayjs().startOf("day");
+  };
+
   const convertTo24Hour = (time12) => {
     // expects: "1:15 PM" or "01:15 AM"
     if (!time12) return "";
@@ -285,18 +345,18 @@ const EditOffer = () => {
           endTime: d.endTime,
         }))
       : [];
-console.log(daysToSubmit);
+// console.log(values.type);
 
 
   // Reject if any day is not selected
   const hasInvalidDay = customDays.some(day => !day.day || day.day.trim() === "");
   // console.log(hasInvalidDay);
-  if (hasInvalidDay === true) {
+  if (hasInvalidDay === true &&  values.type === true ) {
     toast.error("Please select a valid day for all custom schedule entries");
     return;
   }
            
-
+// return;
       // return;
     setLoading(true);
     const formData = new window.FormData();
@@ -306,8 +366,8 @@ console.log(daysToSubmit);
 
     formData.append("discountType", values.discountType);
     formData.append("type", values.type);
-    formData.append("startDate", formatDate(range[0]));
-    formData.append("endDate", formatDate(range[1]));
+    formData.append("startDate", range[0].format("YYYY-MM-DD"));
+    formData.append("endDate", range[1].format("YYYY-MM-DD"));
     if (values.type) {
       formData.append("customDays", JSON.stringify(daysToSubmit));
     } else {
@@ -470,17 +530,18 @@ console.log(daysToSubmit);
                         </Field>
                       </div>
                       {/* Discount Value */}
-                      {values.discountType === "Discount" && (
-                        <div className="mt-4">
-                          <label className="form-label">Percentage</label>
-                          <Field
-                            name="discountValue"
-                            type="text"
-                            className="form-input"
-                            placeholder="%"
-                          />
-                        </div>
-                      )}
+                      {(values.discountType === "Discount" || values.discountType === "Deal") && (
+  <div className="mt-4">
+    <label className="form-label">Percentage</label>
+    <Field
+      name="discountValue"
+      type="text"
+      className="form-input"
+      placeholder="%"
+    />
+  </div>
+)}
+
                     </div>
                     {/* Image Upload */}
                     <div className="col-12 mb-3">
@@ -550,6 +611,13 @@ console.log(daysToSubmit);
                           </div>
                         </div>
                       </div>
+                      <p
+                        className="note text-muted"
+                        style={{ fontSize: "0.875rem" }}
+                      >
+                        Note: Upload images in JPEG, PNG, GIF, or SVG format,
+                        max 5MB, and between 800x600 pixels.
+                      </p>
                     </div>
                     {/* Offer Validity */}
 
@@ -588,6 +656,7 @@ console.log(daysToSubmit);
                           format="YYYY-MM-DD"
                           className="ant-picker"
                           style={{ height: "45px" }}
+                          disabledDate={disablePastDates} 
                         />
                       </div>
                       <p className="form-note mt-2">

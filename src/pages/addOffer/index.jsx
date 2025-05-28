@@ -83,85 +83,146 @@ const validationSchema = Yup.object({
 const AddOffer = () => {
   const navigate = useNavigate();
   const baseUrl = import.meta.env.VITE_BASE_URL;
+  const SUPPORTED_FORMATS = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/svg+xml"
+  ];
+  const [photoError, setPhotoError] = useState("");
+  // const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  // const MAX_IMAGES = 5;
   const [customDays, setCustomDays] = useState([
     { day: "", startTime: "12:01 AM", endTime: "11:59 PM" },
   ]);
   const fileInputRef = useRef(null);
-  const [images, setImages] = useState([]);
+  // const [images, setImages] = useState([]);
   const [imageError, setImageError] = useState("");
   const [range, setRange] = useState([dayjs(), dayjs()]);
   const [disabledDays, setDisabledDays] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const [images, setPhotos] = useState(null);
   const hostUrl = import.meta.env.VITE_BASE_URL;
 
-  const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
+  // const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
   const MAX_IMAGES = 5;
 
   const { _id } = useParams();
 
-  const resizeImage = (file, width, height) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
+  // const resizeImage = (file, width, height) => {
+  //   return new Promise((resolve, reject) => {
+  //     const img = new Image();
+  //     const reader = new FileReader();
 
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
+  //     reader.onload = (e) => {
+  //       img.src = e.target.result;
+  //     };
 
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+  //     img.onload = () => {
+  //       const canvas = document.createElement("canvas");
+  //       const ctx = canvas.getContext("2d");
 
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
+  //       canvas.width = width;
+  //       canvas.height = height;
+  //       ctx.drawImage(img, 0, 0, width, height);
 
-        canvas.toBlob(
-          (blob) => resolve(new File([blob], file.name, { type: file.type })),
-          file.type,
-          1
-        );
-      };
+  //       canvas.toBlob(
+  //         (blob) => resolve(new File([blob], file.name, { type: file.type })),
+  //         file.type,
+  //         1
+  //       );
+  //     };
 
-      img.onerror = (err) => reject(err);
+  //     img.onerror = (err) => reject(err);
 
-      reader.readAsDataURL(file);
-    });
-  };
+  //     reader.readAsDataURL(file);
+  //   });
+  // };
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     let error = "";
 
-    // Validate file count
-    if (files.length + images.length > MAX_IMAGES) {
+    if (files.length + (images?.length || 0) > MAX_IMAGES) {
       error = `You can upload a maximum of ${MAX_IMAGES} images.`;
     }
 
     const resizedImages = [];
+
     for (const file of files) {
       if (!SUPPORTED_FORMATS.includes(file.type)) {
-        error = "Only JPEG, JPG, and PNG formats are allowed.";
+        error = "Only JPEG, PNG, GIF, and SVG formats are allowed.";
+        break;
       } else if (file.size > MAX_FILE_SIZE) {
         error = "Each file must not exceed 5 MB.";
+        break;
       } else {
         try {
-          const resizedImage = await resizeImage(file, 400, 400);
+          console.log('hii you came here');
+          // await checkImageDimensions(file); // validate original dimensions
+          const resizedImage = await resizeImage(file, 800, 600); // resize to 800x600
+          console.log(resizedImage);
           resizedImages.push(resizedImage);
         } catch (err) {
-          console.error("Error resizing image:", err);
+          error = err;
+          break;
         }
       }
     }
 
     if (error) {
-      setImageError(error);
+      setPhotoError(error);
     } else {
-      setImageError("");
-      setImages((prevImages) => [...prevImages, ...resizedImages]);
+      setPhotoError("");
+      console.log('resizeImage')
+      setPhotos((prevPhotos) => [...(prevPhotos || []), ...resizedImages]);
     }
+  };
+  
+  // Checks original image dimensions before processing
+  const checkImageDimensions = (file) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        if (img.width < 800 || img.height < 600) {
+          reject("Image must be at least 800x600 pixels.");
+        } else {
+          resolve();
+        }
+      };
+      img.onerror = () => reject("Could not read image dimensions.");
+    });
+  };
+  
+  // Resizes image to the required dimensions (800x600)
+  const resizeImage = (file, width, height) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            const newFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now()
+            });
+            resolve(newFile);
+          }, file.type);
+        };
+        img.onerror = reject;
+        img.src = event.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleRemoveImage = (indexToRemove) => {
@@ -199,6 +260,10 @@ const AddOffer = () => {
     setCustomDays(updatedDays);
   };
 
+  const disablePastDates = (current) => {
+    return current && current < dayjs().startOf("day");
+  };
+
   const handleRangeChange = (dates) => {
     if (dates) {
       const start = dayjs(dates[0]);
@@ -227,7 +292,7 @@ const AddOffer = () => {
   };
 
   const handleSubmit = async (values, formikHelpers = {}) => {
-    const { resetForm } = formikHelpers;
+    // const { resetForm } = formikHelpers;
     setLoading(true);
 
     let daysToSubmit = values.type
@@ -264,8 +329,8 @@ const AddOffer = () => {
     formData.append("couponDescription", values.couponDescription);
     formData.append("discountType", values.discountType);
     formData.append("type", values.type);
-    formData.append("startDate", formatDate(range[0]));
-    formData.append("endDate", formatDate(range[1]));
+    formData.append("startDate", range[0].format("YYYY-MM-DD"));
+    formData.append("endDate", range[1].format("YYYY-MM-DD"));
 
     if (values.type) {
       formData.append("customDays", JSON.stringify(daysToSubmit));
@@ -285,16 +350,22 @@ const AddOffer = () => {
     }
 
     images.forEach((file) => formData.append("images", file));
+// console.log(formatDate(range[0]), formatDate(range[1]));
+// console.log(range[0].format("YYYY-MM-DD"), range[1].format("YYYY-MM-DD"));
+
+//     return;
 
     try {
       const response = await axios.post(`${baseUrl}coupons/`, formData);
       toast.success(`${values.discountType} Created Successfully`);
-      resetForm();
-      setCustomDays([{ day: "", startTime: "12:01 AM", endTime: "11:59 PM" }]);
-      setImages([]);
-      setRange([dayjs(), dayjs()]);
-      setDisabledDays([]);
-      if (fileInputRef.current) fileInputRef.current.value = null;
+      // resetForm();
+      // setCustomDays([{ day: "", startTime: "12:01 AM", endTime: "11:59 PM" }]);
+      // // setImages([]);
+      // setRange([dayjs(), dayjs()]);
+      // setDisabledDays([]);
+      // if (fileInputRef.current) fileInputRef.current.value = null;
+      // toast.success(`${values.discountType.trim()} created sucessfully`);
+console.log('heyyy ',values.discountType);
       if (values.discountType === "Discount") {
         navigate("/discounts");
       } else if (values.discountType === "Deal") {
@@ -302,10 +373,9 @@ const AddOffer = () => {
       } else {
         navigate("/coupons");
       }
-      toast.error(`${values.discountType.trim()} created sucessfully`);
 
     } catch (err) {
-      toast.error("Something went wrong.");
+      // toast.error("Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -435,14 +505,14 @@ const AddOffer = () => {
                       <label htmlFor="fileUpload" className="upload-label">
                         Upload Files
                         <input
-                          type="file"
-                          id="fileUpload"
-                          ref={fileInputRef}
-                          accept=".jpeg, .png, .jpg"
-                          onChange={handleFileChange}
-                          multiple
-                          style={{ display: "none" }}
-                        />
+  type="file"
+  id="fileUpload"
+  ref={fileInputRef}
+  accept=".jpeg, .png, .gif, .svg"
+  onChange={handleFileChange}
+  multiple
+  style={{ display: "none" }}
+/>
                       </label>
                       <div className="file-info">
                         {images && images.length > 0 ? (
@@ -485,6 +555,7 @@ const AddOffer = () => {
                         format="YYYY-MM-DD"
                         className="ant-picker"
                         style={{ height: "45px" }}
+                        disabledDate={disablePastDates} 
                       />
                     </div>
                     <p className="form-note mt-2">

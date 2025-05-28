@@ -10,3 +10,8 @@
 :where(.css-dev-only-do-not-override-1v5z42l).ant-card .ant-card-body {
     padding-right: 40px;
 }
+
+.no-link-style {
+    text-decoration: none !important;
+    color: inherit !important;
+  }

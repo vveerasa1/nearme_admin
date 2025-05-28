@@ -36,8 +36,15 @@ const EditBusiness = () => {
   const navigate = useNavigate();
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
-  const SUPPORTED_FORMATS = ["image/jpeg", "image/png", "image/jpg"];
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+  const SUPPORTED_FORMATS = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/svg+xml",
+  ];
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   const MAX_IMAGES = 5;
   const fileInputRef = useRef(null);
   const [workingHours, setWorkingHours] = useState([
@@ -46,7 +53,7 @@ const EditBusiness = () => {
 
   const [initialValues, setInitialValues] = useState({
     display_name: "",
-    types: "",
+    types: [],
     address: "",
     street: "",
     city: "",
@@ -109,6 +116,7 @@ const EditBusiness = () => {
                 return [];
               }
             })();
+        // const typesArray = data.types.split(",").map((t) => t.trim());
 
         // Parse working hours safely
         const parsedWorkingHours = (() => {
@@ -173,7 +181,11 @@ const EditBusiness = () => {
         setExistingPhoto(Array.isArray(data.photo) ? data.photo : []);
         setInitialValues({
           display_name: data.display_name || "",
-          types: data.types || [],
+          types: Array.isArray(data.types)
+    ? data.types.flatMap((t) => t.split(",").map((s) => s.trim()))
+    : typeof data.types === "string"
+      ? data.types.split(",").map((s) => s.trim())
+      : [],
           address: data.address || "",
           street: data.street || "",
           city: data.city || "",
@@ -203,63 +215,65 @@ const EditBusiness = () => {
     fetchData();
   }, [_id]);
 
-  const resizeImage = (file, width, height) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
+  // const resizeImage = (file, width, height) => {
+  //   return new Promise((resolve, reject) => {
+  //     const img = new Image();
+  //     const reader = new FileReader();
 
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
+  //     reader.onload = (e) => {
+  //       img.src = e.target.result;
+  //     };
 
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+  //     img.onload = () => {
+  //       const canvas = document.createElement("canvas");
+  //       const ctx = canvas.getContext("2d");
 
-        canvas.width = width;
-        canvas.height = height;
+  //       canvas.width = width;
+  //       canvas.height = height;
 
-        // Draw the image on the canvas with the specified dimensions
-        ctx.drawImage(img, 0, 0, width, height);
+  //       // Draw the image on the canvas with the specified dimensions
+  //       ctx.drawImage(img, 0, 0, width, height);
 
-        canvas.toBlob(
-          (blob) => {
-            resolve(new File([blob], file.name, { type: file.type }));
-          },
-          file.type,
-          1
-        );
-      };
+  //       canvas.toBlob(
+  //         (blob) => {
+  //           resolve(new File([blob], file.name, { type: file.type }));
+  //         },
+  //         file.type,
+  //         1
+  //       );
+  //     };
 
-      img.onerror = (err) => reject(err);
+  //     img.onerror = (err) => reject(err);
 
-      reader.readAsDataURL(file);
-    });
-  };
+  //     reader.readAsDataURL(file);
+  //   });
+  // };
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     let error = "";
 
-    // Validate file count
-    if (files.length + (newPhoto?.length || 0) > MAX_IMAGES) {
+    if (files.length + (photos?.length || 0) > MAX_IMAGES) {
       error = `You can upload a maximum of ${MAX_IMAGES} images.`;
     }
 
     const resizedImages = [];
+
     for (const file of files) {
-      // Validate file type and size
       if (!SUPPORTED_FORMATS.includes(file.type)) {
-        error = "Only JPEG, JPG, and PNG formats are allowed.";
+        error = "Only JPEG, PNG, GIF, and SVG formats are allowed.";
+        break;
       } else if (file.size > MAX_FILE_SIZE) {
         error = "Each file must not exceed 5 MB.";
+        break;
       } else {
         try {
-          // Resize the image to a standard size (e.g., 500x500 pixels)
-          const resizedImage = await resizeImage(file, 400, 400);
+          await checkImageDimensions(file); // validate original dimensions
+          const resizedImage = await resizeImage(file, 800, 600); // resize to 800x600
           resizedImages.push(resizedImage);
         } catch (err) {
-          console.error("Error resizing image:", err);
+          error = err;
+          break;
         }
       }
     }
@@ -267,9 +281,53 @@ const EditBusiness = () => {
     if (error) {
       setPhotoError(error);
     } else {
-      setPhotoError(""); // Clear error if validation passes
-      setNewPhoto((prevPhotos) => [...(prevPhotos || []), ...resizedImages]);
+      setPhotoError("");
+      setPhotos((prevPhotos) => [...(prevPhotos || []), ...resizedImages]);
     }
+  };
+
+  // Checks original image dimensions before processing
+  const checkImageDimensions = (file) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        if (img.width < 800 || img.height < 600) {
+          reject("Image must be at least 800x600 pixels.");
+        } else {
+          resolve();
+        }
+      };
+      img.onerror = () => reject("Could not read image dimensions.");
+    });
+  };
+
+  // Resizes image to the required dimensions (800x600)
+  const resizeImage = (file, width, height) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            const newFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now(),
+            });
+            resolve(newFile);
+          }, file.type);
+        };
+        img.onerror = reject;
+        img.src = event.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleRemoveNewImage = (indexToRemove) => {
@@ -303,6 +361,8 @@ const EditBusiness = () => {
   };
 
   const handleSubmit = async (values, { resetForm, setSubmitting } = {}) => {
+    // console.log('come here');
+    // return;
     setSubmitting && setSubmitting(true);
     const updatedTime = values.working_hours.map((date) => ({
       day: date.day,
@@ -310,7 +370,7 @@ const EditBusiness = () => {
       endTime: convert24hTo12h(date.endTime),
       is24Hours: date.is24Hours,
     }));
-    console.log(updatedTime);
+    console.log("Hii helow how are ", values.types);
     const formData = new FormData();
     formData.append("display_name", values.display_name);
     formData.append("types", values.types);
@@ -325,7 +385,7 @@ const EditBusiness = () => {
     formData.append("place_link", values.place_link || "");
     formData.append("rating", values.rating || "");
     formData.append("reviews", values.reviews || "");
-    formData.append("buisness_status", values.buisness_status || "");
+    formData.append("business_status", values.business_status || "");
     formData.append(
       "working_hours",
       JSON.stringify(formatWeeklyHours(updatedTime))
@@ -335,14 +395,15 @@ const EditBusiness = () => {
     if (newPhoto.length > 0) {
       newPhoto.forEach((file) => formData.append("newPhoto", file));
     }
-
+    //     console.log(values.rating)
+    // return;
     try {
       const response = await axios.put(`${baseUrl}business/${_id}`, formData);
       if (response.status === 200) {
-         toast.success("Business updated successfully");
-  
-          navigate("/business-listings", { state: { updated: true } });
-          setSubmitting && setSubmitting(false);
+        toast.success("Business updated successfully");
+
+        navigate("/business-listings", { state: { updated: true } });
+        setSubmitting && setSubmitting(false);
         // }, 1500);
       } else {
         setSubmitting && setSubmitting(false);
@@ -350,10 +411,8 @@ const EditBusiness = () => {
     } catch (error) {
       console.error("Submission failed:", error);
       toast.error("Something went wrong while updating business");
-      setSubmitting && setSubmitting(false); 
+      setSubmitting && setSubmitting(false);
     }
-    
-    
   };
 
   const handleImageDelete = async (url) => {
@@ -403,8 +462,70 @@ const EditBusiness = () => {
             initialValues={initialValues}
             enableReinitialize
             validationSchema={Yup.object({
-              display_name: Yup.string().required("Title is required"),
-              // Add other validations here
+              display_name: Yup.string().required("Name is required"),
+              types: Yup.array()
+                .min(1, "At least one type is required")
+                .of(Yup.string().required("Each type must be a valid string"))
+                .required("Types field is required"),
+              address: Yup.string().required("Address is required"),
+
+              street: Yup.string().required("Street is required"),
+              city: Yup.string().required("City is required"),
+              state: Yup.string().required("State is required"),
+              postal_code: Yup.string().required("Postal code is required"),
+              county: Yup.string().required("County is required"),
+              country_code: Yup.string()
+                .required("Country ISO code is required")
+                .matches(
+                  /^[A-Z]{2,3}$/,
+                  "Must be a valid ISO code like IN, US, or CA"
+                ),
+              business_status: Yup.string().required(
+                "Business status is required"
+              ),
+              // place_link: Yup.string().url("Invalid URL format"),
+              reviews: Yup.number()
+                .min(0, "Reviews count cannot be negative")
+                .required("Enter the reviews count"),
+              rating: Yup.number()
+                .min(1, "Rating must be between 1 and 5")
+                .max(5, "Rating must be between 1 and 5")
+                .required("Enter the rating count"),
+              // // latitude: Yup.number()
+              // //   .typeError("Latitude must be a number")
+              // //   .required("Latitude is required")
+              // //   .min(-90, "Latitude must be between -90 and 90")
+              // //   .max(90, "Latitude must be between -90 and 90"),
+              // // longitude: Yup.number()
+              // //   .typeError("Longitude must be a number")
+              // //   .required("Longitude is required")
+              // //   .min(-180, "Longitude must be between -180 and 180")
+              // //   .max(180, "Longitude must be between -180 and 180"),
+              phone: Yup.string()
+                .matches(/^\+?[1-9]\d{1,14}$/, "Invalid phone number")
+                .max(10, "Phone number must be between 10 digits")
+                .min(10, "Phone number must be between 10 digits")
+                .required("Phone number is required"),
+              // working_hours: Yup.array()
+              //   .of(
+              //     Yup.object().shape({
+              //       day: Yup.string()
+              //         .required("Day is required")
+              //         .oneOf(daysOfWeek, "Invalid day"),
+              //       startTime: Yup.string().when("is24Hours", {
+              //         is: false,
+              //         then: (schema) => schema.notRequired(),
+              //         otherwise: (schema) => schema.notRequired(),
+              //       }),
+              //       endTime: Yup.string().when("is24Hours", {
+              //         is: false,
+              //         then: (schema) => schema.notRequired(),
+              //         otherwise: (schema) => schema.notRequired(),
+              //       }),
+              //       is24Hours: Yup.boolean(),
+              //     })
+              //   )
+              //   .min(1, "At least one working hour is required"),
             })}
             onSubmit={handleSubmit}
           >
@@ -434,15 +555,25 @@ const EditBusiness = () => {
                       <div className="col-12 col-md-12 col-lg-12 mb-3">
                         <div className="form-group">
                           <label className="form-label">Types</label>
-                          {loading === true ? (
-                            "Data Fetching"
+                          {loading ? (
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                minHeight: "50px",
+                              }}
+                            >
+                              <Spin tip="Loading..." size="small" />
+                            </div>
                           ) : (
-                            <CreatableSelect
-                              name="types"
-                              options={filteredTypes}
-                              value={
-                                values.types.length > 0 &&
-                                values.types.map(
+                            <>
+                              {" "}
+                              <CreatableSelect
+                                classNamePrefix="select"
+                                name="types"
+                                options={filteredTypes}
+                                value={values.types.map(
                                   (type) =>
                                     allTypes.find(
                                       (option) => option.value === type
@@ -450,52 +581,59 @@ const EditBusiness = () => {
                                       label: type,
                                       value: type,
                                     }
-                                )
-                              }
-                              onChange={(selected) =>
-                                setFieldValue(
-                                  "types",
-                                  selected.map((option) => option.value)
-                                )
-                              }
-                              onInputChange={(inputValue) => {
-                                const filtered = allTypes.filter((option) =>
-                                  option.label
-                                    .toLowerCase()
-                                    .includes(inputValue.toLowerCase())
-                                );
-                                setFilteredTypes(filtered.slice(0, 20));
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" && e.target.value) {
-                                  const newType = e.target.value.trim();
-                                  if (
-                                    newType &&
-                                    !allTypes.some(
-                                      (option) => option.value === newType
+                                )}
+                                onChange={(selected) => {
+                                  setFieldValue(
+                                    "types",
+                                    selected.map((option) => option.value)
+                                  );
+                                }}
+                                onInputChange={(inputValue) => {
+                                  const query = inputValue.toLowerCase();
+                                  const filtered = allTypes
+                                    .filter((option) =>
+                                      option.label.toLowerCase().includes(query)
                                     )
-                                  ) {
-                                    const newOption = {
-                                      label: newType,
-                                      value: newType,
-                                    };
-                                    setAllTypes((prev) => [...prev, newOption]);
-                                    setFilteredTypes((prev) => [
-                                      ...prev,
-                                      newOption,
-                                    ]);
-                                    setFieldValue("types", [
-                                      ...values.types,
-                                      newType,
-                                    ]);
-                                  }
-                                  e.preventDefault(); // Prevent the default behavior of the Enter key
-                                }
-                              }}
-                              placeholder="Select or create a type..."
-                              isMulti
-                              isSearchable
-                            />
+                                    .sort((a, b) => {
+                                      const aLabel = a.label.toLowerCase();
+                                      const bLabel = b.label.toLowerCase();
+
+                                      if (aLabel === query && bLabel !== query)
+                                        return -1;
+                                      if (aLabel !== query && bLabel === query)
+                                        return 1;
+
+                                      return aLabel.localeCompare(bLabel);
+                                    });
+
+                                  setFilteredTypes(filtered);
+                                }}
+                                onCreateOption={(inputValue) => {
+                                  const newOption = {
+                                    label: inputValue,
+                                    value: inputValue,
+                                  };
+
+                                  setAllTypes((prev) => [...prev, newOption]);
+                                  setFilteredTypes((prev) => [
+                                    ...prev,
+                                    newOption,
+                                  ]);
+                                  setFieldValue("types", [
+                                    ...values.types,
+                                    inputValue,
+                                  ]);
+                                }}
+                                placeholder="Select or create a type..."
+                                isMulti
+                                isSearchable
+                              />
+                              <ErrorMessage
+                                name="types"
+                                component="div"
+                                className="error text-danger"
+                              />
+                            </>
                           )}
                         </div>
                       </div>
@@ -505,22 +643,31 @@ const EditBusiness = () => {
                         <div className="form-group">
                           <label className="form-label">Address</label>
                           <div className="col-12 col-md-12 col-lg-12 mb-3">
-                        <div className="form-group">
-                          <Field
-                            name="address"
-                            type="text"
-                            className="form-input"
-                            placeholder="Place map link"
-                          />
-                        </div>
-                        <p
-                        
-                        className="note text-muted"
-                        style={{ fontSize: "0.800rem" , marginTop: "10px"}}
-                      >
-                        Note: Please enter your complete address, including building number, street name, city, state, country, and postal code..
-                      </p>
-                      </div>
+                            <div className="form-group">
+                              <Field
+                                name="address"
+                                type="text"
+                                className="form-input"
+                                placeholder="Enter your address"
+                              />
+                              <ErrorMessage
+                                name="address"
+                                component="div"
+                                className="error text-danger"
+                              />
+                            </div>
+                            <p
+                              className="note text-muted"
+                              style={{
+                                fontSize: "0.800rem",
+                                marginTop: "10px",
+                              }}
+                            >
+                              Note: Please enter your complete address,
+                              including building number, street name, city,
+                              state, country, and postal code..
+                            </p>
+                          </div>
                           <div className="row">
                             <div className="col-12 col-md-6 col-lg-6 mb-3">
                               <Field
@@ -528,6 +675,11 @@ const EditBusiness = () => {
                                 type="text"
                                 className="form-input"
                                 placeholder="street"
+                              />
+                              <ErrorMessage
+                                name="street"
+                                component="div"
+                                className="error text-danger"
                               />
                             </div>
                             {/* <div className="col-12 col-md-6 col-lg-6 mb-3">
@@ -545,6 +697,11 @@ const EditBusiness = () => {
                                 className="form-input"
                                 placeholder="City"
                               />
+                              <ErrorMessage
+                                name="city"
+                                component="div"
+                                className="error text-danger"
+                              />
                             </div>
                             <div className="col-12 col-md-6 col-lg-6 mb-3">
                               <Field
@@ -552,6 +709,11 @@ const EditBusiness = () => {
                                 type="text"
                                 className="form-input"
                                 placeholder="State / Province / Region"
+                              />
+                              <ErrorMessage
+                                name="state"
+                                component="div"
+                                className="error text-danger"
                               />
                             </div>
                             <div className="col-12 col-md-6 col-lg-6 mb-3">
@@ -561,6 +723,11 @@ const EditBusiness = () => {
                                 className="form-input"
                                 placeholder="Postal code / Zip code"
                               />
+                              <ErrorMessage
+                                name="postal_code"
+                                component="div"
+                                className="error text-danger"
+                              />
                             </div>
                             <div className="col-12 col-md-6 col-lg-6 mb-3">
                               <Field
@@ -569,6 +736,11 @@ const EditBusiness = () => {
                                 className="form-input"
                                 placeholder="County"
                               />
+                              <ErrorMessage
+                                name="country"
+                                component="div"
+                                className="error text-danger"
+                              />
                             </div>
                             <div className="col-12 col-md-6 col-lg-6 mb-3">
                               <Field
@@ -576,6 +748,11 @@ const EditBusiness = () => {
                                 type="text"
                                 className="form-input"
                                 placeholder="CA"
+                              />
+                              <ErrorMessage
+                                name="country_code"
+                                component="div"
+                                className="error text-danger"
                               />
                             </div>
                             {/* <div className="col-12 col-md-6 col-lg-6 mb-3">
@@ -595,7 +772,7 @@ const EditBusiness = () => {
                               </option>
                             </Field>
                             {/* <ErrorMessage
-                              name="buisness_status"
+                              name="business_status"
                               component="div"
                               className="error text-danger"
                             /> *
@@ -761,12 +938,20 @@ const EditBusiness = () => {
                             </Field>
 
                             {/* Phone Number Input */}
-                            <Field
+                            {/* <Field
                               name="phone"
                               type="Number"
                               className="form-input w-75"
                               placeholder="Phone number"
-                            />
+                            /> */}
+                            <Field
+  name="phone"
+  type="tel"
+  maxLength="10"
+  pattern="\d{10}"
+  className="form-input w-75"
+  placeholder="Phone number"
+  />
                           </div>
                           <ErrorMessage
                             name="phone"
@@ -898,7 +1083,7 @@ const EditBusiness = () => {
                                       <option value="" disabled>
                                         Select a day
                                       </option>
-                                      {console.log("daysOfWeek", daysOfWeek)}
+                                      {/* {console.log("daysOfWeek", daysOfWeek)} */}
                                       {daysOfWeek.map((dayName) => (
                                         <option
                                           key={dayName}
@@ -1124,26 +1309,34 @@ const EditBusiness = () => {
                   {/* form button */}
                   <div className="col-12 col-md-12 col-lg-12">
                     <div className="vbtns">
-                      <button className="theme-btn btn-border" type="button">
-                        Clear
-                      </button>
+                      {/* <button
+        type="button"
+        className="theme-btn btn-border"
+        onClick={() => {
+          resetForm(); // This resets the form values
+          setPhotos([]); // Clear uploaded images
+          setPhotoError(""); // Clear photo error message
+          setRange([null, null]); // Reset date range
+          setDisabledDays([]); // Reset disabled weekdays
+        }}
+      > */}
                       <button
-                      className="theme-btn btn-main"
-                      type="submit"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <i
-                            className="fa fa-spinner fa-spin"
-                            style={{ marginRight: 8 }}
-                          ></i>{" "}
-                          Saving...
-                        </>
-                      ) : (
-                        "Save"
-                      )}
-                    </button>
+                        className="theme-btn btn-main"
+                        type="submit"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <i
+                              className="fa fa-spinner fa-spin"
+                              style={{ marginRight: 8 }}
+                            ></i>{" "}
+                            Saving...
+                          </>
+                        ) : (
+                          "Save"
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>

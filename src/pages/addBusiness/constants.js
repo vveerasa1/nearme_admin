@@ -20,11 +20,22 @@ function convert24hTo12h(time24h) {
       } else if (!startTime && !endTime) {
         result[day] = 'Closed';
       } else {
-        result[day] = `${startTime}-${endTime}`;
+        result[day] = `${formatTime(startTime)}-${formatTime(endTime)}`;
       }
     }
   
     return result;
+  }
+  
+  function formatTime(timeStr) {
+    // Expects input like "2.20 am"
+    const [time, period] = timeStr.toLowerCase().split(' ');
+    const [hour, minute] = time.split('.');
+  
+    const formattedHour = parseInt(hour, 10);
+    const formattedMinute = minute.padEnd(2, '0');
+  
+    return `${formattedHour}:${formattedMinute}${period === 'am' ? 'a.m' : 'p.m'}`;
   }
   
 
