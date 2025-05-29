@@ -395,7 +395,7 @@ const EditBusiness = () => {
     );
     formData.append("existingPhoto", JSON.stringify(existingPhoto));
 
-    if (images.length > 0) {
+    if (images?.length > 0) {
       images.forEach((file) => formData.append("newPhoto", file));
     }
     //     console.log(values.rating)
@@ -532,7 +532,7 @@ const EditBusiness = () => {
             })}
             onSubmit={handleSubmit}
           >
-            {({ values, setFieldValue, isSubmitting }) => (
+            {({ values, setFieldValue, isSubmitting, errors }) => (
               <Form className="form-wrapper">
                 <div className="row">
                   <div className="col-12 col-md-12 col-lg-6">
@@ -1164,7 +1164,7 @@ const EditBusiness = () => {
                                       24 Hrs
                                     </label>
                                   </div>
-
+                                    {console.log(errors, "my errors from the form")}
                                   {/* Add / Remove Buttons */}
                                   <div className="d-flex flex-column mt-1">
                                     {index === 0 &&

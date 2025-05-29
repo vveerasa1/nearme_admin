@@ -378,7 +378,7 @@ const EditOffer = () => {
       formData.append("discountValue", values.discountValue);
     }
     formData.append("existingImages", JSON.stringify(existingImages));
-    if (images.length > 0) {
+    if (images?.length > 0) {
       images.forEach((file) => formData.append("newImages", file));
     }
     try {
