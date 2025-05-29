@@ -159,7 +159,7 @@ const EditOffer = () => {
         break;
       } else {
         try {
-          await checkImageDimensions(file); // validate original dimensions
+          // await checkImageDimensions(file); // validate original dimensions
           const resizedImage = await resizeImage(file, 800, 600); // resize to 800x600
           resizedImages.push(resizedImage);
         } catch (err) {
@@ -378,8 +378,8 @@ const EditOffer = () => {
       formData.append("discountValue", values.discountValue);
     }
     formData.append("existingImages", JSON.stringify(existingImages));
-    if (newImages.length > 0) {
-      newImages.forEach((file) => formData.append("newImages", file));
+    if (images.length > 0) {
+      images.forEach((file) => formData.append("newImages", file));
     }
     try {
       const updateResponse = await axios.put(
@@ -581,8 +581,8 @@ const EditOffer = () => {
                                   </div>
                                 </div>
                               ))}
-                            {newImages.length > 0 &&
-                              newImages.map((file, index) => (
+                            {images?.length > 0 &&
+                              images?.map((file, index) => (
                                 <div
                                   key={`new-${index}`}
                                   className="uploaded-file row py-2"

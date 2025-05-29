@@ -28,6 +28,8 @@ const EditBusiness = () => {
 
   const { _id } = useParams();
   const [allTypes, setAllTypes] = useState([]);
+  const [images, setPhotos] = useState(null);
+
   const [filteredTypes, setFilteredTypes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [existingPhoto, setExistingPhoto] = useState([]);
@@ -149,22 +151,20 @@ const EditBusiness = () => {
               return { day, startTime: "", endTime: "", is24Hours: false };
             } else if (typeof value === "string" && value.includes("-")) {
               const [start, end] = value.split("-");
-              console.log(start, end, "my start and end");
-              const cleanedStart = cleanTimeString(start);
-              const cleanedEnd = cleanTimeString(end);
-
               return {
                 day,
-                startTime: convert12hTo24h(cleanedStart),
-                endTime: convert12hTo24h(cleanedEnd),
+                startTime: convert12hTo24h(start),
+                endTime: convert12hTo24h(end),
                 is24Hours: false,
               };
             } else {
-              console.warn(`Unexpected value for day "${day}":`, value);
               return { day, startTime: "", endTime: "", is24Hours: false };
             }
           }
         );
+        
+        
+        
 
         console.log(transformedWorkingHours, "transformed working hours");
 
@@ -178,7 +178,10 @@ const EditBusiness = () => {
           "+" + cleanedPhone.slice(0, cleanedPhone.length - 10);
         console.log("hello", data.business_status);
         setWorkingHours(transformedWorkingHours);
-        setExistingPhoto(Array.isArray(data.photo) ? data.photo : []);
+        // setExistingPhoto(Array.isArray(data.photo) ? data.photo : []);
+        if (data.photo && data.photo.length > 0) {
+          setExistingPhoto(data.photo);
+        }
         setInitialValues({
           display_name: data.display_name || "",
           types: Array.isArray(data.types)
@@ -253,7 +256,7 @@ const EditBusiness = () => {
     const files = Array.from(e.target.files);
     let error = "";
 
-    if (files.length + (photos?.length || 0) > MAX_IMAGES) {
+    if (files.length + (newPhoto?.length || 0) > MAX_IMAGES) {
       error = `You can upload a maximum of ${MAX_IMAGES} images.`;
     }
 
@@ -268,7 +271,7 @@ const EditBusiness = () => {
         break;
       } else {
         try {
-          await checkImageDimensions(file); // validate original dimensions
+          // await checkImageDimensions(file); // validate original dimensions
           const resizedImage = await resizeImage(file, 800, 600); // resize to 800x600
           resizedImages.push(resizedImage);
         } catch (err) {
@@ -392,8 +395,8 @@ const EditBusiness = () => {
     );
     formData.append("existingPhoto", JSON.stringify(existingPhoto));
 
-    if (newPhoto.length > 0) {
-      newPhoto.forEach((file) => formData.append("newPhoto", file));
+    if (images.length > 0) {
+      images.forEach((file) => formData.append("newPhoto", file));
     }
     //     console.log(values.rating)
     // return;
@@ -877,8 +880,8 @@ const EditBusiness = () => {
                                 ))}
 
                               {/* New images */}
-                              {newPhoto.length > 0 &&
-                                newPhoto.map((file, index) => (
+                              {images?.length > 0 &&
+                                images?.map((file, index) => (
                                   <div
                                     key={`new-${index}`}
                                     className="uploaded-file row py-2"
