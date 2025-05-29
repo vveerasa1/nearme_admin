@@ -8,6 +8,7 @@ import { Toaster } from "react-hot-toast";
 const { Search } = Input;
 import { Card } from "antd"; // Import Card from Ant Design
 import fallbackimage from "../../assets/images/landingPage.png";
+import axiosInstance from '../../interceptors/axiosInstance';
 
 const Users = () => {
   const [loading, setLoading] = useState(false);
@@ -34,18 +35,18 @@ const Users = () => {
   const fetchUsers = async (search = "") => {
     try {
       const queryParam = search ? `?search=${encodeURIComponent(search)}` : "";
-      const response = await axios.get(`${hostUrl}users${queryParam}`);
+      const response = await axiosInstance.get(`/users${queryParam}`);
       const userData = Array.isArray(response.data?.data)
         ? response.data.data
         : [];
   
-      console.log(userData);
       setUsers(userData);
       setFilteredUsers(userData);
     } catch (error) {
       console.error("Error fetching users:", error);
     }
   };
+  
   
 
   const handleSearch = (value) => {

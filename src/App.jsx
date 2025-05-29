@@ -23,86 +23,160 @@ import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap/dist/js/bootstrap.bundle.min.js"
 import ViewData from './pages/viewData'
 import { BusinessProvider } from './pages/businessListing/businessContext'
+import PrivateRoute from './components/privateRoute/PrivateRoute'
 function App() {
 
   return (
     <Router>
-      <BusinessProvider>
+    <BusinessProvider>
       <Routes>
-
         {/* Redirect default route ("/") to "/signin" */}
         <Route path="/" element={<Navigate to="/signin" />} />
-
-        {/* SignIn Route */}
+  
+        {/* Public Route */}
         <Route path="/signin" element={<SignIn />} />
-
-        {/* Routes for pages with Sidebar and Topbar */}
-        <Route 
-          path="/dashboard" 
-          element={<AppLayout><Dashboard /></AppLayout>} 
+  
+        {/* Private Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <AppLayout><Dashboard /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/business-listings" 
-          element={<AppLayout><BusinessListing /></AppLayout>} 
+        <Route
+          path="/business-listings"
+          element={
+            <PrivateRoute>
+              <AppLayout><BusinessListing /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/business-view" 
-          element={<AppLayout><BusinessView /></AppLayout>} 
+        <Route
+          path="/business-view"
+          element={
+            <PrivateRoute>
+              <AppLayout><BusinessView /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/add-new-business" 
-          element={<AppLayout><AddBusiness /></AppLayout>} 
+        <Route
+          path="/add-new-business"
+          element={
+            <PrivateRoute>
+              <AppLayout><AddBusiness /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/coupons" 
-          element={<AppLayout><Coupon /></AppLayout>} 
+        <Route
+          path="/coupons"
+          element={
+            <PrivateRoute>
+              <AppLayout><Coupon /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/deals" 
-          element={<AppLayout><Deal /></AppLayout>} 
+        <Route
+          path="/deals"
+          element={
+            <PrivateRoute>
+              <AppLayout><Deal /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/discounts" 
-          element={<AppLayout><Discount /></AppLayout>} 
+        <Route
+          path="/discounts"
+          element={
+            <PrivateRoute>
+              <AppLayout><Discount /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/view/:discountType/:_id" 
-          element={<AppLayout><ViewData /></AppLayout>} 
+        <Route
+          path="/view/:discountType/:_id"
+          element={
+            <PrivateRoute>
+              <AppLayout><ViewData /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/coupon-view" 
-          element={<AppLayout><CouponView /></AppLayout>} 
+        <Route
+          path="/coupon-view"
+          element={
+            <PrivateRoute>
+              <AppLayout><CouponView /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/deal-view" 
-          element={<AppLayout><DealView /></AppLayout>} 
+        <Route
+          path="/deal-view"
+          element={
+            <PrivateRoute>
+              <AppLayout><DealView /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/discount-view" 
-          element={<AppLayout><DiscountView /></AppLayout>} 
+        <Route
+          path="/discount-view"
+          element={
+            <PrivateRoute>
+              <AppLayout><DiscountView /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route 
-          path="/add-offer/:_id" 
-          element={<AppLayout><AddOffer /></AppLayout>} 
+        <Route
+          path="/add-offer/:_id"
+          element={
+            <PrivateRoute>
+              <AppLayout><AddOffer /></AppLayout>
+            </PrivateRoute>
+          }
         />
-         <Route 
-          path="/edit-offer/:type/:_id" 
-          element={<AppLayout><EditOffer /></AppLayout>} 
+        <Route
+          path="/edit-offer/:type/:_id"
+          element={
+            <PrivateRoute>
+              <AppLayout><EditOffer /></AppLayout>
+            </PrivateRoute>
+          }
         />
-         <Route 
-          path="/edit-business/:_id" 
-          element={<AppLayout><EditBusiness /></AppLayout>} 
+        <Route
+          path="/edit-business/:_id"
+          element={
+            <PrivateRoute>
+              <AppLayout><EditBusiness /></AppLayout>
+            </PrivateRoute>
+          }
         />
-         <Route 
-          path="/view-business/:_id" 
-          element={<AppLayout><ViewBusinessData /></AppLayout>} 
+        <Route
+          path="/view-business/:_id"
+          element={
+            <PrivateRoute>
+              <AppLayout><ViewBusinessData /></AppLayout>
+            </PrivateRoute>
+          }
         />
-        <Route path="/users"  element={<AppLayout><Users /></AppLayout> }/>
-        <Route path="/view-users/:_id"  element={<AppLayout><ViewUser /></AppLayout> }/>
+        <Route
+          path="/users"
+          element={
+            <PrivateRoute>
+              <AppLayout><Users /></AppLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/view-users/:_id"
+          element={
+            <PrivateRoute>
+              <AppLayout><ViewUser /></AppLayout>
+            </PrivateRoute>
+          }
+        />
       </Routes>
-      </BusinessProvider>
-
-    </Router>
+    </BusinessProvider>
+  </Router>
+  
   )
 }
 

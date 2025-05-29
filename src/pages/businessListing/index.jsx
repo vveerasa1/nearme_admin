@@ -8,6 +8,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { Card, Button, Spin, message, Popconfirm } from "antd";
 import { BusinessContext } from "./businessContext";
 import fallbackImage from "../../assets/images/landingPage.png";
+import axiosInstance from '../../interceptors/axiosInstance';
 
 const BusinessListing = () => {
   const location = useLocation();
@@ -66,7 +67,7 @@ const navigate = useNavigate();
         : `${baseUrl}business?page=1&limit=20`; // Fetch all if no searchText
   
       // Fetch data from the server
-      const response = await axios.get(url);
+      const response = await axiosInstance.get(url);
   
       // Update the business list with the latest data
       setBusinessList(response.data.data.data);
@@ -91,8 +92,8 @@ const navigate = useNavigate();
 
   const deleteBusiness = async (_id) => {
     try {
-      const url = `${baseUrl}business/${_id}`;
-      await axios.delete(url);
+      const url = `business/${_id}`;
+      await axiosInstance.delete(url);
       setBusinessList((prev) => prev.filter((item) => item._id !== _id));
       toast.success("Business deleted successfully");
     } catch (error) {

@@ -11,6 +11,8 @@ import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import weekday from "dayjs/plugin/weekday";
 import isBetween from "dayjs/plugin/isBetween";
+import axiosInstance from '../../interceptors/axiosInstance';
+
 import { Toaster, toast } from "react-hot-toast";
 
 dayjs.extend(weekday);
@@ -356,7 +358,7 @@ const AddOffer = () => {
 //     return;
 
     try {
-      const response = await axios.post(`${baseUrl}coupons/`, formData);
+      const response = await axiosInstance.post(`coupons/`, formData);
       toast.success(`${values.discountType} Created Successfully`);
       // resetForm();
       // setCustomDays([{ day: "", startTime: "12:01 AM", endTime: "11:59 PM" }]);

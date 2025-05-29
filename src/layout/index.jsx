@@ -75,6 +75,34 @@ const AppLayout = ({ children }) => {
     return "1";
   };
 
+  const handleAvatarClick = (visible) => {
+    if (visible) {
+      console.log("Avatar clicked!");
+      // You can trigger any logic here
+    }
+  };
+
+  const handleProfileMenuClick = ({ key }) => {
+    if (key === "1") {
+      console.log("Go to Profile");
+    } else if (key === "2") {
+      console.log("Logging out...");
+      localStorage.removeItem("authUser");
+      window.location.href = "/signin";
+    }
+  };
+  
+  const profileMenu = (
+    <Menu
+      onClick={handleProfileMenuClick}
+      items={[
+        { key: "1", label: "Profile" },
+        { key: "2", label: "Logout" },
+      ]}
+    />
+  );
+  
+
   const menuItems = [
     {
       key: "1",
@@ -108,14 +136,14 @@ const AppLayout = ({ children }) => {
     },
   ];
 
-  const profileMenu = (
-    <Menu
-      items={[
-        { key: "1", label: "Profile" },
-        { key: "2", label: "Logout" },
-      ]}
-    />
-  );
+  // const profileMenu = (
+  //   <Menu
+  //     items={[
+  //       { key: "1", label: "Profile" },
+  //       { key: "2", label: "Logout" },
+  //     ]}
+  //   />
+  // );
 
   return (
     <Layout style={{ height: "100vh" }}>
@@ -237,13 +265,20 @@ const AppLayout = ({ children }) => {
 
           <Space>
             <span style={{ fontSize: 16 }}>Admin</span>
-            <Dropdown overlay={profileMenu} trigger={["click"]}>
-              <Avatar
-                size="large"
-                icon={<UserOutlined />}
-                style={{ backgroundColor: "#31A5DC", cursor: "pointer" }}
-              />
-            </Dropdown>
+            <Dropdown
+  overlay={profileMenu}
+  trigger={["click"]}
+  onOpenChange={(visible) => {
+    if (visible) console.log("Avatar clicked");
+  }}
+>
+  <Avatar
+    size="large"
+    icon={<UserOutlined />}
+    style={{ backgroundColor: "#31A5DC", cursor: "pointer" }}
+  />
+</Dropdown>
+
           </Space>
         </Header>
 

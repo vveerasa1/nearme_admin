@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom"; 
+import axiosInstance from '../../interceptors/axiosInstance';
+
 
 import { Card, Switch } from "antd";
 import axios from "axios";
@@ -14,7 +16,7 @@ const ViewCoupon = () => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await axios.get(`${baseUrl}coupons/${_id}`);
+        const res = await axiosInstance.get(`${baseUrl}coupons/${_id}`);
         setActive(res.data.active);
       } catch (err) {
         console.error("Failed to fetch coupon:", err);
@@ -30,7 +32,7 @@ const ViewCoupon = () => {
 
   const handleStatusChange = async (checked) => {
     try {
-      await axios.patch(`${baseUrl}coupons/${_id}/status`, { active: checked });
+      await axiosInstance.patch(`${baseUrl}coupons/${_id}/status`, { active: checked });
       setActive(checked);
     } catch (err) {
       console.error("Failed to update status:", err);

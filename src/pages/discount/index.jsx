@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import "./style.css";
 import {Spin} from "antd";
 import { Link, useNavigate } from "react-router-dom";
+import axiosInstance from '../../interceptors/axiosInstance';
 import axios from "axios";
 import { Card, Pagination, Button, Popconfirm, message } from "antd";
 import { Edit, Delete } from "@mui/icons-material";
@@ -26,7 +27,7 @@ const Discount = () => {
       const url = searchText
         ? `${baseUrl}&keyword=${encodeURIComponent(searchText)}`
         : baseUrl;
-      const response = await axios.get(url);
+      const response = await axiosInstance.get(url);
       setGetDiscount(response.data.data.couponInfo || []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -70,7 +71,7 @@ const Discount = () => {
   const handleDelete = async (_id) => {
     try {
       setLoading(true);
-      await axios.delete(`${hostUrl}coupons/${_id}`);
+      await axiosInstance.delete(`${hostUrl}coupons/${_id}`);
       message.success("Deleted successfully");
       fetchData();
       setLoading(false);

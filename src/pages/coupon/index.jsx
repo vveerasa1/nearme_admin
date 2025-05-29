@@ -9,6 +9,8 @@ import { Edit, Delete } from "@mui/icons-material";
 import { debounce } from "lodash";
 import fallbackImage from "../../assets/images/landingPage.png";
 import dayjs from 'dayjs';
+import axiosInstance from '../../interceptors/axiosInstance';
+
 
 const Coupon = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,7 +39,7 @@ const Coupon = () => {
       const url = searchText
         ? `${baseUrl}&keyword=${encodeURIComponent(searchText)}`
         : baseUrl;      
-      const response = await axios.get(url);
+      const response = await axiosInstance.get(url)
       console.log(response)
       setGetCoupon(response.data.data.couponInfo);
       setLoading(false)
@@ -91,7 +93,7 @@ const formatValidDateRange = (startDateStr, endDateStr) => {
 
   const handleDelete = async (_id) => {
     try {
-      const response = await axios.delete(
+      const response = await axiosInstance.delete(
         `${hostUrl}coupons/${_id}`
       );
       console.log(response);

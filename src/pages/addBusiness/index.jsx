@@ -3,6 +3,8 @@ import "./style.css";
 import { Link, useNavigate } from "react-router-dom";
 import { Star, Add, Remove, Delete } from "@mui/icons-material";
 import { Formik, Form, Field, ErrorMessage, FieldArray } from "formik";
+import axiosInstance from '../../interceptors/axiosInstance';
+
 import * as Yup from "yup";
 import axios from "axios";
 import { Spin } from "antd";
@@ -202,8 +204,8 @@ const AddBusiness = () => {
     const fetchTypes = async () => {
       try {
         setLoading(true);
-        const url = `${baseUrl}business/types`;
-        const response = await axios.get(url);
+        const url = `business/types`;
+        const response = await axiosInstance.get(url);
         const options = response.data.data.map((type) => ({
           label: type,
           value: type,
@@ -335,7 +337,7 @@ const AddBusiness = () => {
     // return;
     try {
       // Make the API request
-      const response = await axios.post(`${baseUrl}business`, formData);
+      const response = await axiosInstance.post(`business`, formData);
       console.log("Business submitted:", response.data);
 
       // Reset form and clear photos/working hours after submission

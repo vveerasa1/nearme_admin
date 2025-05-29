@@ -11,6 +11,7 @@ import dayjs from "dayjs";
 import weekday from "dayjs/plugin/weekday";
 import isBetween from "dayjs/plugin/isBetween";
 import { Toaster, toast } from "react-hot-toast";
+import axiosInstance from '../../interceptors/axiosInstance';
 import CircularProgress from "@mui/material/CircularProgress";
 import {
   convert12hTo24h,
@@ -382,7 +383,7 @@ const EditOffer = () => {
       images.forEach((file) => formData.append("newImages", file));
     }
     try {
-      const updateResponse = await axios.put(
+      const updateResponse = await axiosInstance.put(
         `${baseUrl}coupons/${_id}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
@@ -419,7 +420,7 @@ const EditOffer = () => {
     }
     try {
       const deleteUrl = `${baseUrl}coupons/${_id}/image`;
-      await axios.delete(deleteUrl, { data: { imageUrl: urlOrIdx } });
+      await axiosInstance.delete(deleteUrl, { data: { imageUrl: urlOrIdx } });
       setExistingImages((prevImages) =>
         prevImages.filter((image) => image !== urlOrIdx)
       );

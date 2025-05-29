@@ -7,6 +7,7 @@ import { Card, Pagination, Button, Popconfirm, message, Spin } from "antd";
 import { Edit, Delete } from "@mui/icons-material";
 import { debounce } from "lodash";
 import fallbackImage from "../../assets/images/landingPage.png";
+import axiosInstance from "../../interceptors/axiosInstance";
 
 const Deal = () => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const Deal = () => {
       const url = searchText
         ? `${baseUrl}&keyword=${encodeURIComponent(searchText)}`
         : baseUrl;
-      const response = await axios.get(url);
+      const response = await axiosInstance.get(url);
       setGetDeal(response.data.data.couponInfo || []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -84,7 +85,7 @@ const Deal = () => {
   // Delete handler
   const handleDelete = async (_id) => {
     try {
-      await axios.delete(`${hostUrl}coupons/${_id}`);
+      await axiosInstance.delete(`coupons/${_id}`);
       message.success("Deal deleted successfully");
       fetchData(); // refetch after delete
     } catch (err) {
@@ -146,124 +147,144 @@ const Deal = () => {
 
                     return (
                       <div
-  className="col-lg-4 col-md-6 col-12 d-flex py-3"
-  key={item._id}
->
-<Card
-                    hoverable
-                    onClick={() =>
-                      navigate(`/view/${item.discountType}/${item._id}`, { state: item })
-                    }
-                    className="w-100"
-                    style={{
-                      marginBottom: "20px",
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
-                      borderRadius: "10px",
-                      opacity: isDisabled ? 0.6 : 1,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div className="d-flex w-100 align-items-start" style={{ position: 'relative' }}>
-                      {/* Left: Image */}
-                      <div style={{ width: "100px", flexShrink: 0 }}>
-                        <img
-                          src={
-                            Array.isArray(item?.images) &&
-                            item.images.length > 0 &&
-                            item.images[0]?.trim()
-                              ? item.images[0]
-                              : fallbackImage
+                        className="col-lg-4 col-md-6 col-12 d-flex py-3"
+                        key={item._id}
+                      >
+                        <Card
+                          hoverable
+                          onClick={() =>
+                            navigate(`/view/${item.discountType}/${item._id}`, {
+                              state: item,
+                            })
                           }
-                          onError={(e) => { e.target.src = fallbackImage; }}
-                          className="img-fluid"
-                          alt="Discount"
+                          className="w-100 "
                           style={{
-                            height: "100px",
-                            width: "100px",
-                            objectFit: "cover",
-                            borderRadius: "6px",
-                          }}
-                        />
-                      </div>
-
-                      {/* Right: Text Content */}
-                      <div className="ms-3 flex-grow-1">
-                        <h6
-                          className="mb-2 fw-semibold"
-                          style={{
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
+                            marginBottom: "20px",
+                            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
+                            borderRadius: "10px",
+                            opacity: isDisabled ? 0.6 : 1,
+                            cursor: "pointer",
                           }}
                         >
-                          {item.title || "No Title"}
-                        </h6>
-                        <p className="mb-1"><strong>Store:</strong> {item.storeInfo.display_name}</p>
-                        <p className="mb-1 text-muted">
-                          <strong>
-                            {formatValidDateRange(item.dateRange?.startDate, item.dateRange?.endDate)}
-                          </strong>
-                        </p>
-                        <span className="text-primary fw-semibold text-decoration-none">View</span>
+                          <div
+                            className="d-flex "
+                            
+                          >
+                            {/* Left: Image */}
+                            <div style={{ width: "100px", flexShrink: 0 }}>
+                              <img
+                                src={
+                                  Array.isArray(item?.images) &&
+                                  item.images.length > 0 &&
+                                  item.images[0]?.trim()
+                                    ? item.images[0]
+                                    : fallbackImage
+                                }
+                                onError={(e) => {
+                                  e.target.src = fallbackImage;
+                                }}
+                                className="img-fluid"
+                                alt="Discount"
+                                style={{
+                                  height: "100px",
+                                  width: "100px",
+                                  objectFit: "cover",
+                                  borderRadius: "6px",
+                                }}
+                              />
+                            </div>
+
+                            {/* Right: Text Content */}
+                            <div className="ms-3 flex-grow-1">
+                              <h6
+                                className="mb-2 fw-semibold"
+                                style={{
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                {item.title || "No Title"}
+                              </h6>
+                              <p className="mb-1">
+                                <strong>Store:</strong>{" "}
+                                {item.storeInfo.display_name}
+                              </p>
+                              <p className="mb-1 text-muted">
+                                <strong>
+                                  {formatValidDateRange(
+                                    item.dateRange?.startDate,
+                                    item.dateRange?.endDate
+                                  )}
+                                </strong>
+                              </p>
+                              <span className="text-primary fw-semibold text-decoration-none">
+                                View
+                              </span>
+                            </div>
+
+                            {/* Right-top corner: Edit & Delete buttons */}
+                            <div
+                            className="col-1 "
+                              // style={{
+                              //   position: "absolute",
+                              //   top: 10,
+                              //   right: 10,
+                              //   display: "flex",
+                              //   flexDirection: "column",
+                              //   gap: "6px",
+                              // }}
+                            >
+                              <div className="d-flex flex-column ">
+                              <Button
+                                type="text"
+                                className="btn border rounded-5 btn-sm"
+                                icon={<Edit className="fs-6 text-primary" />}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(
+                                    `/edit-offer/${item.discountType}/${item._id}`,
+                                    {
+                                      state: item,
+                                    }
+                                  );
+                                }}
+                                disabled={isDisabled}
+                              />
+
+                              <Popconfirm
+                                title="Delete the discount"
+                                description="Are you sure to delete this discount?"
+                                onConfirm={(e) => {
+                                  e?.stopPropagation?.(); // stop bubbling on confirm
+                                  handleDelete(item._id);
+                                }}
+                                onCancel={(e) => {
+                                  e?.stopPropagation?.(); // stop bubbling on cancel
+                                  cancel(e);
+                                }}
+                                okText="Yes"
+                                cancelText="No"
+                              >
+                                <Button
+                                  type="text"
+                                  className="btn border rounded-5 d-flex mt-2"
+                                  icon={<Delete className="fs-6" />}
+                                  danger
+                                  onClick={(e) => e.stopPropagation()} // stop bubbling on button click
+                                  style={{ outline: "none", boxShadow: "none" }}
+                                  disabled={item.active === false}
+                                />
+                              </Popconfirm>
+
+                              </div>
+                              
+                            </div>
+                          </div>
+                        </Card>
                       </div>
-
-                      {/* Right-top corner: Edit & Delete buttons */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: 10,
-                          right: 10,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "6px",
-                        }}
-                      >
-                        <Button
-                          type="text"
-                          className="btn border rounded-5 btn-sm"
-                          icon={<Edit className="fs-6 text-primary" />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/edit-offer/${item.discountType}/${item._id}`, {
-                              state: item,
-                            });
-                          }}
-                          disabled={isDisabled}
-                        />
-
-
-<Popconfirm
-  title="Delete the discount"
-  description="Are you sure to delete this discount?"
-  onConfirm={(e) => {
-    e?.stopPropagation?.(); // stop bubbling on confirm
-    handleDelete(item._id);
-  }}
-  onCancel={(e) => {
-    e?.stopPropagation?.(); // stop bubbling on cancel
-    cancel(e);
-  }}
-  okText="Yes"
-  cancelText="No"
->
-  <Button
-    type="text"
-    className="btn border rounded-5 d-flex"
-    icon={<Delete className="fs-6" />}
-    danger
-    onClick={(e) => e.stopPropagation()} // stop bubbling on button click
-    style={{ outline: "none", boxShadow: "none" }}
-    disabled={item.active === false}
-  />
-</Popconfirm>
-
-                      </div>
-                    </div>
-                  </Card>
-</div>
-
                     );
                   })
                 ) : (

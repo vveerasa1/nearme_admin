@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import axios from "axios";
+import axiosInstance from '../../interceptors/axiosInstance';
 
 const ViewBusinessData = () => {
   const { _id } = useParams();
@@ -12,7 +13,7 @@ const ViewBusinessData = () => {
   useEffect(() => {
     const fetchBusinessStatus = async () => {
       try {
-        const response = await axios.get(`${baseUrl}business/${_id}`);
+        const response = await axiosInstance.get(`${baseUrl}business/${_id}`);
         console.log(response.data);
       } catch (error) {
         console.error("Error fetching business:", error);

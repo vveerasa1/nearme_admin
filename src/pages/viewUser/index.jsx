@@ -4,14 +4,13 @@ import { Card, Switch } from "antd";
 import fallbackImage from "../../assets/images/landingPage.png";
 import { CheckCircleTwoTone } from "@ant-design/icons";
 import axios from "axios";
+import axiosInstance from '../../interceptors/axiosInstance';
+
 
 const ViewUser = () => {
   const { _id } = useParams();
   const { state: user } = useLocation();
   const [isEnabled, setIsEnabled] = useState(user?.enabled ?? false);
-
-  // const { state: data } = useLocation();
-  const baseUrl = import.meta.env.VITE_BASE_URL;
 
   const formatDOB = (dob) => {
     if (!dob) return "Not available";
@@ -46,7 +45,7 @@ const ViewUser = () => {
 
   const handleStatusChange = async (checked) => {
     try {
-      await axios.put(`${baseUrl}users/profile/${_id}`, { enabled: checked });
+      await axiosInstance.put(`/users/profile/${_id}`, { enabled: checked });
       setIsEnabled(checked);
     } catch (err) {
       console.error("Failed to update status:", err);

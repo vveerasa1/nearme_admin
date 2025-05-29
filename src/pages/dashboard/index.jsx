@@ -2,6 +2,7 @@ import React from "react";
 import "./style.css";
 import { Link } from "react-router-dom";
 import { Business, LocalOffer, Person } from "@mui/icons-material";
+import axiosInstance from '../../interceptors/axiosInstance';
 import CountUp from "react-countup";
 import { useEffect, useState } from "react";
 import { Spin } from "antd";
@@ -43,8 +44,9 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const dashboardRes = await axios.get(`${baseUrl}dashboard`);
-        const weekGraphRes = await axios.get(`${baseUrl}dashboard/graph?type=week`);
+        setLoading(true)
+        const dashboardRes = await axiosInstance.get(`dashboard`);
+        const weekGraphRes = await axiosInstance.get(`dashboard/graph?type=week`);
   
         const countData = dashboardRes.data.data;
   
@@ -70,12 +72,12 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
       if (type === "month") {
         if (forGraph === "business" && !getGraphMonthData) {
           setLoadingBusinessGraph(true);
-          const res = await axios.get(`${baseUrl}dashboard/graph?type=month`);
+          const res = await axiosInstance.get(`dashboard/graph?type=month`);
           setGetGraphMonthData(res.data.data);
           setLoadingBusinessGraph(false);
         } else if (forGraph === "coupon" && !getGraphMonthData) {
           setLoadingCouponGraph(true);
-          const res = await axios.get(`${baseUrl}dashboard/graph?type=month`);
+          const res = await axiosInstance.get(`dashboard/graph?type=month`);
           setGetGraphMonthData(res.data.data);
           setLoadingCouponGraph(false);
         }
@@ -84,12 +86,13 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
       if (type === "year") {
         if (forGraph === "business" && !getGraphYearData) {
           setLoadingBusinessGraph(true);
-          const res = await axios.get(`${baseUrl}dashboard/graph?type=year`);
+          // const res = await axios.get(`${baseUrl}dashboard/graph?type=year`);
+          const res = await axiosInstance.get(`dashboard/graph?type=year`);
           setGetGraphYearData(res.data.data);
           setLoadingBusinessGraph(false);
         } else if (forGraph === "coupon" && !getGraphYearData) {
           setLoadingCouponGraph(true);
-          const res = await axios.get(`${baseUrl}dashboard/graph?type=year`);
+          const res = await axiosInstance.get(`dashboard/graph?type=year`);
           setGetGraphYearData(res.data.data);
           setLoadingCouponGraph(false);
         }
@@ -276,7 +279,7 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
               </div>
               <div className="gc-body">
                 <ResponsiveContainer>
-                  {loadingBusinessGraph === true ? (
+                  {loading === true ? (
                     <Spin />
                   ) : (
                     <LineChart
@@ -344,7 +347,7 @@ const [loadingCouponGraph, setLoadingCouponGraph] = useState(false);
               </div>
               <div className="gc-body">
                 <ResponsiveContainer>
-                  {loadingCouponGraph === true ? (
+                  {loading === true ? (
                     <Spin />
                   ) : (
                     <LineChart data={getCouponGraphData()}>
