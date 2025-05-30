@@ -7,7 +7,7 @@ import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { Toaster } from "react-hot-toast";
 const { Search } = Input;
 import { Card } from "antd"; // Import Card from Ant Design
-import fallbackimage from "../../assets/images/landingPage.png";
+import fallbackimage from "../../assets/images/people.png";
 import axiosInstance from '../../interceptors/axiosInstance';
 
 const Users = () => {

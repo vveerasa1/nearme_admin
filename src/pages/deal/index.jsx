@@ -2,92 +2,105 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import "./style.css";
 import dayjs from "dayjs";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Card, Pagination, Button, Popconfirm, message, Spin } from "antd";
 import { Edit, Delete } from "@mui/icons-material";
 import { debounce } from "lodash";
 import fallbackImage from "../../assets/images/landingPage.png";
 import axiosInstance from "../../interceptors/axiosInstance";
 
-const Deal = () => {
+const Deals = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [getDeal, setGetDeal] = useState(location.state?.deals || []);
+  const [getDeals, setGetDeals] = useState(location.state?.deals || []);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 12;
+  const [searchText, setSearchText] = useState("");
+  const [totalCount, setTotalCount] = useState(0);
+
+  const pageSize = 9;
   const hostUrl = import.meta.env.VITE_BASE_URL;
 
-  // Format the valid date range for display
   const formatValidDateRange = (startDateStr, endDateStr) => {
     const start = dayjs(startDateStr).format("D/M/YY");
     const end = dayjs(endDateStr).format("D/M/YY");
     return `Valid: ${start} - ${end}`;
   };
 
-  // Fetch data function
-  const fetchData = async (searchText) => {
+  const fetchData = async (page = 1) => {
     try {
       setLoading(true);
-      const baseUrl = `${hostUrl}coupons?discountType=Deal`;
-      const url = searchText
-        ? `${baseUrl}&keyword=${encodeURIComponent(searchText)}`
-        : baseUrl;
-      const response = await axiosInstance.get(url);
-      setGetDeal(response.data.data.couponInfo || []);
+      if (searchText.trim()) {
+        const url = `${hostUrl}coupons?discountType=Deal&keyword=${encodeURIComponent(searchText)}&page=${page}&limit=${pageSize}`;
+        const response = await axiosInstance.get(url);
+        setGetDeals(response.data.data.couponInfo || []);
+        setTotalCount(response.data.data.pagination?.totalCount || 0);
+        setCurrentPage(response.data.data.pagination?.page || 1);
+      } else {
+        const url = `${hostUrl}coupons?discountType=Deal`;
+        const response = await axiosInstance.get(url);
+        setGetDeals(response.data.data.couponInfo || []);
+        setTotalCount(0);
+        setCurrentPage(1);
+      }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching data", error);
       message.error("Failed to fetch deals");
     } finally {
       setLoading(false);
     }
   };
-
-  // Only fetch if no data in location.state
   useEffect(() => {
     if (!location.state?.deals) {
-      fetchData();
+      if (searchText.trim()) {
+        debouncedFetchData(searchText);
+      } else {
+        fetchData(); // Call non-paginated API when search is cleared
+      }
     }
-  }, [location.state?.deals]);
+  }, [searchText]);
+  
 
-  // Debounce the search input to avoid too many API calls
   const debouncedFetchData = useMemo(
     () =>
-      debounce((searchText) => {
-        setCurrentPage(1);
-        fetchData(searchText);
+      debounce((value) => {
+        fetchData(1);
       }, 500),
-    []
+    [searchText]
   );
 
-  // Cleanup debounce on unmount
   useEffect(() => {
     return () => {
       debouncedFetchData.cancel();
     };
   }, [debouncedFetchData]);
-
   const handleSearchChange = (e) => {
-    debouncedFetchData(e.target.value);
+    const value = e.target.value;
+    debouncedFetchData.cancel(); // cancel previous calls
+    setSearchText(value);
+    debouncedFetchData(value);
   };
+  
 
-  // Slice deals for current page
   const pagedDeals = useMemo(() => {
+    if (searchText.trim()) return getDeals;
     const startIdx = (currentPage - 1) * pageSize;
-    return getDeal.slice(startIdx, startIdx + pageSize);
-  }, [currentPage, getDeal]);
+    return getDeals.slice(startIdx, startIdx + pageSize);
+  }, [currentPage, getDeals, searchText]);
 
   const handlePageChange = (page) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" }); // scroll to top on page change
+    if (searchText.trim()) {
+      fetchData(page);
+    } else {
+      setCurrentPage(page);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Delete handler
   const handleDelete = async (_id) => {
     try {
       await axiosInstance.delete(`coupons/${_id}`);
       message.success("Deal deleted successfully");
-      fetchData(); // refetch after delete
+      fetchData(currentPage);
     } catch (err) {
       console.error("Error deleting deal:", err);
       message.error("Failed to delete deal");
@@ -100,7 +113,6 @@ const Deal = () => {
 
   return (
     <div className="content-wrapper">
-      {/* Breadcrumb */}
       <div className="breadcrumb-wrapper d-flex flex-column flex-md-row">
         <div className="breadcrumb-block">
           <h2 className="page-heading">Deals</h2>
@@ -117,15 +129,12 @@ const Deal = () => {
         </div>
       </div>
 
-      {/* List Section */}
       <div className="lists-container py-4">
         <div className="row">
           <div className="col-12">
             <div className="lists-wrapper businesslist">
-              {/* Search bar */}
               <div className="list-filter d-flex justify-content-between align-items-center mb-3">
                 <h5 className="mb-0 fw-semibold">Deals List</h5>
-
                 <input
                   className="lfs-input"
                   type="text"
@@ -135,7 +144,6 @@ const Deal = () => {
                 />
               </div>
 
-              {/* Deals Cards */}
               <div className="row">
                 {loading ? (
                   <div className="d-flex justify-content-center w-100">
@@ -146,10 +154,7 @@ const Deal = () => {
                     const isDisabled = item.active === false;
 
                     return (
-                      <div
-                        className="col-lg-4 col-md-6 col-12 d-flex py-3"
-                        key={item._id}
-                      >
+                      <div className="col-lg-4 col-md-6 col-12 d-flex py-3" key={item._id}>
                         <Card
                           hoverable
                           onClick={() =>
@@ -157,20 +162,15 @@ const Deal = () => {
                               state: item,
                             })
                           }
-                          className="w-100 "
+                          className="w-100"
                           style={{
-                            marginBottom: "20px",
                             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
                             borderRadius: "10px",
                             opacity: isDisabled ? 0.6 : 1,
                             cursor: "pointer",
                           }}
                         >
-                          <div
-                            className="d-flex "
-                            
-                          >
-                            {/* Left: Image */}
+                          <div className="d-flex">
                             <div style={{ width: "100px", flexShrink: 0 }}>
                               <img
                                 src={
@@ -180,11 +180,9 @@ const Deal = () => {
                                     ? item.images[0]
                                     : fallbackImage
                                 }
-                                onError={(e) => {
-                                  e.target.src = fallbackImage;
-                                }}
+                                onError={(e) => (e.target.src = fallbackImage)}
                                 className="img-fluid"
-                                alt="Discount"
+                                alt="Deal"
                                 style={{
                                   height: "100px",
                                   width: "100px",
@@ -193,8 +191,6 @@ const Deal = () => {
                                 }}
                               />
                             </div>
-
-                            {/* Right: Text Content */}
                             <div className="ms-3 flex-grow-1">
                               <h6
                                 className="mb-2 fw-semibold"
@@ -209,8 +205,7 @@ const Deal = () => {
                                 {item.title || "No Title"}
                               </h6>
                               <p className="mb-1">
-                                <strong>Store:</strong>{" "}
-                                {item.storeInfo.display_name}
+                                <strong>Store:</strong> {item.storeInfo.display_name}
                               </p>
                               <p className="mb-1 text-muted">
                                 <strong>
@@ -225,62 +220,49 @@ const Deal = () => {
                               </span>
                             </div>
 
-                            {/* Right-top corner: Edit & Delete buttons */}
-                            <div
-                            className="col-1 "
-                              // style={{
-                              //   position: "absolute",
-                              //   top: 10,
-                              //   right: 10,
-                              //   display: "flex",
-                              //   flexDirection: "column",
-                              //   gap: "6px",
-                              // }}
-                            >
-                              <div className="d-flex flex-column ">
-                              <Button
-                                type="text"
-                                className="btn border rounded-5 btn-sm"
-                                icon={<Edit className="fs-6 text-primary" />}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(
-                                    `/edit-offer/${item.discountType}/${item._id}`,
-                                    {
-                                      state: item,
-                                    }
-                                  );
-                                }}
-                                disabled={isDisabled}
-                              />
-
-                              <Popconfirm
-                                title="Delete the discount"
-                                description="Are you sure to delete this discount?"
-                                onConfirm={(e) => {
-                                  e?.stopPropagation?.(); // stop bubbling on confirm
-                                  handleDelete(item._id);
-                                }}
-                                onCancel={(e) => {
-                                  e?.stopPropagation?.(); // stop bubbling on cancel
-                                  cancel(e);
-                                }}
-                                okText="Yes"
-                                cancelText="No"
-                              >
+                            <div className="col-1">
+                              <div className="d-flex flex-column">
                                 <Button
                                   type="text"
-                                  className="btn border rounded-5 d-flex mt-2"
-                                  icon={<Delete className="fs-6" />}
-                                  danger
-                                  onClick={(e) => e.stopPropagation()} // stop bubbling on button click
-                                  style={{ outline: "none", boxShadow: "none" }}
-                                  disabled={item.active === false}
+                                  className="btn border rounded-5 btn-sm"
+                                  icon={<Edit className="fs-6 text-primary" />}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(
+                                      `/edit-offer/${item.discountType}/${item._id}`,
+                                      {
+                                        state: item,
+                                      }
+                                    );
+                                  }}
+                                  disabled={isDisabled}
                                 />
-                              </Popconfirm>
 
+                                <Popconfirm
+                                  title="Delete the deal"
+                                  description="Are you sure to delete this deal?"
+                                  onConfirm={(e) => {
+                                    e?.stopPropagation?.();
+                                    handleDelete(item._id);
+                                  }}
+                                  onCancel={(e) => {
+                                    e?.stopPropagation?.();
+                                    cancel(e);
+                                  }}
+                                  okText="Yes"
+                                  cancelText="No"
+                                >
+                                  <Button
+                                    type="text"
+                                    className="btn border rounded-5 d-flex mt-2"
+                                    icon={<Delete className="fs-6" />}
+                                    danger
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{ outline: "none", boxShadow: "none" }}
+                                    disabled={isDisabled}
+                                  />
+                                </Popconfirm>
                               </div>
-                              
                             </div>
                           </div>
                         </Card>
@@ -294,16 +276,15 @@ const Deal = () => {
                 )}
               </div>
 
-              {/* Pagination */}
-              {getDeal.length > pageSize && (
+              {/* Pagination only on search */}
+              {totalCount > pageSize && (
                 <div className="d-flex justify-content-center p-2">
                   <Pagination
                     current={currentPage}
-                    total={getDeal.length}
+                    total={totalCount}
                     pageSize={pageSize}
                     onChange={handlePageChange}
                     showSizeChanger={false}
-                    showQuickJumper
                   />
                 </div>
               )}
@@ -315,4 +296,4 @@ const Deal = () => {
   );
 };
 
-export default Deal;
+export default Deals;

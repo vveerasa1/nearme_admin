@@ -129,11 +129,11 @@ const ViewBusinessData = () => {
             <div className="mb-2">
               <strong>Address</strong>
               <p className="mb-1">
-                {data.address}, {data.street}
+                {data.address}
               </p>
-              <p className="mb-3">
+              {/* <p className="mb-3">
                 {data.city}, {data.state} - {data.postal_code}
-              </p>
+              </p> */}
             </div>
 
             <div className="mb-2">

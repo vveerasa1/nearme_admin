@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { Card, Switch } from "antd";
-import fallbackImage from "../../assets/images/landingPage.png";
+import fallbackImage from "../../assets/images/people.png";
 import { CheckCircleTwoTone } from "@ant-design/icons";
 import axios from "axios";
 import axiosInstance from '../../interceptors/axiosInstance';
@@ -76,24 +76,28 @@ const ViewUser = () => {
 
           {/* Right Column - User Info */}
           <div className="col-lg-8">
-            <h5 className="fw-bold">{user?.userName || "No Name"}</h5>
-            <p className="mb-1">
-              <strong>DOB:</strong> {formatDOB(user?.dob)}
-            </p>
-            <p className="mb-1">
-              <strong>Phone Number:</strong> {user?.mobile || "No mobile number"}
-            </p>
-            <p className="mb-1">
-              <strong>Address:</strong> {formatAddress(user?.address)}
-            </p>
-            <p className="mb-1">
-              <strong>Joined by:</strong> {formatJoinedDate(user?.createdAt)}
-            </p>
-            <p className="mb-1">
-              <CheckCircleTwoTone twoToneColor="#52c41a" />
-              <span style={{ color: "#52c41a", marginLeft: "6px" }}>Verified</span>
-            </p>
-          </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+    <h5 className="fw-bold mb-0">{user?.userName || "No Name"}</h5>
+    <div className="d-flex align-items-center">
+      <CheckCircleTwoTone twoToneColor="#52c41a" />
+      <span style={{ color: "#52c41a", marginLeft: "6px" }}>Verified</span>
+    </div>
+  </div>
+
+  <p className="mb-1">
+    <strong>DOB:</strong> {formatDOB(user?.dob)}
+  </p>
+  <p className="mb-1">
+    <strong>Phone Number:</strong> {user?.mobile || "No mobile number"}
+  </p>
+  <p className="mb-1">
+    <strong>Address:</strong> {formatAddress(user?.address)}
+  </p>
+  <p className="mb-1">
+    <strong>Joined by:</strong> {formatJoinedDate(user?.createdAt)}
+  </p>
+</div>
+
         </div>
 
         {/* Switch Toggle */}

@@ -315,6 +315,9 @@ const AddBusiness = () => {
     formData.append("country_code", values.iso_code);
     formData.append("phone", values.code + values.phone_number);
     formData.append("place_link", values.place_link || "");
+    formData.append("site", values.buisness_url || "");
+
+    
     formData.append("rating", values.rating || "");
     formData.append("business_status", values.business_status || "");
     formData.append("reviews", values.reviews || "");
@@ -392,6 +395,7 @@ const AddBusiness = () => {
             phone_number: "",
             // code: "",
             place_link: "",
+            buisness_url:"",
             reviews: "",
             rating: "",
             business_status: "",
@@ -436,6 +440,7 @@ const AddBusiness = () => {
               "Business status is required"
             ),
             place_link: Yup.string().url("Invalid URL format"),
+            buisness_url:  Yup.string().url("Invalid URL format"),
             reviews: Yup.number()
               .min(0, "Reviews count cannot be negative")
               .required("Enter the reviews count"),
@@ -900,7 +905,9 @@ const AddBusiness = () => {
                             name="code"
                             className="form-control w-25"
                           >
-                            <option value="+1">+1 (USA)</option>
+                            {/* <option value="+1">+1 (USA)</option> */}
+                            <option value="+1">+1 (USA / CA)</option>
+
                             <option value="+91">+91 (India)</option>
                             <option value="+44">+44 (UK)</option>
                             <option value="+61">+61 (Australia)</option>
@@ -913,6 +920,10 @@ const AddBusiness = () => {
   type="tel"
   maxLength="10"
   pattern="\d{10}"
+  onChange={(e) => {
+    const onlyNums = e.target.value.replace(/[^0-9]/g, "");
+    setFieldValue("phone_number", onlyNums);
+  }}
   className="form-input w-75"
   placeholder="Phone number"
 />
@@ -942,7 +953,19 @@ const AddBusiness = () => {
                         />
                       </div>
                     </div>
+                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                        <div className="form-group">
+                          <label className="form-label">Buisness URL</label>
+                          <Field
+                            name="buisness_url"
+                            type="text"
+                            className="form-input"
+                            placeholder="Enter buisness url"
+                          />
+                        </div>
+                      </div>
                     {/* rating */}
+
 
                     <div className="col-12 col-md-6 col-lg-6 mb-4">
                       <div className="form-group">
