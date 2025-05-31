@@ -516,32 +516,40 @@ const EditOffer = () => {
                       />
                     </div>
                     {/* Offer Type */}
-                    <div className="col-12 mb-3">
-                      <div className="form-group">
-                        <label className="form-label">Offer Type</label>
+                    <div className="form-group mb-3">
+                    <label className="form-label">Offer Type</label>
+                    <Field
+                      as="select"
+                      name="discountType"
+                      className="form-input"
+                    >
+                      <option value="">Select Offer</option>
+                      <option>Deal</option>
+                      <option>Discount</option>
+                      <option>Coupon</option>
+                    </Field>
+                    <ErrorMessage
+                      name="discountType"
+                      component="div"
+                      className="error text-danger"
+                    />
+                    {(values.discountType === "Discount" ||
+                      values.discountType === "Deal") && (
+                      <div className="mt-3">
+                        <label className="form-label">
+                          {values.discountType === "Discount"
+                            ? "Percentage"
+                            : "Amount"}
+                        </label>
                         <Field
-                          as="select"
-                          name="discountType"
+                          name="discountValue"
                           className="form-input"
-                        >
-                          <option value="">Select Offer</option>
-                          <option>Deal</option>
-                          <option>Discount</option>
-                          <option>Coupon</option>
-                        </Field>
+                          placeholder={
+                            values.discountType === "Discount" ? "%" : "$"
+                          }
+                        />
                       </div>
-                      {/* Discount Value */}
-                      {(values.discountType === "Discount" || values.discountType === "Deal") && (
-  <div className="mt-4">
-    <label className="form-label">Percentage</label>
-    <Field
-      name="discountValue"
-      type="text"
-      className="form-input"
-      placeholder="%"
-    />
-  </div>
-)}
+                    )}
 
                     </div>
                     {/* Image Upload */}
