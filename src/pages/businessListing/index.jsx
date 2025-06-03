@@ -62,10 +62,10 @@ const BusinessListing = () => {
       const url = searchText.trim()
         ? `${baseUrl}business?searchText=${searchText}&page=${page}&limit=10`
         : `${baseUrl}business?page=${page}&limit=10`;
-  
+
       const response = await axiosInstance.get(url);
       const data = response.data.data;
-  
+
       setBusinessList(data.data);
       setTotalPages(data.totalPages);
       setCurrentPage(data.page); // <-- ✅ ensure page state updates
@@ -75,7 +75,6 @@ const BusinessListing = () => {
       setLoading(false);
     }
   };
-  
 
   const deleteBusiness = async (_id) => {
     try {
@@ -326,24 +325,22 @@ const BusinessListing = () => {
                   )}
                 </div>
                 {totalPages > 1 && (
-  <div className="d-flex justify-content-center mt-4">
-    <Pagination
-      current={currentPage}
-      total={totalPages * 10} 
-      pageSize={10}
-      onChange={(page) => {
-        setCurrentPage(page);
-        handleSearch(page); 
-      }}
-      showSizeChanger={false}
-    />
-  </div>
-)}
+                  <div className="d-flex justify-content-center mt-4">
+                    <Pagination
+                      current={currentPage}
+                      total={totalPages * 10}
+                      pageSize={10}
+                      onChange={(page) => {
+                        setCurrentPage(page);
+                        handleSearch(page);
+                      }}
+                      showSizeChanger={false}
+                    />
+                  </div>
+                )}
               </div>
             </div>
-      
           </div>
-  
         </div>
       </div>
     </>
