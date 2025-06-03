@@ -1,49 +1,30 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import axios from "axios";
 import axiosInstance from '../../interceptors/axiosInstance';
 
 const ViewBusinessData = () => {
   const { _id } = useParams();
-  const { state: data } = useLocation();
-  const baseUrl = import.meta.env.VITE_BASE_URL;
+  const { state: initialData } = useLocation();
 
-  const [selectedImage, setSelectedImage] = useState(data?.photo[0]);
+  const [businessData, setBusinessData] = useState(initialData || null);
+  const [selectedImage, setSelectedImage] = useState(initialData?.photo?.[0]);
 
   useEffect(() => {
     const fetchBusinessStatus = async () => {
       try {
-        const response = await axiosInstance.get(`${baseUrl}business/${_id}`);
-        console.log(response.data);
+        const response = await axiosInstance.get(`business/${_id}`);
+        if (response?.data?.data) {
+          setBusinessData(response.data.data);
+          setSelectedImage(response.data.data.photo?.[0]);
+        }
       } catch (error) {
         console.error("Error fetching business:", error);
       }
     };
     fetchBusinessStatus();
-  }, [_id, baseUrl]);
+  }, [_id]);
 
-  const renderStars = (rating) => {
-    const total = 5;
-    const full = Math.floor(rating);
-    const half = rating - full >= 0.5;
-    const empty = total - full - (half ? 1 : 0);
-
-    return (
-      <>
-        {[...Array(full)].map((_, i) => (
-          <span key={`f-${i}`} style={{ color: "#FFD700" }}>
-            ★
-          </span>
-        ))}
-        {half && <span style={{ color: "#FFD700" }}>☆</span>}
-        {[...Array(empty)].map((_, i) => (
-          <span key={`e-${i}`} style={{ color: "#ccc" }}>
-            ★
-          </span>
-        ))}
-      </>
-    );
-  };
+  const data = businessData || initialData;
 
   const workingHours = (() => {
     try {
@@ -52,19 +33,42 @@ const ViewBusinessData = () => {
       }
       return data?.working_hours;
     } catch (e) {
-      console.error("Invalid working_hours format");
+      console.error("Invalid working_hours format", e);
       return null;
     }
   })();
 
-  // Handle image click to update the selected main image
+  const renderStars = (rating) => {
+    const total = 5;
+    const parsedRating = Number(rating);
+    if (isNaN(parsedRating)) return <span>Not rated</span>;
+
+    const safeRating = Math.min(Math.max(parsedRating, 0), total);
+    const full = Math.floor(safeRating);
+    const half = safeRating - full >= 0.5;
+    const empty = total - full - (half ? 1 : 0);
+
+    return (
+      <>
+        {[...Array(full)].map((_, i) => (
+          <span key={`f-${i}`} style={{ color: "#FFD700" }}>★</span>
+        ))}
+        {half && <span style={{ color: "#FFD700" }}>☆</span>}
+        {[...Array(empty)].map((_, i) => (
+          <span key={`e-${i}`} style={{ color: "#ccc" }}>★</span>
+        ))}
+      </>
+    );
+  };
+
   const handleImageClick = (img) => {
     setSelectedImage(img);
   };
 
+  if (!data) return <div>Loading...</div>;
+
   return (
     <div className="container my-4">
-      {/* Breadcrumb */}
       <div className="mb-3">
         <h4>
           {data.display_name}{" "}
@@ -75,10 +79,9 @@ const ViewBusinessData = () => {
         </small>
       </div>
 
-      {/* Main Card */}
       <div className="card shadow-lg p-4 rounded-4 elevation-3">
         <div className="row">
-          {/* Left Column: Images */}
+          {/* Images */}
           <div className="col-md-4 mb-3">
             {data?.photo?.length > 0 ? (
               <>
@@ -117,7 +120,7 @@ const ViewBusinessData = () => {
             )}
           </div>
 
-          {/* Middle Column: Business Info */}
+          {/* Business Info */}
           <div className="col-md-6 mb-3">
             <h5>{data.display_name}</h5>
             <div className="d-flex align-items-center mb-2">
@@ -128,12 +131,7 @@ const ViewBusinessData = () => {
 
             <div className="mb-2">
               <strong>Address</strong>
-              <p className="mb-1">
-                {data.address}
-              </p>
-              {/* <p className="mb-3">
-                {data.city}, {data.state} - {data.postal_code}
-              </p> */}
+              <p className="mb-1">{data.address}</p>
             </div>
 
             <div className="mb-2">
@@ -157,11 +155,9 @@ const ViewBusinessData = () => {
                 <p>No working hours available</p>
               )}
             </div>
-         
+
             <div className="col-12 ">
-              <div>
-                <strong>Location</strong>
-              </div>
+              <div><strong>Location</strong></div>
               <div className="py-3">
                 <iframe
                   width="100%"
@@ -181,9 +177,6 @@ const ViewBusinessData = () => {
               </div>
             </div>
           </div>
-         
-          
-          {/* Bottom Row: Map */}
         </div>
       </div>
     </div>
