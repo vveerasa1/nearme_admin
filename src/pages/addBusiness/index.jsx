@@ -318,9 +318,9 @@ const AddBusiness = () => {
     // formData.append("place_link", values.place_link || "");
     formData.append("site", values.buisness_url || "");
 
-    formData.append("rating", values.rating || "");
+    formData.append("rating", values.rating || 0);
     formData.append("business_status", values.business_status || "");
-    formData.append("reviews", values.reviews || "");
+    formData.append("reviews", values.reviews || 0);
     formData.append(
       "working_hours",
       JSON.stringify(formatWeeklyHours(updatedTime))
@@ -395,7 +395,7 @@ const AddBusiness = () => {
             phone_number: "",
             // code: "",
             // place_link: "",
-            buisness_url:"",
+            buisness_url: "",
             reviews: "",
             rating: "",
             business_status: "",
@@ -431,22 +431,21 @@ const AddBusiness = () => {
             postal_code: Yup.string().required("Postal code is required"),
             county: Yup.string().required("County is required"),
             suiteNo: Yup.string(),
-              // .required("Su is required")
-              // .matches(
-              //   /^[A-Z]{2,3}$/,
-              //   "Must be a valid ISO code like IN, US, or CA"
-              // ),
+            // .required("Su is required")
+            // .matches(
+            //   /^[A-Z]{2,3}$/,
+            //   "Must be a valid ISO code like IN, US, or CA"
+            // ),
             business_status: Yup.string().required(
               "Business status is required"
             ),
-            place_link: Yup.string().url("Invalid URL format"),
-            buisness_url:  Yup.string().url("Invalid URL format"),
+            buisness_url: Yup.string().url("Invalid URL format"),
             reviews: Yup.number()
               .min(0, "Reviews count cannot be negative")
               .required("Enter the reviews count"),
             rating: Yup.number()
-              .min(1, "Rating must be between 1 and 5")
-              .max(5, "Rating must be between 1 and 5")
+              .min(0, "Rating must be between 0 and 5")
+              .max(5, "Rating must be between 0 and 5")
               .required("Enter the rating count"),
             // latitude: Yup.number()
             //   .typeError("Latitude must be a number")
@@ -624,8 +623,9 @@ const AddBusiness = () => {
                     {/* address */}
                     <div className="col-12 col-md-12 col-lg-12">
                       <div className="form-group">
-                        {/* <label className="form-label">Address</label>
-                        <div className="col-12 col-md-12 col-lg-12 mb-3">
+                        {
+                          <label className="form-label">Address</label>
+                          /*<div className="col-12 col-md-12 col-lg-12 mb-3">
                           <div className="form-group">
                             <Field
                               name="address"
@@ -650,7 +650,8 @@ const AddBusiness = () => {
                               state, country, and postal code.
                             </p>
                           </div>
-                        </div> */}
+                        </div> */
+                        }
                         <div className="row">
                           {/* <div className="col-12 col-md-6 col-lg-6 mb-3">
                             <Field
@@ -670,7 +671,7 @@ const AddBusiness = () => {
                               name="street"
                               type="text"
                               className="form-input"
-                              placeholder="street"
+                              placeholder="Street"
                             />{" "}
                             <ErrorMessage
                               name="street"
@@ -925,18 +926,20 @@ const AddBusiness = () => {
 
                           {/* Phone Number Input */}
                           <Field
-  name="phone_number"
-  type="tel"
-  maxLength="10"
-  pattern="\d{10}"
-  onChange={(e) => {
-    const onlyNums = e.target.value.replace(/[^0-9]/g, "");
-    setFieldValue("phone_number", onlyNums);
-  }}
-  className="form-input w-75"
-  placeholder="0123456789"
-/>
-
+                            name="phone_number"
+                            type="tel"
+                            maxLength="10"
+                            pattern="\d{10}"
+                            onChange={(e) => {
+                              const onlyNums = e.target.value.replace(
+                                /[^0-9]/g,
+                                ""
+                              );
+                              setFieldValue("phone_number", onlyNums);
+                            }}
+                            className="form-input w-75"
+                            placeholder="0123456789"
+                          />
                         </div>
                         <ErrorMessage
                           name="phone_number"

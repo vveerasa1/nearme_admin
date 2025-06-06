@@ -68,7 +68,7 @@ const EditBusiness = () => {
     phone: "",
     code: "",
     // place_link: "",
-    buisness_url:"",
+    buisness_url: "",
     rating: "",
     reviews: "",
     business_status: "",
@@ -201,8 +201,8 @@ const EditBusiness = () => {
           photo: data.photo || "",
           // place_link: data.gmb_link || "",
           buisness_url: data.site || "",
-          rating: data.rating || "",
-          reviews: data.reviews || "",
+          rating: data.rating || 0,
+          reviews: data.reviews || 0,
           working_hours: transformedWorkingHours || [],
           business_status: data.business_status || "",
         });
@@ -388,8 +388,8 @@ const EditBusiness = () => {
     // formData.append("place_link", values.place_link || "");
     formData.append("site", values.buisness_url || "");
 
-    formData.append("rating", values.rating || "");
-    formData.append("reviews", values.reviews || "");
+    formData.append("rating", values.rating || 0);
+    formData.append("reviews", values.reviews || 0);
     formData.append("business_status", values.business_status || "");
     formData.append(
       "working_hours",
@@ -480,23 +480,23 @@ const EditBusiness = () => {
               postal_code: Yup.string().required("Postal code is required"),
               county: Yup.string().required("County is required"),
               suiteNo: Yup.string(),
-                // .required("Country ISO code is required")
-                // .matches(
-                //   /^[A-Z]{2,3}$/,
-                //   "Must be a valid ISO code like IN, US, or CA"
-                // ),
+              // .required("Country ISO code is required")
+              // .matches(
+              //   /^[A-Z]{2,3}$/,
+              //   "Must be a valid ISO code like IN, US, or CA"
+              // ),
               business_status: Yup.string().required(
                 "Business status is required"
               ),
               // place_link: Yup.string().url("Invalid URL format"),
-            buisness_url:  Yup.string().url("Invalid URL format"),
+              buisness_url: Yup.string().url("Invalid URL format"),
               // place_link: Yup.string().url("Invalid URL format"),
               reviews: Yup.number()
                 .min(0, "Reviews count cannot be negative")
                 .required("Enter the reviews count"),
               rating: Yup.number()
-                .min(1, "Rating must be between 1 and 5")
-                .max(5, "Rating must be between 1 and 5")
+                .min(0, "Rating must be between 0 and 5")
+                .max(5, "Rating must be between 0 and 5")
                 .required("Enter the rating count"),
               // // latitude: Yup.number()
               // //   .typeError("Latitude must be a number")
