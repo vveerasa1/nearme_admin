@@ -306,15 +306,15 @@ const AddBusiness = () => {
     const formData = new FormData();
     formData.append("display_name", values.display_name);
     formData.append("types", values.types); // Send types as a list
-    formData.append("address", values.address);
+    // formData.append("address", values.address);
     formData.append("street", values.street);
     formData.append("city", values.city);
     formData.append("state", values.state);
     formData.append("postal_code", values.postal_code);
     formData.append("county", values.county);
-    formData.append("country_code", values.iso_code);
+    formData.append("suiteNo", values.suiteNo);
     formData.append("phone", values.code + values.phone_number);
-    formData.append("place_link", values.place_link || "");
+    // formData.append("place_link", values.place_link || "");
     formData.append("site", values.buisness_url || "");
 
     
@@ -381,20 +381,20 @@ const AddBusiness = () => {
           initialValues={{
             display_name: "",
             types: [],
-            address: "",
+            // address: "",
             street: "",
             city: "",
             state: "",
             postal_code: "",
             county: "",
-            iso_code: "",
+            suiteNo: "",
             code: "",
             // NOTE removed by akash as lat long will be add from backend
             // latitude: "",
             // longitude: "",
             phone_number: "",
             // code: "",
-            place_link: "",
+            // place_link: "",
             buisness_url:"",
             reviews: "",
             rating: "",
@@ -423,23 +423,23 @@ const AddBusiness = () => {
               .min(1, "At least one type is required")
               .of(Yup.string().required("Each type must be a valid string"))
               .required("Types field is required"),
-            address: Yup.string().required("Address is required"),
+            // address: Yup.string().required("Address is required"),
 
             street: Yup.string().required("Street is required"),
             city: Yup.string().required("City is required"),
             state: Yup.string().required("State is required"),
             postal_code: Yup.string().required("Postal code is required"),
             county: Yup.string().required("County is required"),
-            iso_code: Yup.string()
-              .required("Country ISO code is required")
-              .matches(
-                /^[A-Z]{2,3}$/,
-                "Must be a valid ISO code like IN, US, or CA"
-              ),
+            suiteNo: Yup.string(),
+              // .required("Su is required")
+              // .matches(
+              //   /^[A-Z]{2,3}$/,
+              //   "Must be a valid ISO code like IN, US, or CA"
+              // ),
             business_status: Yup.string().required(
               "Business status is required"
             ),
-            place_link: Yup.string().url("Invalid URL format"),
+            // place_link: Yup.string().url("Invalid URL format"),
             buisness_url:  Yup.string().url("Invalid URL format"),
             reviews: Yup.number()
               .min(0, "Reviews count cannot be negative")
@@ -614,7 +614,7 @@ const AddBusiness = () => {
                     {/* address */}
                     <div className="col-12 col-md-12 col-lg-12">
                       <div className="form-group">
-                        <label className="form-label">Address</label>
+                        {/* <label className="form-label">Address</label>
                         <div className="col-12 col-md-12 col-lg-12 mb-3">
                           <div className="form-group">
                             <Field
@@ -640,7 +640,7 @@ const AddBusiness = () => {
                               state, country, and postal code.
                             </p>
                           </div>
-                        </div>
+                        </div> */}
                         <div className="row">
                           {/* <div className="col-12 col-md-6 col-lg-6 mb-3">
                             <Field
@@ -721,27 +721,27 @@ const AddBusiness = () => {
                             />
                           </div>
                           <div className="col-12 col-md-6 col-lg-6 mb-3">
-                            <Field name="iso_code">
+                            <Field name="suiteNo">
                               {({ field, form }) => (
                                 <input
                                   {...field}
                                   type="text"
                                   className="form-input"
-                                  placeholder="Country ISO code"
-                                  maxLength={3}
-                                  onChange={(e) => {
-                                    // Uppercase only and remove non-letters
-                                    const val = e.target.value
-                                      .toUpperCase()
-                                      .replace(/[^A-Z]/g, "");
-                                    form.setFieldValue("iso_code", val);
-                                  }}
+                                  placeholder="Suite No"
+                                  // maxLength={3}
+                                  // onChange={(e) => {
+                                  //   // Uppercase only and remove non-letters
+                                  //   const val = e.target.value
+                                  //     .toUpperCase()
+                                  //     .replace(/[^A-Z]/g, "");
+                                  //   form.setFieldValue("suiteNo", val);
+                                  // }}
                                 />
                               )}
                             </Field>
 
                             <ErrorMessage
-                              name="iso_code"
+                              name="suiteNo"
                               component="div"
                               className="error text-danger"
                             />
@@ -924,7 +924,7 @@ const AddBusiness = () => {
     setFieldValue("phone_number", onlyNums);
   }}
   className="form-input w-75"
-  placeholder="Phone number"
+  placeholder="0123456789"
 />
 
                         </div>
@@ -936,7 +936,7 @@ const AddBusiness = () => {
                       </div>
                     </div>
                     {/* place link */}
-                    <div className="col-12 col-md-12 col-lg-12 mb-3">
+                    {/* <div className="col-12 col-md-12 col-lg-12 mb-3">
                       <div className="form-group">
                         <label className="form-label">Place Link</label>
                         <Field
@@ -951,7 +951,7 @@ const AddBusiness = () => {
                           className="error text-danger"
                         />
                       </div>
-                    </div>
+                    </div> */}
                     <div className="col-12 col-md-12 col-lg-12 mb-3">
                         <div className="form-group">
                           <label className="form-label">Buisness URL</label>

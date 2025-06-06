@@ -143,17 +143,21 @@ const Users = () => {
                           <div className="row g-0 h-100">
                             {/* Left Column - Image */}
                             <div className="col-4 d-flex align-items-center justify-content-center p-3">
-                              <img
-                                src={fallbackimage}
-                                alt="User"
-                                style={{
-                                  width: "100%",
-                                  height: "auto",
-                                  maxHeight: "120px",
-                                  objectFit: "contain",
-                                  borderRadius: "8px",
-                                }}
-                              />
+                            <img
+  src={
+    user?.image && user.image.trim() !== ''
+      ? user.image
+      : fallbackimage
+  }
+  alt="User"
+  style={{
+    width: "100%",
+    height: "auto",
+    maxHeight: "120px",
+    objectFit: "contain",
+    borderRadius: "8px",
+  }}
+/>
                             </div>
 
                             {/* Right Column - User Info */}

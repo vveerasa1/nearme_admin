@@ -56,18 +56,18 @@ const EditBusiness = () => {
   const [initialValues, setInitialValues] = useState({
     display_name: "",
     types: [],
-    address: "",
+    // address: "",
     street: "",
     city: "",
     state: "",
     postal_code: "",
     county: "",
-    country_code: "",
+    suiteNo: "",
     // latitude: "",
     // longitude: "",
     phone: "",
     code: "",
-    place_link: "",
+    // place_link: "",
     buisness_url:"",
     rating: "",
     reviews: "",
@@ -190,19 +190,19 @@ const EditBusiness = () => {
     : typeof data.types === "string"
       ? data.types.split(",").map((s) => s.trim())
       : [],
-          address: data.address || "",
+          // address: data.address || "",
           street: data.street || "",
           city: data.city || "",
           state: data.state || "",
           postal_code: data.postal_code || "",
           county: data.county || "",
-          country_code: data.country_code || "",
+          suiteNo: data.suiteNo || "",
           // latitude: data.latitude || "",
           // longitude: data.longitude || "",
           phone: phoneNumber || "",
           code: countryCode || "",
           photo: data.photo || "",
-          place_link: data.gmb_link || "",
+          // place_link: data.gmb_link || "",
           buisness_url: data.site || "",
           rating: data.rating || "",
           reviews: data.reviews || "",
@@ -379,15 +379,15 @@ const EditBusiness = () => {
     const formData = new FormData();
     formData.append("display_name", values.display_name);
     formData.append("types", values.types);
-    formData.append("address", values.address);
+    // formData.append("address", values.address);
     formData.append("street", values.street);
     formData.append("city", values.city);
     formData.append("state", values.state);
     formData.append("postal_code", values.postal_code);
     formData.append("county", values.county);
-    formData.append("country_code", values.country_code);
+    formData.append("suiteNo", values.suiteNo);
     formData.append("phone", values.code + values.phone);
-    formData.append("place_link", values.place_link || "");
+    // formData.append("place_link", values.place_link || "");
     formData.append("site", values.buisness_url || "");
 
     
@@ -475,23 +475,23 @@ const EditBusiness = () => {
                 .min(1, "At least one type is required")
                 .of(Yup.string().required("Each type must be a valid string"))
                 .required("Types field is required"),
-              address: Yup.string().required("Address is required"),
+              // address: Yup.string().required("Address is required"),
 
               street: Yup.string().required("Street is required"),
               city: Yup.string().required("City is required"),
               state: Yup.string().required("State is required"),
               postal_code: Yup.string().required("Postal code is required"),
               county: Yup.string().required("County is required"),
-              country_code: Yup.string()
-                .required("Country ISO code is required")
-                .matches(
-                  /^[A-Z]{2,3}$/,
-                  "Must be a valid ISO code like IN, US, or CA"
-                ),
+              suiteNo: Yup.string(),
+                // .required("Country ISO code is required")
+                // .matches(
+                //   /^[A-Z]{2,3}$/,
+                //   "Must be a valid ISO code like IN, US, or CA"
+                // ),
               business_status: Yup.string().required(
                 "Business status is required"
               ),
-              place_link: Yup.string().url("Invalid URL format"),
+              // place_link: Yup.string().url("Invalid URL format"),
             buisness_url:  Yup.string().url("Invalid URL format"),
               // place_link: Yup.string().url("Invalid URL format"),
               reviews: Yup.number()
@@ -652,7 +652,7 @@ const EditBusiness = () => {
                       <div className="col-12 col-md-12 col-lg-12">
                         <div className="form-group">
                           <label className="form-label">Address</label>
-                          <div className="col-12 col-md-12 col-lg-12 mb-3">
+                          {/* <div className="col-12 col-md-12 col-lg-12 mb-3">
                             <div className="form-group">
                               <Field
                                 name="address"
@@ -677,7 +677,7 @@ const EditBusiness = () => {
                               including building number, street name, city,
                               state, country, and postal code..
                             </p>
-                          </div>
+                          </div> */}
                           <div className="row">
                             <div className="col-12 col-md-6 col-lg-6 mb-3">
                               <Field
@@ -754,13 +754,13 @@ const EditBusiness = () => {
                             </div>
                             <div className="col-12 col-md-6 col-lg-6 mb-3">
                               <Field
-                                name="country_code"
+                                name="suiteNo"
                                 type="text"
                                 className="form-input"
-                                placeholder="CA"
+                                placeholder="Enter Suite No"
                               />
                               <ErrorMessage
-                                name="country_code"
+                                name="suiteNo"
                                 component="div"
                                 className="error text-danger"
                               />
@@ -979,7 +979,7 @@ const EditBusiness = () => {
                         </div>
                       </div>
                       {/* place link */}
-                      <div className="col-12 col-md-12 col-lg-12 mb-3">
+                      {/* <div className="col-12 col-md-12 col-lg-12 mb-3">
                         <div className="form-group">
                           <label className="form-label">Place map link</label>
                           <Field
@@ -989,7 +989,7 @@ const EditBusiness = () => {
                             placeholder="Place map link"
                           />
                         </div>
-                      </div>
+                      </div> */}
                       <div className="col-12 col-md-12 col-lg-12 mb-3">
                         <div className="form-group">
                           <label className="form-label">Buisness URL</label>
