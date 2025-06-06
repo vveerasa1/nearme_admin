@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { debounce } from "lodash";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Input, Tag } from "antd";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { Toaster } from "react-hot-toast";
 const { Search } = Input;
 import { Card } from "antd"; // Import Card from Ant Design
 import fallbackimage from "../../assets/images/people.png";
-import axiosInstance from '../../interceptors/axiosInstance';
+import axiosInstance from "../../interceptors/axiosInstance";
 
 const Users = () => {
   const [loading, setLoading] = useState(false);
@@ -17,6 +17,7 @@ const Users = () => {
   const [searchText, setSearchText] = useState("");
   const hostUrl = import.meta.env.VITE_BASE_URL;
   const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -28,9 +29,9 @@ const Users = () => {
     fetchUsers(searchText);
   }, 500);
 
-  useEffect(()=>{
-    fetchUsers(searchText)
-  },[])
+  useEffect(() => {
+    fetchUsers(searchText);
+  }, []);
 
   const fetchUsers = async (search = "") => {
     try {
@@ -39,15 +40,13 @@ const Users = () => {
       const userData = Array.isArray(response.data?.data)
         ? response.data.data
         : [];
-  
+
       setUsers(userData);
       setFilteredUsers(userData);
     } catch (error) {
       console.error("Error fetching users:", error);
     }
   };
-  
-  
 
   const handleSearch = (value) => {
     setSearchText(value);
@@ -106,21 +105,20 @@ const Users = () => {
                     <h3>Users</h3>
                   </div>
                   <div className="list-filter">
-                  <form>
-                    <div className="lf-search">
-                      <input
-                        className="lfs-input"
-                        type="text"
-                        placeholder="Search here..."
-                        onChange={handleSearchChange}
-                      />
-                      <div className="search-icon-container">
-                        <div type="button"></div>
+                    <form>
+                      <div className="lf-search">
+                        <input
+                          className="lfs-input"
+                          type="text"
+                          placeholder="Search here..."
+                          onChange={handleSearchChange}
+                        />
+                        <div className="search-icon-container">
+                          <div type="button"></div>
+                        </div>
                       </div>
-                    </div>
-                  </form>
-</div>
-
+                    </form>
+                  </div>
                 </div>
 
                 {/* Listings */}
@@ -138,6 +136,13 @@ const Users = () => {
                             marginBottom: "20px",
                             borderRadius: "10px",
                             boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                          }}
+                          onClick={(e) => {
+                            if (!e.target.closest(".no-click")) {
+                              navigate(`/view-users/${user._id}`, {
+                                state: user,
+                              });
+                            }
                           }}
                         >
                           <div className="row g-0 h-100">

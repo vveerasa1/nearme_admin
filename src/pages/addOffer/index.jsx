@@ -11,7 +11,7 @@ import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import weekday from "dayjs/plugin/weekday";
 import isBetween from "dayjs/plugin/isBetween";
-import axiosInstance from '../../interceptors/axiosInstance';
+import axiosInstance from "../../interceptors/axiosInstance";
 
 import { Toaster, toast } from "react-hot-toast";
 
@@ -26,12 +26,21 @@ dayjs.extend(isBetween);
 //   const hours12 = parsedHours % 12 || 12; // Handle 00:00 as 12 AM
 //   return `${hours12}:${minutes} ${period}`;
 // };
+let allWeekdays = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 const convertTo12Hour = (time24) => {
   if (!time24) return "";
-  const [hours, minutes] = time24.split(':');
+  const [hours, minutes] = time24.split(":");
   const parsedHours = parseInt(hours, 10);
-  const period = parsedHours >= 12 ? 'PM' : 'AM';
+  const period = parsedHours >= 12 ? "PM" : "AM";
   const hours12 = parsedHours % 12 || 12;
   return `${hours12}:${minutes} ${period}`;
 };
@@ -73,13 +82,26 @@ const { RangePicker } = DatePicker;
 const validationSchema = Yup.object({
   title: Yup.string().required("Title is required").min(3),
   description: Yup.string().required("Description is required"),
-  couponDescription: Yup.string()
-    .required("Coupon details is required")
-    .min(5),
+  couponDescription: Yup.string().required("Coupon details is required").min(5),
   discountType: Yup.string()
     .required("Discount type is required")
     .oneOf(["Deal", "Discount", "Coupon"]),
   type: Yup.boolean(),
+  endTime: Yup.string().when("type", {
+    is: false,
+    then: (schema) =>
+      schema
+        .notRequired()
+        .test(
+          "is-greater",
+          "End time must be greater than start time",
+          function (value) {
+            const { startTime } = this.parent;
+            return !startTime || !value || value > startTime;
+          }
+        ),
+    otherwise: (schema) => schema.notRequired(),
+  }),
 });
 
 const AddOffer = () => {
@@ -90,13 +112,13 @@ const AddOffer = () => {
     "image/jpg",
     "image/png",
     "image/gif",
-    "image/svg+xml"
+    "image/svg+xml",
   ];
   const [photoError, setPhotoError] = useState("");
   // const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   // const MAX_IMAGES = 5;
   const [customDays, setCustomDays] = useState([
-    { day: "", startTime: "12:01 AM", endTime: "11:59 PM" },
+    { day: "", startTime: "00:01", endTime: "23:59" },
   ]);
   const fileInputRef = useRef(null);
   // const [images, setImages] = useState([]);
@@ -144,7 +166,9 @@ const AddOffer = () => {
   // };
 
   const handleFileChange = async (e) => {
-    const files = Array.from(e.target.files);
+    const input = e.target;
+
+    const files = Array.from(input.files);
     let error = "";
 
     if (files.length + (images?.length || 0) > MAX_IMAGES) {
@@ -162,10 +186,7 @@ const AddOffer = () => {
         break;
       } else {
         try {
-          console.log('hii you came here');
-          // await checkImageDimensions(file); // validate original dimensions
-          const resizedImage = await resizeImage(file, 800, 600); // resize to 800x600
-          console.log(resizedImage);
+          const resizedImage = await resizeImage(file, 800, 600);
           resizedImages.push(resizedImage);
         } catch (err) {
           error = err;
@@ -178,11 +199,13 @@ const AddOffer = () => {
       setPhotoError(error);
     } else {
       setPhotoError("");
-      console.log('resizeImage')
       setPhotos((prevPhotos) => [...(prevPhotos || []), ...resizedImages]);
     }
+
+    // 🔑 Reset file input so selecting same file again will trigger onChange
+    input.value = "";
   };
-  
+
   // Checks original image dimensions before processing
   const checkImageDimensions = (file) => {
     return new Promise((resolve, reject) => {
@@ -198,7 +221,7 @@ const AddOffer = () => {
       img.onerror = () => reject("Could not read image dimensions.");
     });
   };
-  
+
   // Resizes image to the required dimensions (800x600)
   const resizeImage = (file, width, height) => {
     return new Promise((resolve, reject) => {
@@ -214,7 +237,7 @@ const AddOffer = () => {
           canvas.toBlob((blob) => {
             const newFile = new File([blob], file.name, {
               type: file.type,
-              lastModified: Date.now()
+              lastModified: Date.now(),
             });
             resolve(newFile);
           }, file.type);
@@ -228,7 +251,7 @@ const AddOffer = () => {
   };
 
   const handleRemoveImage = (indexToRemove) => {
-    setImages((prevImages) =>
+    setPhotos((prevImages) =>
       prevImages.filter((_, index) => index !== indexToRemove)
     );
   };
@@ -237,22 +260,37 @@ const AddOffer = () => {
   const handleCustomDayChange = (index, field, value) => {
     const updated = [...customDays];
     updated[index][field] = value;
+
+    const start = dayjs(updated[index].startTime, "HH:mm"); // 24-hour format
+    const end = dayjs(updated[index].endTime, "HH:mm");
+
+    if (start.isValid() && end.isValid() && end.isBefore(start)) {
+      toast.error("End time should be greater than start time.");
+      updated[index].endTime = "23:59"; // reset to default valid time
+    }
+
     setCustomDays(updated);
-  };  
+  };
 
   const handleAddDay = () => {
     if (customDays.length >= 7) {
       toast.error("You can only add up to 7 days.");
       return;
     }
+
     const lastDay = customDays[customDays.length - 1];
     if (!lastDay.day) {
       toast.error("Please select a day before adding another.");
       return;
     }
+
     setCustomDays([
       ...customDays,
-      { day: "", startTime: "12:00 AM", endTime: "11:59 PM" },
+      {
+        day: "",
+        startTime: "00:01", // 24-hour format
+        endTime: "23:59",
+      }, // set defaults
     ]);
   };
 
@@ -274,12 +312,17 @@ const AddOffer = () => {
 
       if (start.month() === end.month() && start.year() === end.year()) {
         const daysInRange = [];
-        for (let d = start; d.isBefore(end) || d.isSame(end); d = d.add(1, "day")) {
+        for (
+          let d = start;
+          d.isBefore(end) || d.isSame(end);
+          d = d.add(1, "day")
+        ) {
           const weekday = d.format("dddd");
           if (!daysInRange.includes(weekday)) daysInRange.push(weekday);
         }
-        const allWeekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-        setDisabledDays(allWeekdays.filter((day) => !daysInRange.includes(day)));
+        setDisabledDays(
+          allWeekdays.filter((day) => !daysInRange.includes(day))
+        );
       } else {
         setDisabledDays([]);
       }
@@ -298,19 +341,21 @@ const AddOffer = () => {
     setLoading(true);
 
     let daysToSubmit = values.type
-      ? customDays.map((d) => ({
-          ...d,
-          startTime: d.startTime,
-          endTime: d.endTime,
-        }))
+      ? customDays
+          .map((d) => ({
+            ...d,
+            startTime: d.startTime,
+            endTime: d.endTime,
+          }))
+          .sort(
+            (a, b) => allWeekdays.indexOf(a.day) - allWeekdays.indexOf(b.day)
+          )
       : [];
 
     if (
       values.type &&
       (!daysToSubmit.length ||
-        daysToSubmit.some(
-          (day) => !day.day || !day.startTime || !day.endTime
-        ))
+        daysToSubmit.some((day) => !day.day || !day.startTime || !day.endTime))
     ) {
       toast.error("Please complete all custom day fields.");
       setLoading(false);
@@ -323,7 +368,7 @@ const AddOffer = () => {
       return;
     }
     // console.log('Hi hello' ,formatDate(range[0]) , formatDate(range[1]) , convertTo24Hour(values.startTime));
-// return;
+    // return;
     const formData = new FormData();
     formData.append("place_Id", _id);
     formData.append("title", values.title);
@@ -337,14 +382,8 @@ const AddOffer = () => {
     if (values.type) {
       formData.append("customDays", JSON.stringify(daysToSubmit));
     } else {
-      formData.append(
-        "startTime",
-        convertTo24Hour(values.startTime)
-      );
-      formData.append(
-        "endTime",
-        convertTo24Hour(values.endTime)
-      );
+      formData.append("startTime", convertTo24Hour(values.startTime));
+      formData.append("endTime", convertTo24Hour(values.endTime));
     }
 
     if (values.discountType === "Discount" || values.discountType === "Deal") {
@@ -352,10 +391,10 @@ const AddOffer = () => {
     }
 
     images.forEach((file) => formData.append("images", file));
-// console.log(formatDate(range[0]), formatDate(range[1]));
-// console.log(range[0].format("YYYY-MM-DD"), range[1].format("YYYY-MM-DD"));
+    // console.log(formatDate(range[0]), formatDate(range[1]));
+    // console.log(range[0].format("YYYY-MM-DD"), range[1].format("YYYY-MM-DD"));
 
-//     return;
+    //     return;
 
     try {
       const response = await axiosInstance.post(`coupons/`, formData);
@@ -367,7 +406,6 @@ const AddOffer = () => {
       // setDisabledDays([]);
       // if (fileInputRef.current) fileInputRef.current.value = null;
       // toast.success(`${values.discountType.trim()} created sucessfully`);
-console.log('heyyy ',values.discountType);
       if (values.discountType === "Discount") {
         navigate("/discounts");
       } else if (values.discountType === "Deal") {
@@ -375,7 +413,6 @@ console.log('heyyy ',values.discountType);
       } else {
         navigate("/coupons");
       }
-
     } catch (err) {
       // toast.error("Something went wrong.");
     } finally {
@@ -413,9 +450,9 @@ console.log('heyyy ',values.discountType);
             type: false,
             startDate: new Date(),
             endDate: new Date(),
-            startTime: "00:01",  // 12:01 AM
-    endTime: "23:59",    // 11:59 PM
-    customDays: [{ day: "", startTime: "00:01", endTime: "23:59" }],
+            startTime: "00:01", // 12:01 AM
+            endTime: "23:59", // 11:59 PM
+            customDays: [{ day: "", startTime: "00:01", endTime: "23:59" }],
           }}
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
@@ -493,6 +530,7 @@ console.log('heyyy ',values.discountType);
                         </label>
                         <Field
                           name="discountValue"
+                          type="number"
                           className="form-input"
                           placeholder={
                             values.discountType === "Discount" ? "%" : "$"
@@ -507,22 +545,19 @@ console.log('heyyy ',values.discountType);
                       <label htmlFor="fileUpload" className="upload-label">
                         Upload Files
                         <input
-  type="file"
-  id="fileUpload"
-  ref={fileInputRef}
-  accept=".jpeg, .png, .gif, .svg"
-  onChange={handleFileChange}
-  multiple
-  style={{ display: "none" }}
-/>
+                          type="file"
+                          id="fileUpload"
+                          ref={fileInputRef}
+                          accept=".jpeg, .png, .gif, .svg"
+                          onChange={handleFileChange}
+                          multiple
+                          style={{ display: "none" }}
+                        />
                       </label>
                       <div className="file-info">
                         {images && images.length > 0 ? (
                           images.map((file, index) => (
-                            <div
-                              key={index}
-                              className="uploaded-file row py-2"
-                            >
+                            <div key={index} className="uploaded-file row py-2">
                               <div className="col">{file.name}</div>
                               <div className="col">
                                 <button
@@ -557,7 +592,7 @@ console.log('heyyy ',values.discountType);
                         format="YYYY-MM-DD"
                         className="ant-picker"
                         style={{ height: "45px" }}
-                        disabledDate={disablePastDates} 
+                        disabledDate={disablePastDates}
                       />
                     </div>
                     <p className="form-note mt-2">
@@ -598,85 +633,119 @@ console.log('heyyy ',values.discountType);
                       <div className="col-6">
                         <label className="form-label">Start Time</label>
                         <Field
-          name="startTime"
-          type="time"
-          className="form-input"
-        />
+                          name="startTime"
+                          type="time"
+                          className="form-input"
+                        />
                       </div>
                       <div className="col-6">
                         <label className="form-label">End Time</label>
                         <Field
-          name="endTime"
-          type="time"
-          className="form-input"
-        />
+                          name="endTime"
+                          type="time"
+                          className="form-input"
+                        />
+                        <ErrorMessage
+                          name="endTime"
+                          component="div"
+                          className="text-danger mt-1"
+                        />
                       </div>
                     </div>
                   ) : (
                     <div className="custom-days mt-3">
                       {customDays.map((day, index) => (
-  <div key={index} className="custom-day-row d-flex align-items-center mb-2">
-    <select
-      className="form-input w-25"
-      value={day.day}
-      onChange={(e) => handleCustomDayChange(index, "day", e.target.value)}
-    >
-      <option value="">Select Day</option>
-      {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map(
-        (d) => (
-          <option
-            key={d}
-            value={d}
-            disabled={
-              customDays.some((cd, i) => cd.day === d && i !== index) || disabledDays.includes(d)
-            }
-          >
-            {d}
-          </option>
-        )
-      )}
-    </select>
+                        <div
+                          key={index}
+                          className="custom-day-row d-flex align-items-center mb-2"
+                        >
+                          <select
+                            className="form-input w-25"
+                            value={day.day}
+                            onChange={(e) =>
+                              handleCustomDayChange(
+                                index,
+                                "day",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <option value="">Select Day</option>
+                            {[
+                              "Monday",
+                              "Tuesday",
+                              "Wednesday",
+                              "Thursday",
+                              "Friday",
+                              "Saturday",
+                              "Sunday",
+                            ].map((d) => (
+                              <option
+                                key={d}
+                                value={d}
+                                disabled={
+                                  customDays.some(
+                                    (cd, i) => cd.day === d && i !== index
+                                  ) || disabledDays.includes(d)
+                                }
+                              >
+                                {d}
+                              </option>
+                            ))}
+                          </select>
 
-    <div className="mx-2 w-25 d-flex align-items-center">
-      <input
-        type="time"
-        className="form-input"
-        value={day.startTime}
-        onChange={(e) => handleCustomDayChange(index, "startTime", e.target.value)}
-      />
-      {/* <span className="ms-2">{convertTo12Hour(day.startTime)}</span> */}
-    </div>
+                          <div className="mx-2 w-25 d-flex align-items-center">
+                            <input
+                              type="time"
+                              className="form-input"
+                              value={day.startTime}
+                              onChange={(e) =>
+                                handleCustomDayChange(
+                                  index,
+                                  "startTime",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            {/* <span className="ms-2">{convertTo12Hour(day.startTime)}</span> */}
+                          </div>
 
-    <div className="w-25 d-flex align-items-center">
-      <input
-        type="time"
-        className="form-input"
-        value={day.endTime}
-        onChange={(e) => handleCustomDayChange(index, "endTime", e.target.value)}
-      />
-      {/* <span className="ms-2">{convertTo12Hour(day.endTime)}</span> */}
-    </div>
+                          <div className="w-25 d-flex align-items-center">
+                            <input
+                              type="time"
+                              className="form-input"
+                              value={day.endTime}
+                              onChange={(e) =>
+                                handleCustomDayChange(
+                                  index,
+                                  "endTime",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            {/* <span className="ms-2">{convertTo12Hour(day.endTime)}</span> */}
+                          </div>
 
-    {index === 0 ? (
-      <button
-        type="button"
-        onClick={handleAddDay}
-        className="btn btn-sm btn-outline-primary mx-2"
-        disabled={customDays.length >= 7}
-      >
-        <Add />
-      </button>
-    ) : (
-      <button
-        type="button"
-        onClick={() => handleRemoveDay(index)}
-        className="btn btn-sm btn-outline-danger mx-2"
-      >
-        <Remove />
-      </button>
-    )}
-  </div>
-))}
+                          {index === 0 ? (
+                            <button
+                              type="button"
+                              onClick={handleAddDay}
+                              className="btn btn-sm btn-outline-primary mx-2"
+                              disabled={customDays.length >= 7}
+                            >
+                              <Add />
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveDay(index)}
+                              className="btn btn-sm btn-outline-danger mx-2"
+                            >
+                              <Remove />
+                            </button>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

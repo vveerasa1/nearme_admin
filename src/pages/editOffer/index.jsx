@@ -11,7 +11,7 @@ import dayjs from "dayjs";
 import weekday from "dayjs/plugin/weekday";
 import isBetween from "dayjs/plugin/isBetween";
 import { Toaster, toast } from "react-hot-toast";
-import axiosInstance from '../../interceptors/axiosInstance';
+import axiosInstance from "../../interceptors/axiosInstance";
 import CircularProgress from "@mui/material/CircularProgress";
 import {
   convert12hTo24h,
@@ -54,6 +54,15 @@ const EditOffer = () => {
     startTime: "00:01",
     endTime: "23:59",
   });
+  let allWeekdays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,7 +82,7 @@ const EditOffer = () => {
           images: data.images || "",
           type: data.type || false,
           startDate: data.dateRange.startDate,
-           
+
           endDate: data.dateRange.endDate
             ? dayjs(data.dateRange.endDate)
             : dayjs(),
@@ -115,8 +124,6 @@ const EditOffer = () => {
     fetchData();
   }, [_id, baseUrl]);
 
-  
-
   // const resizeImage = (file, width, height) => {
   //   return new Promise((resolve, reject) => {
   //     const img = new window.Image();
@@ -144,13 +151,13 @@ const EditOffer = () => {
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     let error = "";
-  
+
     if (files.length + (images?.length || 0) > MAX_IMAGES) {
       error = `You can upload a maximum of ${MAX_IMAGES} images.`;
     }
-  
+
     const resizedImages = [];
-  
+
     for (const file of files) {
       if (!SUPPORTED_FORMATS.includes(file.type)) {
         error = "Only JPEG, PNG, GIF, and SVG formats are allowed.";
@@ -169,7 +176,7 @@ const EditOffer = () => {
         }
       }
     }
-  
+
     if (error) {
       setPhotoError(error);
     } else {
@@ -177,7 +184,7 @@ const EditOffer = () => {
       setPhotos((prevPhotos) => [...(prevPhotos || []), ...resizedImages]);
     }
   };
-  
+
   // Checks original image dimensions before processing
   const checkImageDimensions = (file) => {
     return new Promise((resolve, reject) => {
@@ -193,7 +200,7 @@ const EditOffer = () => {
       img.onerror = () => reject("Could not read image dimensions.");
     });
   };
-  
+
   // Resizes image to the required dimensions (800x600)
   const resizeImage = (file, width, height) => {
     return new Promise((resolve, reject) => {
@@ -209,7 +216,7 @@ const EditOffer = () => {
           canvas.toBlob((blob) => {
             const newFile = new File([blob], file.name, {
               type: file.type,
-              lastModified: Date.now()
+              lastModified: Date.now(),
             });
             resolve(newFile);
           }, file.type);
@@ -255,6 +262,13 @@ const EditOffer = () => {
     updatedDays[index][field] = value; // Update the specific field (day, startTime, or endTime)
     console.log(`Updating ${field} for index ${index}:`, value); // Debugging log
     console.log("Updated Days:", updatedDays); // Debugging log
+    const start = dayjs(updatedDays[index].startTime, "HH:mm"); // 24-hour format
+    const end = dayjs(updatedDays[index].endTime, "HH:mm");
+
+    if (start.isValid() && end.isValid() && end.isBefore(start)) {
+      toast.error("End time should be greater than start time.");
+      updatedDays[index].endTime = "23:59"; // reset to default valid time
+    }
     setCustomDays(updatedDays); // Update the state
   };
   const handleAddDay = () => {
@@ -298,15 +312,6 @@ const EditOffer = () => {
             daysInRange.push(weekday);
           }
         }
-        const allWeekdays = [
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-          "Sunday",
-        ];
         const disabled = allWeekdays.filter(
           (day) => !daysInRange.includes(day)
         );
@@ -340,25 +345,30 @@ const EditOffer = () => {
 
   const handleSubmit = async (values, { resetForm }) => {
     let daysToSubmit = values.type
-      ? customDays.map((d) => ({
-          ...d,
-          startTime: d.startTime,
-          endTime: d.endTime,
-        }))
+      ? customDays
+          .map((d) => ({
+            ...d,
+            startTime: d.startTime,
+            endTime: d.endTime,
+          }))
+          .sort(
+            (a, b) => allWeekdays.indexOf(a.day) - allWeekdays.indexOf(b.day)
+          )
       : [];
-// console.log(values.type);
+    // console.log(values.type);
 
+    // Reject if any day is not selected
+    const hasInvalidDay = customDays.some(
+      (day) => !day.day || day.day.trim() === ""
+    );
+    // console.log(hasInvalidDay);
+    if (hasInvalidDay === true && values.type === true) {
+      toast.error("Please select a valid day for all custom schedule entries");
+      return;
+    }
 
-  // Reject if any day is not selected
-  const hasInvalidDay = customDays.some(day => !day.day || day.day.trim() === "");
-  // console.log(hasInvalidDay);
-  if (hasInvalidDay === true &&  values.type === true ) {
-    toast.error("Please select a valid day for all custom schedule entries");
-    return;
-  }
-           
-// return;
-      // return;
+    // return;
+    // return;
     setLoading(true);
     const formData = new window.FormData();
     formData.append("title", values.title);
@@ -431,209 +441,235 @@ const EditOffer = () => {
 
   return (
     <>
-    <Toaster position="bottom-center" />
-    <div className="content-wrapper">
-      {/* Breadcrumb */}
-      <div className="breadcrumb-wrapper">
-        <div className="breadcrumb-block">
-          <h2 className="page-heading">Edit {type}</h2>
-          <ul className="breadcrumb-list">
-            <li className="breadcrumb-item">
-              <Link to={"/dashboard"} className="breadcrumb-link">
-                Home
-              </Link>
-            </li>
-            <li className="breadcrumb-item">
-              <span className="breadcrumb-link">{type}</span>
-            </li>
-          </ul>
+      <Toaster position="bottom-center" />
+      <div className="content-wrapper">
+        {/* Breadcrumb */}
+        <div className="breadcrumb-wrapper">
+          <div className="breadcrumb-block">
+            <h2 className="page-heading">Edit {type}</h2>
+            <ul className="breadcrumb-list">
+              <li className="breadcrumb-item">
+                <Link to={"/dashboard"} className="breadcrumb-link">
+                  Home
+                </Link>
+              </li>
+              <li className="breadcrumb-item">
+                <span className="breadcrumb-link">{type}</span>
+              </li>
+            </ul>
+          </div>
         </div>
-      </div>
-      {/* Add form */}
-      <div className="form-container">
-        <Formik
-          initialValues={initialValues}
-          enableReinitialize={true}
-          validationSchema={Yup.object({
-            title: Yup.string().required("Title is required"),
-            description: Yup.string().required("Description is required"),
-          })}
-          onSubmit={handleSubmit}
-        >
-          {({ values, handleChange }) => (
-            <Form className="form-wrapper">
-              <div className="row ">
-                <div className="col-12 col-md-12 col-lg-6">
-                  <div className="row">
-                    {/* Title */}
-                    <div className="col-12 mb-3">
-                      <div className="form-group">
-                        <label className="form-label">Title</label>
-                        <Field
-                          name="title"
-                          type="text"
-                          className="form-input"
-                          placeholder="Enter title here"
-                        />
-                        <ErrorMessage
-                          name="title"
-                          component="div"
-                          className="error"
-                        />
-                      </div>
-                    </div>
-                    {/* Description */}
-                    <div className="col-12 mb-3">
-                      <div className="form-group">
-                        <label className="form-label">How to use</label>
-                        <Field
-                          as="textarea"
-                          name="description"
-                          className="form-input"
-                          cols={30}
-                          rows={3}
-                          placeholder="Type something here"
-                        />
-                        <ErrorMessage
-                          name="description"
-                          component="div"
-                          className="error"
-                        />
-                      </div>
-                    </div>
-                    <div className="form-group mb-3">
-                      <label className="form-label">Coupon Details</label>
-                      <Field
-                        as="textarea"
-                        name="couponDescription"
-                        className="form-input"
-                        rows={3}
-                      />
-                      <ErrorMessage
-                        name="couponDescription"
-                        component="div"
-                        className="error text-danger"
-                      />
-                    </div>
-                    {/* Offer Type */}
-                    <div className="form-group mb-3">
-                    <label className="form-label">Offer Type</label>
-                    <Field
-                      as="select"
-                      name="discountType"
-                      className="form-input"
-                    >
-                      <option value="">Select Offer</option>
-                      <option>Deal</option>
-                      <option>Discount</option>
-                      <option>Coupon</option>
-                    </Field>
-                    <ErrorMessage
-                      name="discountType"
-                      component="div"
-                      className="error text-danger"
-                    />
-                    {(values.discountType === "Discount" ||
-                      values.discountType === "Deal") && (
-                      <div className="mt-3">
-                        <label className="form-label">
-                          {values.discountType === "Discount"
-                            ? "Percentage"
-                            : "Amount"}
-                        </label>
-                        <Field
-                          name="discountValue"
-                          className="form-input"
-                          placeholder={
-                            values.discountType === "Discount" ? "%" : "$"
-                          }
-                        />
-                      </div>
-                    )}
-
-                    </div>
-                    {/* Image Upload */}
-                    <div className="col-12 mb-3">
-                      <div className="form-group">
-                        <label className="form-label">Image</label>
-                        <div className="file-upload-container">
-                          <label htmlFor="fileUpload" className="upload-label">
-                            Upload Files
-                            <input
-                              type="file"
-                              id="fileUpload"
-                              ref={fileInputRef}
-                              accept=".jpeg, .png, .jpg"
-                              onChange={handleFileChange}
-                              multiple
-                              style={{ display: "none" }}
-                            />
-                          </label>
-                          <div className="file-info">
-                            {existingImages.length > 0 &&
-                              existingImages.map((url, index) => (
-                                <div
-                                  key={`existing-${index}`}
-                                  className="uploaded-file row py-2"
-                                >
-                                  <div className="col-5 mb-2">
-                                    <img src={url} alt="uploaded" height="60" />
-                                  </div>
-                                  <div className="col mt-2">
-                                    <button
-                                      type="button"
-                                      className="remove-btn btn btn-sm"
-                                      onClick={() => handleImageDelete(url)}
-                                    >
-                                      <Delete className="text-danger" />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            {images?.length > 0 &&
-                              images?.map((file, index) => (
-                                <div
-                                  key={`new-${index}`}
-                                  className="uploaded-file row py-2"
-                                >
-                                  <div className="col">
-                                    <span>{file.name}</span>
-                                  </div>
-                                  <div className="col">
-                                    <button
-                                      type="button"
-                                      className="remove-btn btn btn-sm"
-                                      onClick={() => handleImageDelete(index)}
-                                    >
-                                      <Delete className="text-danger" />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            {existingImages.length === 0 &&
-                              newImages.length === 0 && (
-                                <p>Choose files or drag and drop here</p>
-                              )}
-                            {imageError && (
-                              <div className="error">{imageError}</div>
-                            )}
-                          </div>
+        {/* Add form */}
+        <div className="form-container">
+          <Formik
+            initialValues={initialValues}
+            enableReinitialize={true}
+            validationSchema={Yup.object({
+              title: Yup.string().required("Title is required"),
+              description: Yup.string().required("Description is required"),
+              discountType: Yup.string()
+                .required("Discount type is required")
+                .oneOf(["Deal", "Discount", "Coupon"]),
+              type: Yup.boolean(),
+              endTime: Yup.string().when("type", {
+                is: false,
+                then: (schema) =>
+                  schema
+                    .notRequired()
+                    .test(
+                      "is-greater",
+                      "End time must be greater than start time",
+                      function (value) {
+                        const { startTime } = this.parent;
+                        return !startTime || !value || value > startTime;
+                      }
+                    ),
+                otherwise: (schema) => schema.notRequired(),
+              }),
+            })}
+            onSubmit={handleSubmit}
+          >
+            {({ values, handleChange }) => (
+              <Form className="form-wrapper">
+                <div className="row ">
+                  <div className="col-12 col-md-12 col-lg-6">
+                    <div className="row">
+                      {/* Title */}
+                      <div className="col-12 mb-3">
+                        <div className="form-group">
+                          <label className="form-label">Title</label>
+                          <Field
+                            name="title"
+                            type="text"
+                            className="form-input"
+                            placeholder="Enter title here"
+                          />
+                          <ErrorMessage
+                            name="title"
+                            component="div"
+                            className="error"
+                          />
                         </div>
                       </div>
-                      <p
-                        className="note text-muted"
-                        style={{ fontSize: "0.875rem" }}
-                      >
-                        Note: Upload images in JPEG, PNG, GIF, or SVG format,
-                        max 5MB, and between 800x600 pixels.
-                      </p>
-                    </div>
-                    {/* Offer Validity */}
+                      {/* Description */}
+                      <div className="col-12 mb-3">
+                        <div className="form-group">
+                          <label className="form-label">How to use</label>
+                          <Field
+                            as="textarea"
+                            name="description"
+                            className="form-input"
+                            cols={30}
+                            rows={3}
+                            placeholder="Type something here"
+                          />
+                          <ErrorMessage
+                            name="description"
+                            component="div"
+                            className="error"
+                          />
+                        </div>
+                      </div>
+                      <div className="form-group mb-3">
+                        <label className="form-label">Coupon Details</label>
+                        <Field
+                          as="textarea"
+                          name="couponDescription"
+                          className="form-input"
+                          rows={3}
+                        />
+                        <ErrorMessage
+                          name="couponDescription"
+                          component="div"
+                          className="error text-danger"
+                        />
+                      </div>
+                      {/* Offer Type */}
+                      <div className="form-group mb-3">
+                        <label className="form-label">Offer Type</label>
+                        <Field
+                          as="select"
+                          name="discountType"
+                          className="form-input"
+                        >
+                          <option value="">Select Offer</option>
+                          <option>Deal</option>
+                          <option>Discount</option>
+                          <option>Coupon</option>
+                        </Field>
+                        <ErrorMessage
+                          name="discountType"
+                          component="div"
+                          className="error text-danger"
+                        />
+                        {(values.discountType === "Discount" ||
+                          values.discountType === "Deal") && (
+                          <div className="mt-3">
+                            <label className="form-label">
+                              {values.discountType === "Discount"
+                                ? "Percentage"
+                                : "Amount"}
+                            </label>
+                            <Field
+                              name="discountValue"
+                              type="number"
+                              className="form-input"
+                              placeholder={
+                                values.discountType === "Discount" ? "%" : "$"
+                              }
+                            />
+                          </div>
+                        )}
+                      </div>
+                      {/* Image Upload */}
+                      <div className="col-12 mb-3">
+                        <div className="form-group">
+                          <label className="form-label">Image</label>
+                          <div className="file-upload-container">
+                            <label
+                              htmlFor="fileUpload"
+                              className="upload-label"
+                            >
+                              Upload Files
+                              <input
+                                type="file"
+                                id="fileUpload"
+                                ref={fileInputRef}
+                                accept=".jpeg, .png, .jpg"
+                                onChange={handleFileChange}
+                                multiple
+                                style={{ display: "none" }}
+                              />
+                            </label>
+                            <div className="file-info">
+                              {existingImages.length > 0 &&
+                                existingImages.map((url, index) => (
+                                  <div
+                                    key={`existing-${index}`}
+                                    className="uploaded-file row py-2"
+                                  >
+                                    <div className="col-5 mb-2">
+                                      <img
+                                        src={url}
+                                        alt="uploaded"
+                                        height="60"
+                                      />
+                                    </div>
+                                    <div className="col mt-2">
+                                      <button
+                                        type="button"
+                                        className="remove-btn btn btn-sm"
+                                        onClick={() => handleImageDelete(url)}
+                                      >
+                                        <Delete className="text-danger" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              {images?.length > 0 &&
+                                images?.map((file, index) => (
+                                  <div
+                                    key={`new-${index}`}
+                                    className="uploaded-file row py-2"
+                                  >
+                                    <div className="col">
+                                      <span>{file.name}</span>
+                                    </div>
+                                    <div className="col">
+                                      <button
+                                        type="button"
+                                        className="remove-btn btn btn-sm"
+                                        onClick={() => handleImageDelete(index)}
+                                      >
+                                        <Delete className="text-danger" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              {existingImages.length === 0 &&
+                                newImages.length === 0 && (
+                                  <p>Choose files or drag and drop here</p>
+                                )}
+                              {imageError && (
+                                <div className="error">{imageError}</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <p
+                          className="note text-muted"
+                          style={{ fontSize: "0.875rem" }}
+                        >
+                          Note: Upload images in JPEG, PNG, GIF, or SVG format,
+                          max 5MB, and between 800x600 pixels.
+                        </p>
+                      </div>
+                      {/* Offer Validity */}
 
-                    {/* Custom Days Toggle */}
+                      {/* Custom Days Toggle */}
 
-                    {/* Submit Button - aligned right */}
-                    {/* <div className="col-12">
+                      {/* Submit Button - aligned right */}
+                      {/* <div className="col-12">
                       <div className="d-flex justify-content-end">
                         <button
                           type="submit"
@@ -645,207 +681,214 @@ const EditOffer = () => {
                         </button>
                       </div>
                     </div> */}
-                    {/* <div className="col-12 col-md-12 col-lg-12"> */}
+                      {/* <div className="col-12 col-md-12 col-lg-12"> */}
 
-                    {/* </div> */}
+                      {/* </div> */}
+                    </div>
                   </div>
-                </div>
 
-                <div className="col-12 col-md-12 col-lg-6 d-flex flex-column justify-content-between" style={{ minHeight: '100%' }}>
-                <div className="flex-grow-1">
-                    {/* Offer Validity Period */}
-                    <div className="form-group mb-4">
-                      <label className="form-label">
-                        Offer Validity Period
-                      </label>
-                      <div className="w-100">
-                        <RangePicker
-                          value={range}
-                          onChange={handleRangeChange}
-                          format="YYYY-MM-DD"
-                          className="ant-picker"
-                          style={{ height: "45px" }}
-                          disabledDate={disablePastDates} 
-                        />
+                  <div
+                    className="col-12 col-md-12 col-lg-6 d-flex flex-column justify-content-between"
+                    style={{ minHeight: "100%" }}
+                  >
+                    <div className="flex-grow-1">
+                      {/* Offer Validity Period */}
+                      <div className="form-group mb-4">
+                        <label className="form-label">
+                          Offer Validity Period
+                        </label>
+                        <div className="w-100">
+                          <RangePicker
+                            value={range}
+                            onChange={handleRangeChange}
+                            format="YYYY-MM-DD"
+                            className="ant-picker"
+                            style={{ height: "45px" }}
+                            disabledDate={disablePastDates}
+                          />
+                        </div>
+                        <p className="form-note mt-2">
+                          Note: Specify the duration for which the coupon is
+                          valid, including both the start and end dates.
+                        </p>
                       </div>
-                      <p className="form-note mt-2">
-                        Note: Specify the duration for which the coupon is
-                        valid, including both the start and end dates.
-                      </p>
-                    </div>
-                    <div className="col-12 mb-4">
-                      <div className="form-group d-flex align-items-center">
-                        <Field
-                          type="checkbox"
-                          name="type"
-                          checked={values.type}
-                          onChange={handleChange}
-                          className="me-2"
-                        />
-                        <span>Custom Days</span>
+                      <div className="col-12 mb-4">
+                        <div className="form-group d-flex align-items-center">
+                          <Field
+                            type="checkbox"
+                            name="type"
+                            checked={values.type}
+                            onChange={handleChange}
+                            className="me-2"
+                          />
+                          <span>Custom Days</span>
+                        </div>
                       </div>
-                    </div>
-                    {/* Custom Days OR Start/End Time */}
-                    <div className="col-12 mb-3">
-                      {/* <label className="form-label">Custom time</label> */}
+                      {/* Custom Days OR Start/End Time */}
+                      <div className="col-12 mb-3">
+                        {/* <label className="form-label">Custom time</label> */}
 
-                      {values.type ? (
-                        <div className="custom-days mt-3">
-                          {customDays.map((day, index) => (
-                            <div
-                              key={index}
-                              className="custom-day-row d-flex align-items-center mb-2"
-                            >
-                              {/* Day Dropdown */}
-                              <select
-                                className="form-input w-25"
-                                value={day.day}
-                                onChange={(e) =>
-                                  handleCustomDayChange(
-                                    index,
-                                    "day",
-                                    e.target.value
-                                  )
-                                }
+                        {values.type ? (
+                          <div className="custom-days mt-3">
+                            {customDays.map((day, index) => (
+                              <div
+                                key={index}
+                                className="custom-day-row d-flex align-items-center mb-2"
                               >
-                                <option value="">Select Day</option>
-                                {[
-                                  "Monday",
-                                  "Tuesday",
-                                  "Wednesday",
-                                  "Thursday",
-                                  "Friday",
-                                  "Saturday",
-                                  "Sunday",
-                                ].map((d) => (
-                                  <option
-                                    key={d}
-                                    value={d}
-                                    disabled={
-                                      customDays.some(
-                                        (cd, i) => cd.day === d && i !== index
-                                      ) || disabledDays.includes(d)
-                                    }
+                                {/* Day Dropdown */}
+                                <select
+                                  className="form-input w-25"
+                                  value={day.day}
+                                  onChange={(e) =>
+                                    handleCustomDayChange(
+                                      index,
+                                      "day",
+                                      e.target.value
+                                    )
+                                  }
+                                >
+                                  <option value="">Select Day</option>
+                                  {[
+                                    "Monday",
+                                    "Tuesday",
+                                    "Wednesday",
+                                    "Thursday",
+                                    "Friday",
+                                    "Saturday",
+                                    "Sunday",
+                                  ].map((d) => (
+                                    <option
+                                      key={d}
+                                      value={d}
+                                      disabled={
+                                        customDays.some(
+                                          (cd, i) => cd.day === d && i !== index
+                                        ) || disabledDays.includes(d)
+                                      }
+                                    >
+                                      {d}
+                                    </option>
+                                  ))}
+                                </select>
+
+                                {/* Start Time Input */}
+                                <div className="mx-2 w-25 d-flex align-items-center">
+                                  <input
+                                    type="time"
+                                    className="form-input"
+                                    value={day.startTime} // Bind to the state
+                                    onChange={(e) =>
+                                      handleCustomDayChange(
+                                        index,
+                                        "startTime",
+                                        e.target.value
+                                      )
+                                    } // Update state on change
+                                  />
+                                </div>
+
+                                {/* End Time Input */}
+                                <div className="w-25 d-flex align-items-center">
+                                  <input
+                                    type="time"
+                                    className="form-input"
+                                    value={day.endTime} // Bind to the state
+                                    onChange={(e) =>
+                                      handleCustomDayChange(
+                                        index,
+                                        "endTime",
+                                        e.target.value
+                                      )
+                                    } // Update state on change
+                                  />
+                                </div>
+
+                                {/* Add or Remove Button */}
+                                {index === 0 ? (
+                                  <button
+                                    type="button"
+                                    onClick={handleAddDay}
+                                    className="btn btn-sm btn-outline-primary mx-2"
+                                    disabled={customDays.length >= 7}
                                   >
-                                    {d}
-                                  </option>
-                                ))}
-                              </select>
-
-                              {/* Start Time Input */}
-                              <div className="mx-2 w-25 d-flex align-items-center">
-                                <input
+                                    <Add />
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveDay(index)}
+                                    className="btn btn-sm btn-outline-danger mx-2"
+                                  >
+                                    <Remove />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="row">
+                            <div className="col-6 mb-3">
+                              <div className="form-group">
+                                <label className="form-label">
+                                  Offer Active Start Time
+                                </label>
+                                <Field
+                                  name="startTime"
                                   type="time"
                                   className="form-input"
-                                  value={day.startTime} // Bind to the state
-                                  onChange={(e) =>
-                                    handleCustomDayChange(
-                                      index,
-                                      "startTime",
-                                      e.target.value
-                                    )
-                                  } // Update state on change
                                 />
                               </div>
-
-                              {/* End Time Input */}
-                              <div className="w-25 d-flex align-items-center">
-                                <input
+                            </div>
+                            <div className="col-6 mb-3">
+                              <div className="form-group">
+                                <label className="form-label">
+                                  Offer Active End Time
+                                </label>
+                                <Field
+                                  name="endTime"
                                   type="time"
                                   className="form-input"
-                                  value={day.endTime} // Bind to the state
-                                  onChange={(e) =>
-                                    handleCustomDayChange(
-                                      index,
-                                      "endTime",
-                                      e.target.value
-                                    )
-                                  } // Update state on change
+                                />
+                                <ErrorMessage
+                                  name="endTime"
+                                  component="div"
+                                  className="text-danger mt-1"
                                 />
                               </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                              {/* Add or Remove Button */}
-                              {index === 0 ? (
-                                <button
-                                  type="button"
-                                  onClick={handleAddDay}
-                                  className="btn btn-sm btn-outline-primary mx-2"
-                                  disabled={customDays.length >= 7}
-                                >
-                                  <Add />
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveDay(index)}
-                                  className="btn btn-sm btn-outline-danger mx-2"
-                                >
-                                  <Remove />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="row">
-                          <div className="col-6 mb-3">
-                            <div className="form-group">
-                              <label className="form-label">
-                                Offer Active Start Time
-                              </label>
-                              <Field
-                                name="startTime"
-                                type="time"
-                                className="form-input"
-                              />
-                            </div>
-                          </div>
-                          <div className="col-6 mb-3">
-                            <div className="form-group">
-                              <label className="form-label">
-                                Offer Active End Time
-                              </label>
-                              <Field
-                                name="endTime"
-                                type="time"
-                                className="form-input"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                    {/* Buttons aligned to bottom */}
+                    <div className="mt-3 text-end">
+                      <button
+                        className="theme-btn btn-main"
+                        type="submit"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <span
+                              className="spinner-border spinner-border-sm me-2"
+                              role="status"
+                              aria-hidden="true"
+                            ></span>
+                            Saving...
+                          </>
+                        ) : (
+                          "Update offer"
+                        )}
+                      </button>
                     </div>
                   </div>
-
-                  {/* Buttons aligned to bottom */}
-                  <div className="mt-3 text-end">
-                  
-                    <button
-                      className="theme-btn btn-main"
-                      type="submit"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <span
-                            className="spinner-border spinner-border-sm me-2"
-                            role="status"
-                            aria-hidden="true"
-                          ></span>
-                          Saving...
-                        </>
-                      ) : (
-                        "Update offer"
-                      )}
-                    </button>
-                  </div>
                 </div>
-              </div>
-            </Form>
-          )}
-        </Formik>
+              </Form>
+            )}
+          </Formik>
+        </div>
       </div>
-    </div>
     </>
   );
 };

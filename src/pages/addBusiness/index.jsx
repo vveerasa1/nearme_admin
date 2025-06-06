@@ -3,7 +3,7 @@ import "./style.css";
 import { Link, useNavigate } from "react-router-dom";
 import { Star, Add, Remove, Delete } from "@mui/icons-material";
 import { Formik, Form, Field, ErrorMessage, FieldArray } from "formik";
-import axiosInstance from '../../interceptors/axiosInstance';
+import axiosInstance from "../../interceptors/axiosInstance";
 
 import * as Yup from "yup";
 import axios from "axios";
@@ -279,13 +279,14 @@ const AddBusiness = () => {
     // console.log("hey", values.business_status);
     // return;
     // Convert working hours to 12-hour format
-    const updatedTime = values.working_hours.map((date) => ({
-      day: date.day,
-      startTime: convert24hTo12h(date.startTime),
-      endTime: convert24hTo12h(date.endTime),
-      is24Hours: date.is24Hours,
-    }));
-    // console.log("hellow ", values.types);
+    const updatedTime = values.working_hours
+      .map((date) => ({
+        day: date.day,
+        startTime: convert24hTo12h(date.startTime),
+        endTime: convert24hTo12h(date.endTime),
+        is24Hours: date.is24Hours,
+      }))
+      .sort((a, b) => daysOfWeek.indexOf(a.day) - daysOfWeek.indexOf(b.day));
 
     // Set loading state to true
     setLoading(true);
@@ -317,7 +318,6 @@ const AddBusiness = () => {
     // formData.append("place_link", values.place_link || "");
     formData.append("site", values.buisness_url || "");
 
-    
     formData.append("rating", values.rating || "");
     formData.append("business_status", values.business_status || "");
     formData.append("reviews", values.reviews || "");
@@ -403,8 +403,8 @@ const AddBusiness = () => {
             working_hours: [
               {
                 day: "",
-                startTime: "00:01",
-                endTime: "23:59",
+                startTime: "",
+                endTime: "",
                 is24Hours: false,
               },
             ],
@@ -439,7 +439,7 @@ const AddBusiness = () => {
             business_status: Yup.string().required(
               "Business status is required"
             ),
-            // place_link: Yup.string().url("Invalid URL format"),
+            place_link: Yup.string().url("Invalid URL format"),
             buisness_url:  Yup.string().url("Invalid URL format"),
             reviews: Yup.number()
               .min(0, "Reviews count cannot be negative")
@@ -469,6 +469,7 @@ const AddBusiness = () => {
                   day: Yup.string()
                     .required("Day is required")
                     .oneOf(daysOfWeek, "Invalid day"),
+                  is24Hours: Yup.boolean(),
                   startTime: Yup.string().when("is24Hours", {
                     is: false,
                     then: (schema) => schema.notRequired(),
@@ -476,10 +477,19 @@ const AddBusiness = () => {
                   }),
                   endTime: Yup.string().when("is24Hours", {
                     is: false,
-                    then: (schema) => schema.notRequired(),
+                    then: (schema) =>
+                      schema.test(
+                        "endTime-greater-than-startTime",
+                        "End time must be greater than start time",
+                        function (value) {
+                          const { startTime } = this.parent;
+                          // only validate if endTime is provided
+                          if (!value) return true;
+                          return !startTime || value > startTime;
+                        }
+                      ),
                     otherwise: (schema) => schema.notRequired(),
                   }),
-                  is24Hours: Yup.boolean(),
                 })
               )
               .min(1, "At least one working hour is required"),
@@ -953,18 +963,17 @@ const AddBusiness = () => {
                       </div>
                     </div> */}
                     <div className="col-12 col-md-12 col-lg-12 mb-3">
-                        <div className="form-group">
-                          <label className="form-label">Buisness URL</label>
-                          <Field
-                            name="buisness_url"
-                            type="text"
-                            className="form-input"
-                            placeholder="Enter buisness url"
-                          />
-                        </div>
+                      <div className="form-group">
+                        <label className="form-label">Buisness URL</label>
+                        <Field
+                          name="buisness_url"
+                          type="text"
+                          className="form-input"
+                          placeholder="Enter buisness url"
+                        />
                       </div>
+                    </div>
                     {/* rating */}
-
 
                     <div className="col-12 col-md-6 col-lg-6 mb-4">
                       <div className="form-group">
@@ -1052,6 +1061,10 @@ const AddBusiness = () => {
                     <div className="col-12 col-md-12 col-lg-12 mb-4">
                       <div className="form-group">
                         <label className="form-label">Working hours</label>
+                        <small className="text-muted d-block mt-1">
+                          If both start and end time are left empty, that day
+                          will be considered closed.
+                        </small>
                       </div>
                     </div>
                     {/* fields */}
@@ -1063,7 +1076,7 @@ const AddBusiness = () => {
                           {values.working_hours.map((day, index) => (
                             <div
                               key={index}
-                              className="custom-day-row mb-2 d-flex gap-2 align-items-start"
+                              className="custom-day-row mb-2 d-flex gap-2 align-items-start flex-wrap"
                             >
                               {/* Day Select */}
                               <div className="w-25">
@@ -1147,7 +1160,6 @@ const AddBusiness = () => {
                                         ""
                                       );
                                     } else {
-                                      // Set default times when 24Hrs is unselected
                                       setFieldValue(
                                         `working_hours[${index}].startTime`,
                                         "00:01"
@@ -1194,6 +1206,18 @@ const AddBusiness = () => {
                                     </button>
                                   )}
                               </div>
+
+                              {/* Custom full-row error message */}
+                              {errors.working_hours &&
+                                errors.working_hours[index] &&
+                                typeof errors.working_hours[index] ===
+                                  "string" &&
+                                touched.working_hours &&
+                                touched.working_hours[index] && (
+                                  <div className="text-danger w-100 mt-1">
+                                    {errors.working_hours[index]}
+                                  </div>
+                                )}
                             </div>
                           ))}
                         </div>

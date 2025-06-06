@@ -163,9 +163,6 @@ const EditBusiness = () => {
             }
           }
         );
-        
-        
-        
 
         console.log(transformedWorkingHours, "transformed working hours");
 
@@ -186,11 +183,11 @@ const EditBusiness = () => {
         setInitialValues({
           display_name: data.display_name || "",
           types: Array.isArray(data.types)
-    ? data.types.flatMap((t) => t.split(",").map((s) => s.trim()))
-    : typeof data.types === "string"
-      ? data.types.split(",").map((s) => s.trim())
-      : [],
-          // address: data.address || "",
+            ? data.types.flatMap((t) => t.split(",").map((s) => s.trim()))
+            : typeof data.types === "string"
+            ? data.types.split(",").map((s) => s.trim())
+            : [],
+          address: data.address || "",
           street: data.street || "",
           city: data.city || "",
           state: data.state || "",
@@ -369,13 +366,14 @@ const EditBusiness = () => {
     // console.log('come here');
     // return;
     setSubmitting && setSubmitting(true);
-    const updatedTime = values.working_hours.map((date) => ({
-      day: date.day,
-      startTime: convert24hTo12h(date.startTime),
-      endTime: convert24hTo12h(date.endTime),
-      is24Hours: date.is24Hours,
-    }));
-    console.log("Hii helow how are ", values.types);
+    const updatedTime = values.working_hours
+      .map((date) => ({
+        day: date.day,
+        startTime: convert24hTo12h(date.startTime),
+        endTime: convert24hTo12h(date.endTime),
+        is24Hours: date.is24Hours,
+      }))
+      .sort((a, b) => daysOfWeek.indexOf(a.day) - daysOfWeek.indexOf(b.day));
     const formData = new FormData();
     formData.append("display_name", values.display_name);
     formData.append("types", values.types);
@@ -390,7 +388,6 @@ const EditBusiness = () => {
     // formData.append("place_link", values.place_link || "");
     formData.append("site", values.buisness_url || "");
 
-    
     formData.append("rating", values.rating || "");
     formData.append("reviews", values.reviews || "");
     formData.append("business_status", values.business_status || "");
@@ -516,26 +513,35 @@ const EditBusiness = () => {
                 .max(10, "Phone number must be between 10 digits")
                 .min(10, "Phone number must be between 10 digits")
                 .required("Phone number is required"),
-              // working_hours: Yup.array()
-              //   .of(
-              //     Yup.object().shape({
-              //       day: Yup.string()
-              //         .required("Day is required")
-              //         .oneOf(daysOfWeek, "Invalid day"),
-              //       startTime: Yup.string().when("is24Hours", {
-              //         is: false,
-              //         then: (schema) => schema.notRequired(),
-              //         otherwise: (schema) => schema.notRequired(),
-              //       }),
-              //       endTime: Yup.string().when("is24Hours", {
-              //         is: false,
-              //         then: (schema) => schema.notRequired(),
-              //         otherwise: (schema) => schema.notRequired(),
-              //       }),
-              //       is24Hours: Yup.boolean(),
-              //     })
-              //   )
-              //   .min(1, "At least one working hour is required"),
+              working_hours: Yup.array()
+                .of(
+                  Yup.object().shape({
+                    day: Yup.string()
+                      .required("Day is required")
+                      .oneOf(daysOfWeek, "Invalid day"),
+                    startTime: Yup.string().when("is24Hours", {
+                      is: false,
+                      then: (schema) => schema.notRequired(),
+                      otherwise: (schema) => schema.notRequired(),
+                    }),
+                    endTime: Yup.string().when("is24Hours", {
+                      is: false,
+                      then: (schema) =>
+                        schema.test(
+                          "endTime-greater-than-startTime",
+                          "End time must be greater than start time",
+                          function (value) {
+                            const { startTime } = this.parent;
+                            if (!value) return true; // allow empty
+                            return !startTime || value > startTime;
+                          }
+                        ),
+                      otherwise: (schema) => schema.notRequired(),
+                    }),
+                    is24Hours: Yup.boolean(),
+                  })
+                )
+                .min(1, "At least one working hour is required"),
             })}
             onSubmit={handleSubmit}
           >
@@ -941,9 +947,9 @@ const EditBusiness = () => {
                               className="form-control w-25"
                             >
                               {/* <option value="+1">+1 (USA)</option> */}
-                            <option value="+1">+1 (USA / CA)</option>
+                              <option value="+1">+1 (USA / CA)</option>
 
-                            {/* <option value="+1">+1 (CA)</option> */}
+                              {/* <option value="+1">+1 (CA)</option> */}
 
                               <option value="+91">+91 (India)</option>
                               <option value="+44">+44 (UK)</option>
@@ -959,17 +965,20 @@ const EditBusiness = () => {
                               placeholder="Phone number"
                             /> */}
                             <Field
-  name="phone"
-  type="tel"
-  maxLength="10"
-  pattern="\d{10}"
-  onChange={(e) => {
-    const onlyNums = e.target.value.replace(/[^0-9]/g, "");
-    setFieldValue("phone_number", onlyNums);
-  }}
-  className="form-input w-75"
-  placeholder="Phone number"
-  />
+                              name="phone"
+                              type="tel"
+                              maxLength="10"
+                              pattern="\d{10}"
+                              onChange={(e) => {
+                                const onlyNums = e.target.value.replace(
+                                  /[^0-9]/g,
+                                  ""
+                                );
+                                setFieldValue("phone_number", onlyNums);
+                              }}
+                              className="form-input w-75"
+                              placeholder="Phone number"
+                            />
                           </div>
                           <ErrorMessage
                             name="phone"
@@ -1090,6 +1099,10 @@ const EditBusiness = () => {
                       <div className="col-12 col-md-12 col-lg-12 mb-4">
                         <div className="form-group">
                           <label className="form-label">Working hours</label>
+                          <small className="text-muted d-block mt-1">
+                            If both start and end time are left empty, that day
+                            will be considered closed.
+                          </small>
                         </div>
                       </div>
                       <FieldArray name="working_hours">
@@ -1149,13 +1162,19 @@ const EditBusiness = () => {
                                   </div>
 
                                   {/* End Time */}
-                                  <div className="w-25 d-flex align-items-center">
+                                  <div className="w-25">
                                     <Field
                                       type="time"
                                       name={`working_hours[${index}].endTime`}
                                       className="form-control"
                                       disabled={day.is24Hours}
                                     />
+                                    <ErrorMessage
+                                      name={`working_hours[${index}].endTime`}
+                                      component="div"
+                                      className="text-danger"
+                                    />
+
                                     {/* Show 12hr format */}
                                     {/* <span className="ms-2">
                 {day.endTime ? convert24hTo12h(day.endTime) : ""}
@@ -1190,7 +1209,10 @@ const EditBusiness = () => {
                                       24 Hrs
                                     </label>
                                   </div>
-                                    {console.log(errors, "my errors from the form")}
+                                  {console.log(
+                                    errors,
+                                    "my errors from the form"
+                                  )}
                                   {/* Add / Remove Buttons */}
                                   <div className="d-flex flex-column mt-1">
                                     {index === 0 &&
