@@ -68,7 +68,7 @@ const Users = () => {
   };
 
   const formatAddress = (address) => {
-    if (!address) return "Not available";
+    if (!address) return "N/A";
     if (typeof address === "string") return address;
     const { addressLine, city, state, country, zip } = address;
     return [addressLine, city, state, zip, country].filter(Boolean).join(", ");
@@ -148,21 +148,21 @@ const Users = () => {
                           <div className="row g-0 h-100">
                             {/* Left Column - Image */}
                             <div className="col-4 d-flex align-items-center justify-content-center p-3">
-                            <img
-  src={
-    user?.image && user.image.trim() !== ''
-      ? user.image
-      : fallbackimage
-  }
-  alt="User"
-  style={{
-    width: "100%",
-    height: "auto",
-    maxHeight: "120px",
-    objectFit: "contain",
-    borderRadius: "8px",
-  }}
-/>
+                              <img
+                                src={
+                                  user?.image && user.image.trim() !== ""
+                                    ? user.image
+                                    : fallbackimage
+                                }
+                                alt="User"
+                                style={{
+                                  width: "100%",
+                                  height: "auto",
+                                  maxHeight: "120px",
+                                  objectFit: "contain",
+                                  borderRadius: "8px",
+                                }}
+                              />
                             </div>
 
                             {/* Right Column - User Info */}
@@ -195,8 +195,16 @@ const Users = () => {
                                   {user.postalCode || "N/A"}
                                 </p>
                                 <p className="card-text mb-1">
-                                  <strong>DOB:</strong> {formatDOB(user.dob)}
+                                  <strong>DOB:</strong>
+                                  {user.date && user.month ? (
+                                    <>
+                                      {user.date} {user.month}
+                                    </>
+                                  ) : (
+                                    "N/A"
+                                  )}
                                 </p>
+
                                 <p className="card-text mb-0">
                                   <strong>Address:</strong>{" "}
                                   {formatAddress(user.address)}
